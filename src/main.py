@@ -18,7 +18,7 @@ app = create_app()
 
 def main():
     run(
-        "sidebrain_back.main:app",
+        "main:app",
         host=Env.HOST,
         port=Env.PORT,
         reload=Env.MODE == "dev",
