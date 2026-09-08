@@ -1,0 +1,26 @@
+[project]
+name = "sidebrain_back"
+version = "0.1.0"
+description = "Mentor IA para aprendizagem de novas habilidades!"
+readme = "README.md"
+authors = [
+    { name = "João Suzuki", email = "joaosuzuki98@outlook.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.19.2",
+    "fastapi[standard]>=0.141.1",
+    "sqlalchemy>=2.0.52",
+]
+
+[project.scripts]
+dev = "sidebrain_back.main:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
