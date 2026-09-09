@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from importlib.metadata import version
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class _Env(BaseSettings):
