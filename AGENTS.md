@@ -27,4 +27,10 @@ uv run ruff check .
 uv run pytest
 ```
 
+## Servidores MCP
+
+Se o usuário enviar o ID da task do Jira (SDB-x, onde x é o número da task, exemplo: SDB-1), utilize o MCP do Jira e procure os dados da task no espaço do Sidebrain.
+
+Além disso, utilize o MCP do Context7 para buscar a documentação atualizada de frameworks e bibliotecas.
+
 **Sempre responda em português brasileiro.**
