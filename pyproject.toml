@@ -33,6 +33,7 @@ line-length = 79
 
 extend-exclude = [
     ".specify",
+    "migrations/versions/*",
 ]
 
 [tool.ruff.lint]
