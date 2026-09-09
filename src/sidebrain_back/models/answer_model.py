@@ -34,7 +34,12 @@ class Answer(Base):
     )
     ans_text: Mapped[str] = mapped_column(Text, nullable=False)
     ans_rate: Mapped[AnswerRateEnum] = mapped_column(
-        ENUM(AnswerRateEnum, name="answer_rate", create_type=False),
+        ENUM(
+            AnswerRateEnum,
+            name="answer_rate",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     ans_created_at: Mapped[datetime] = mapped_column(

@@ -43,7 +43,12 @@ class Lesson(Base):
     lsn_title: Mapped[str] = mapped_column(String(255), nullable=False)
     lsn_text: Mapped[str] = mapped_column(Text, nullable=False)
     lsn_status: Mapped[LessonStatusEnum] = mapped_column(
-        ENUM(LessonStatusEnum, name="lesson_status", create_type=False),
+        ENUM(
+            LessonStatusEnum,
+            name="lesson_status",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
         default=LessonStatusEnum.IDLE,
         server_default=text("'idle'"),

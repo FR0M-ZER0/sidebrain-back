@@ -47,6 +47,7 @@ class MissionProgress(Base):
             MissionProgressStatusEnum,
             name="mission_progress_status",
             create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
         ),
         nullable=False,
         default=MissionProgressStatusEnum.IDLE,

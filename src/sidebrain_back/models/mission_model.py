@@ -39,13 +39,21 @@ class Mission(Base):
     msn_title: Mapped[str] = mapped_column(String(255), nullable=False)
     msn_difficulty: Mapped[MissionDifficultyEnum] = mapped_column(
         ENUM(
-            MissionDifficultyEnum, name="mission_difficulty", create_type=False
+            MissionDifficultyEnum,
+            name="mission_difficulty",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
         ),
         nullable=False,
     )
     msn_xp_reward: Mapped[int] = mapped_column(Integer, nullable=False)
     msn_criteria: Mapped[MissionCriteriaEnum] = mapped_column(
-        ENUM(MissionCriteriaEnum, name="mission_criteria", create_type=False),
+        ENUM(
+            MissionCriteriaEnum,
+            name="mission_criteria",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     msn_criteria_value: Mapped[int] = mapped_column(Integer, nullable=False)

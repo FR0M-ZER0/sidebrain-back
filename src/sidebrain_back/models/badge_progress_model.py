@@ -40,6 +40,7 @@ class BadgeProgress(Base):
             BadgeProgressStatusEnum,
             name="badge_progress_status",
             create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
         ),
         nullable=False,
         default=BadgeProgressStatusEnum.IDLE,

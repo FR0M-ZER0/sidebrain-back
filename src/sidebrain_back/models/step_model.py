@@ -30,12 +30,22 @@ class Step(Base):
         nullable=False,
     )
     stp_level: Mapped[StepLevelEnum] = mapped_column(
-        ENUM(StepLevelEnum, name="step_level", create_type=False),
+        ENUM(
+            StepLevelEnum,
+            name="step_level",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     stp_title: Mapped[str] = mapped_column(String(255), nullable=False)
     stp_status: Mapped[StepStatusEnum] = mapped_column(
-        ENUM(StepStatusEnum, name="step_status", create_type=False),
+        ENUM(
+            StepStatusEnum,
+            name="step_status",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
         default=StepStatusEnum.IDLE,
         server_default=text("'idle'"),

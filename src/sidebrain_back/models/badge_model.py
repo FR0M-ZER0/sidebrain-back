@@ -25,11 +25,21 @@ class Badge(Base):
     bdg_name: Mapped[str] = mapped_column(String(255), nullable=False)
     bdg_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     bdg_rarity: Mapped[BadgeRarityEnum] = mapped_column(
-        ENUM(BadgeRarityEnum, name="badge_rarity", create_type=False),
+        ENUM(
+            BadgeRarityEnum,
+            name="badge_rarity",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     bdg_criteria: Mapped[BadgeCriteriaEnum] = mapped_column(
-        ENUM(BadgeCriteriaEnum, name="badge_criteria", create_type=False),
+        ENUM(
+            BadgeCriteriaEnum,
+            name="badge_criteria",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     bdg_criteria_value: Mapped[int] = mapped_column(Integer, nullable=False)

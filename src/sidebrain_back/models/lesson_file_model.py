@@ -28,7 +28,12 @@ class LessonFile(Base):
     )
     lsf_path: Mapped[str] = mapped_column(String(1024), nullable=False)
     lsf_file_type: Mapped[LessonFileTypeEnum] = mapped_column(
-        ENUM(LessonFileTypeEnum, name="lesson_file_type", create_type=False),
+        ENUM(
+            LessonFileTypeEnum,
+            name="lesson_file_type",
+            create_type=False,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
     )
     lsf_updated_at: Mapped[datetime] = mapped_column(
