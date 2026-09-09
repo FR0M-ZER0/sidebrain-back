@@ -29,5 +29,9 @@ dev = [
 [tool.ruff]
 line-length = 88
 
+extend-exclude = [
+    ".specify",
+]
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]
