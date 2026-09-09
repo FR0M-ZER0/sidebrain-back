@@ -9,9 +9,9 @@ from sidebrain_back.core.constants import Env
 
 DATABASE_URL = (
     f"postgresql+asyncpg://"
-    f"{Env.DATABASE_USER}:{Env.DATABASE_PASSWORD}"
-    f"@{Env.DATABASE_HOST}:{Env.DATABASE_PORT}"
-    f"/{Env.DATABASE_NAME}"
+    f"{Env.POSTGRES_USER}:{Env.POSTGRES_PASSWORD}"
+    f"@{Env.POSTGRES_HOST}:{Env.POSTGRES_PORT}"
+    f"/{Env.POSTGRES_DB}"
 )
 
 engine = create_async_engine(DATABASE_URL, echo=Env.MODE == "dev")
