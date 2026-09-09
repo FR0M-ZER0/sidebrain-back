@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.19.2",
+    "asyncpg>=0.31.0",
     "fastapi[standard]>=0.141.1",
     "sqlalchemy>=2.0.52",
 ]
@@ -22,12 +23,13 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.1.1",
     "ruff>=0.16.6",
 ]
 
 [tool.ruff]
-line-length = 88
+line-length = 79
 
 extend-exclude = [
     ".specify",
@@ -35,3 +37,6 @@ extend-exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/env.py" = ["F401"]
