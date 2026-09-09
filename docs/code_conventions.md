@@ -7,8 +7,8 @@ Para operações de CRUD tradicional, utilizar: `list`, `get`, `create`, `update
 Quando a operação envolver um campo ou domínio diferente da entidade principal, especificá-lo no nome do método:
 
 ```python
-list_by_purchase_id(...)   # listar users pelo id da purchase
-update_email(...)          # atualizar apenas o campo email
+list_by_purchase_id(...)  # listar users pelo id da purchase
+update_email(...)  # atualizar apenas o campo email
 ```
 
 ## Nomenclatura de arquivos
@@ -48,7 +48,7 @@ create_user(...)
 update_user(...)
 delete_user(...)
 
-list_users_by_purchase_id(...)   # segue a mesma regra de especificidade do repository
+list_users_by_purchase_id(...)  # segue a mesma regra de especificidade do repository
 ```
 
 ## Paginação
