@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+echo
+echo "🧪 Running tests..."
+pytest || [ $? -eq 5 ]
+if [ $? -ne 0 ]; then
+	echo "❌ Tests failed. Commit aborted."
+	exit 1
+fi
+
+echo
+echo "✅ All tests passed!"
+
+echo
+echo "
+\e[38;5;39m███████╗\e[0m \e[38;5;18m ██████╗ \e[0m
+\e[38;5;39m██╔════╝\e[0m \e[38;5;18m██╔═══██╗\e[0m
+\e[38;5;39m█████╗  \e[0m \e[38;5;18m██║   ██║\e[0m
+\e[38;5;39m██╔══╝  \e[0m \e[38;5;18m██║   ██║\e[0m
+\e[38;5;39m██║     \e[0m \e[38;5;18m╚██████╔╝\e[0m
+
+Obrigado por contribuir! - Equipe From Zer0_
+"
