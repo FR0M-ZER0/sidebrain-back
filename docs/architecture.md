@@ -76,11 +76,13 @@ Exemplo do encadeamento:
 def get_user_repository(db: Session = Depends(get_db)) -> UserRepository:
     return UserRepository(db)
 
+
 # services/user_service.py
 def get_user_service(
     repository: UserRepository = Depends(get_user_repository),
 ) -> UserService:
     return UserService(repository)
+
 
 # routers/v1/users.py
 @router.get("/users/{id}")
