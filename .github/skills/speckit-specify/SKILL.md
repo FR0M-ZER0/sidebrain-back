@@ -58,6 +58,11 @@ The text the user typed after `/speckit-specify` in the triggering message **is*
 
 Given that feature description, do this:
 
+0. **Detect a Jira issue ID** (if present in the feature description or through the Jira MCP):
+   - Look for a Jira-style key matching the pattern `[A-Z][A-Z0-9]+-\d+` (e.g., `SCRUM-123`, `PROJ-45`) anywhere in the raw feature description.
+   - If found, extract it and store it as `JIRA_ID` (keep it exactly as typed, e.g. `SCRUM-123`).
+   - Remove the ID from the text before generating the short name, so it doesn't pollute the short-name extraction below.
+
 1. **Generate a concise short name** (2-4 words) for the feature:
    - Analyze the feature description and extract the most meaningful keywords
    - Create a 2-4 word short name that captures the essence of the feature
@@ -82,7 +87,8 @@ Given that feature description, do this:
 
    **Resolution order for `SPECIFY_FEATURE_DIRECTORY`**:
    1. If the user explicitly provided `SPECIFY_FEATURE_DIRECTORY` (e.g., via environment variable, argument, or configuration), use it as-is
-   2. Otherwise, auto-generate it under `specs/`:
+   2. Otherwise, if a `JIRA_ID` was detected in step 1, construct the directory name as `<JIRA_ID>-<short-name>` (e.g., `SCRUM-123-user-auth`) and set `SPECIFY_FEATURE_DIRECTORY` to `specs/<directory-name>`
+   3. Otherwise, auto-generate it under `specs/`:
       - Check `.specify/init-options.json` for `feature_numbering` (preferred) or `branch_numbering` (deprecated, migration only — will be removed in a future release)
       - If `"timestamp"`: prefix is `YYYYMMDD-HHMMSS` (current timestamp)
       - If `"sequential"` or absent: prefix is `NNN` (next available 3-digit number after scanning existing directories in `specs/`)
