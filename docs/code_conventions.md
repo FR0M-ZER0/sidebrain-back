@@ -48,7 +48,22 @@ create_user(...)
 update_user(...)
 delete_user(...)
 
-list_users_by_purchase_id(...)  # segue a mesma regra de especificidade do repository
+list_users_by_purchase_id(
+    ...
+)  # segue a mesma regra de especificidade do repository
+```
+
+## Nomeclatura das classes
+
+As classes devem ser sufixadas com a camada a que pertencem, com exceção das classes que estiverem no core, utils e models, exemplo:
+
+```python
+# service
+class UserService: ...
+
+
+# Repository
+class UserRepository: ...
 ```
 
 ## Paginação
