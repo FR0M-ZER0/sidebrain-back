@@ -51,3 +51,17 @@ Se estiver utilizando os dados padrões no .env para o servidor, ele estará dis
 
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)
+
+## Trilhas
+
+As trilhas autenticadas estão disponíveis em `/api/v1/tracks`. A credencial
+Bearer identifica o proprietário; `userId` não é aceito nos requests.
+
+- `POST /api/v1/tracks` cria uma trilha.
+- `GET /api/v1/tracks` lista trilhas ativas com `page` e `page_size`.
+- `GET /api/v1/tracks/{track_id}` retorna a hierarquia filtrada.
+- `PATCH /api/v1/tracks/{track_id}` atualiza título e/ou descrição.
+- `DELETE /api/v1/tracks/{track_id}` realiza exclusão lógica e retorna `204`.
+
+Falhas usam Problem Details com `type`, `title`, `status` e `detail`; erros de
+validação também incluem `errors` por campo.

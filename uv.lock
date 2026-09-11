@@ -1130,6 +1130,8 @@ dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "sqlalchemy" },
 ]
 
@@ -1145,6 +1147,8 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.19.2" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
+    { name = "pydantic", specifier = ">=2.11.0" },
+    { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "sqlalchemy", specifier = ">=2.0.52" },
 ]
 
