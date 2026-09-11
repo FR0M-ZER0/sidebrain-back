@@ -92,6 +92,13 @@ def get_user(id: int, service: UserService = Depends(get_user_service)):
 
 Cada provider (`get_*`) deve residir junto à sua respectiva classe (ex.: `get_user_repository` em `repositories/user_repository.py`), mantendo a definição da dependência próxima à implementação.
 
+### Gerenciamento de trilhas
+
+Os endpoints versionados de trilhas ficam em `routers/v1/track_router.py` e
+delegam para `TrackService`, que usa `TrackRepository` com `AsyncSession`.
+Listagens e detalhes filtram ownership e exclusão lógica, carregando a árvore
+com `selectinload`; respostas públicas são definidas em `schemas/track_schema.py`.
+
 ## Versionamento de API
 
 Novas versões (`v2`, `v3`, ...) devem ser adicionadas como novos módulos em `routers/`, preservando versões anteriores enquanto necessário para compatibilidade.
