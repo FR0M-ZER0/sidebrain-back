@@ -17,5 +17,11 @@ class _Env(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
+    GROQ_API_KEY: str
+    GROQ_MODEL: str
+
 
 Env = _Env()

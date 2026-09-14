@@ -6,8 +6,8 @@ API construída em **FastAPI**, organizada em camadas por responsabilidade. O fl
 
 ```
 routers → services → repositories → models
-             ↓
-          schemas
+             ↓           ↓
+          schemas      tasks
 ```
 
 `core` é transversal e pode ser utilizado por qualquer camada.
@@ -23,6 +23,7 @@ sidebrain_back/
 │   └── v1/          # Endpoints da API, versionados
 ├── schemas/         # Contratos de entrada/saída (Pydantic)
 ├── services/        # Regras de negócio e orquestração
+├── tasks/           # Tarefas assíncronas (Celery)
 └── utils/          # Funções auxiliares puras, sem estado e sem dependências de infraestrutura
 
 tests/
@@ -48,15 +49,20 @@ Modelos Pydantic para validação e serialização de entrada/saída da API (req
 Camada de acesso a dados. Encapsula queries e operações de persistência sobre os `models`, isolando a lógica de negócio de detalhes de ORM/SQL.
 
 ### `services/`
-Regras de negócio e orquestração de operações. Consome `repositories`, aplica validações e lógica de domínio, e retorna dados já prontos para os `routers`.
+Regras de negócio e orquestração de operações. Consome `repositories`, aplica validações e lógica de domínio, e retorna dados já prontos para os `routers`. Quando uma operação precisa ser executada de forma assíncrona/em background, dispara uma task em `tasks/` ao invés de executá-la de forma síncrona.
+
+### `tasks/`
+Tarefas assíncronas executadas via **Celery** (ex.: envio de e-mails, processamento de arquivos, jobs agendados/periódicos, integrações externas demoradas). Consomem `services` para reaproveitar a lógica de negócio já validada, evitando duplicar regras entre o fluxo síncrono da API e o processamento assíncrono. Não contêm regra de negócio própria — apenas orquestram a execução em background e tratam preocupações específicas de Celery (retries, idempotência, serialização de argumentos, timeouts).
 
 ### `routers/v1/`
 Camada de apresentação HTTP. Define os endpoints, recebe/valida requests via `schemas`, delega a lógica para `services` e retorna as respostas. Versionamento explícito em `v1` permite evolução da API sem quebrar clientes existentes.
 
 ## Regras de dependência
 
-- `routers` **não** acessam `repositories` ou `models` diretamente — sempre passam por `services`.
+- `routers` **não** acessam `repositories`, `models` ou `tasks` diretamente — sempre passam por `services`.
 - `services` **não** conhecem detalhes de HTTP (requests/responses) — trabalham com `schemas`/objetos de domínio.
+- `services` podem disparar `tasks` (via `.delay()`/`.apply_async()`), mas não devem depender do resultado de forma síncrona/bloqueante.
+- `tasks` **não** contêm regra de negócio — delegam para `services`; podem depender de `core` (ex.: configuração do broker/backend do Celery), mas não devem ser importadas por `repositories`, `models` ou `schemas`.
 - `repositories` **não** contêm regra de negócio — apenas acesso a dados.
 - `core` não depende de nenhuma outra camada.
 - `utils` não depende de nenhuma outra camada e não deve conter lógica de negócio ou acesso a infraestrutura.
@@ -68,8 +74,9 @@ A composição entre camadas é feita via `Depends` do FastAPI, evitando instanc
 - **`repositories`**: expostos como providers (ex.: `get_user_repository`), recebendo a sessão de banco via `Depends` de `core` (ex.: `get_db`).
 - **`services`**: recebem seus `repositories` via `Depends`, ao invés de instanciá-los diretamente.
 - **`routers`**: recebem os `services` via `Depends`, nunca instanciam `repositories` ou `services` manualmente.
+- **`tasks`**: como o worker Celery roda fora do ciclo de requisição do FastAPI, `Depends` não se aplica diretamente. Cada task abre sua própria sessão de banco (via helper de `core`) e instancia o `service`/`repository` necessário manualmente dentro do corpo da task, mantendo o mesmo encadeamento de camadas.
 
-Exemplo do encadeamento:
+Exemplo do encadeamento (síncrono):
 
 ```python
 # repositories/user_repository.py
@@ -88,6 +95,33 @@ def get_user_service(
 @router.get("/users/{id}")
 def get_user(id: int, service: UserService = Depends(get_user_service)):
     return service.get_user(id)
+```
+
+Exemplo do encadeamento (assíncrono, via Celery):
+
+```python
+# services/user_service.py
+class UserService:
+    def __init__(self, repository: UserRepository):
+        self.repository = repository
+
+    def request_report(self, user_id: int) -> None:
+        # dispara a task ao invés de gerar o relatório de forma síncrona
+        generate_user_report_task.delay(user_id)
+
+
+# tasks/user_tasks.py
+from core.celery_app import celery_app
+from core.database import session_scope
+from repositories.user_repository import get_user_repository
+from services.user_service import get_user_service
+
+
+@celery_app.task(name="tasks.generate_user_report")
+def generate_user_report_task(user_id: int) -> None:
+    with session_scope() as db:
+        service = get_user_service(get_user_repository(db))
+        service.generate_report(user_id)
 ```
 
 Cada provider (`get_*`) deve residir junto à sua respectiva classe (ex.: `get_user_repository` em `repositories/user_repository.py`), mantendo a definição da dependência próxima à implementação.
