@@ -20,5 +20,8 @@ class _Env(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    GROQ_API_KEY: str
+    GROQ_MODEL: str
+
 
 Env = _Env()
