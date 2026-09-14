@@ -66,6 +66,16 @@ class UserService: ...
 class UserRepository: ...
 ```
 
+## Nomenclatura das tasks
+
+As tasks devem ser sufixadas com task, exemplo:
+
+```python
+@celery_app.task(name="tasks.generate_user_report")
+def generate_user_report_task(user_id: int) -> None:
+  ...
+```
+
 ## Paginação
 
 Toda resposta de listagem (`list_*`) deve seguir o formato paginado:
