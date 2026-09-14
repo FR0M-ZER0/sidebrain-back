@@ -72,8 +72,7 @@ As tasks devem ser sufixadas com task, exemplo:
 
 ```python
 @celery_app.task(name="tasks.generate_user_report")
-def generate_user_report_task(user_id: int) -> None:
-  ...
+def generate_user_report_task(user_id: int) -> None: ...
 ```
 
 ## Paginação
