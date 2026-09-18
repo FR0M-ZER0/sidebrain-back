@@ -10,6 +10,13 @@ from pydantic import (
     model_validator,
 )
 
+from sidebrain_back.schemas.quiz_schema import (
+    AnswerResponse as DirectAnswerResponse,
+)
+from sidebrain_back.schemas.quiz_schema import (
+    QuizResponse as DirectQuizResponse,
+)
+
 
 class TrackInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -59,25 +66,20 @@ class PublicModel(BaseModel):
     )
 
 
-class AnswerResponse(PublicModel):
-    id: UUID = Field(alias="ans_id", serialization_alias="id")
-    text: str = Field(alias="ans_text", serialization_alias="text")
-    rate: Any = Field(alias="ans_rate", serialization_alias="rate")
+class AnswerResponse(DirectAnswerResponse):
     created_at: datetime = Field(
-        alias="ans_created_at", serialization_alias="created_at"
+        validation_alias="ans_created_at",
     )
     updated_at: datetime = Field(
-        alias="ans_updated_at", serialization_alias="updated_at"
+        validation_alias="ans_updated_at",
     )
 
 
-class QuizResponse(PublicModel):
-    id: UUID = Field(alias="qui_id", serialization_alias="id")
-    question: str = Field(alias="qui_question", serialization_alias="question")
+class QuizResponse(DirectQuizResponse):
     updated_at: datetime = Field(
-        alias="qui_updated_at", serialization_alias="updated_at"
+        validation_alias="qui_updated_at",
     )
-    answers: list[AnswerResponse] = []
+    answers: list[AnswerResponse] = Field(default_factory=list)
 
 
 class FeedbackResponse(PublicModel):
