@@ -69,6 +69,15 @@ Bearer identifica o proprietário; `userId` não é aceito nos requests.
 - `PATCH /api/v1/tracks/{track_id}` atualiza título e/ou descrição.
 - `DELETE /api/v1/tracks/{track_id}` realiza exclusão lógica e retorna `204`.
 
+As etapas de uma trilha própria estão disponíveis em
+`/api/v1/tracks/{track_id}/steps`:
+
+- `POST` cria uma etapa com `level` e `title`.
+- `GET` lista etapas ativas com `page` e `page_size`.
+- `GET /{step_id}` consulta a etapa com sua hierarquia de conteúdo.
+- `PUT /{step_id}` substitui `level` e `title`.
+- `DELETE /{step_id}` realiza exclusão lógica e retorna `204`.
+
 Falhas usam Problem Details com `type`, `title`, `status` e `detail`; erros de
 validação também incluem `errors` por campo.
 
