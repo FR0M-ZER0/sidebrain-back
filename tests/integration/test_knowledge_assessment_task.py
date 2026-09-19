@@ -83,8 +83,7 @@ def test_task_function_name_and_success_log_follow_conventions(caplog):
     success = next(
         record
         for record in caplog.records
-        if getattr(record, "event", None)
-        == "knowledge_assessment_succeeded"
+        if getattr(record, "event", None) == "knowledge_assessment_succeeded"
     )
     assert success.task_id is not None
     assert success.attempt == 1
@@ -170,8 +169,7 @@ def test_task_logs_definitive_failure_without_sensitive_content(caplog):
     failure_log = next(
         record
         for record in caplog.records
-        if getattr(record, "event", None)
-        == "knowledge_assessment_failed"
+        if getattr(record, "event", None) == "knowledge_assessment_failed"
     )
     assert failure_log.task_id == "task-failure-id"
     assert failure_log.attempt == 1
