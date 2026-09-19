@@ -5,12 +5,14 @@ from sidebrain_back.schemas.knowledge_assessment_schema import (
     KnowledgeAssessmentResult,
 )
 
-
 VALID_QUESTION = {
     "id": "q1",
     "statement": "Qual afirmação descreve melhor o uso de asyncio?",
     "alternatives": [
-        {"id": "a", "text": "Executa operações em paralelo sem bloquear o loop."},
+        {
+            "id": "a",
+            "text": "Executa operações em paralelo sem bloquear o loop.",
+        },
         {"id": "b", "text": "Substitui completamente threads."},
         {"id": "c", "text": "Desativa a execução assíncrona."},
         {"id": "d", "text": "Garante que tudo será síncrono."},

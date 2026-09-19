@@ -69,7 +69,9 @@ class Lesson(Base):
         back_populates="lesson", cascade="all, delete-orphan"
     )
     quizzes: Mapped[list["Quiz"]] = relationship(
-        back_populates="lesson", cascade="all, delete-orphan"
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+        order_by="(Quiz.qui_updated_at.desc(), Quiz.qui_id.desc())",
     )
     feedbacks: Mapped[list["Feedback"]] = relationship(
         back_populates="lesson", cascade="all, delete-orphan"

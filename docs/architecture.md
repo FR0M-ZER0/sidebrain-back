@@ -133,6 +133,33 @@ delegam para `TrackService`, que usa `TrackRepository` com `AsyncSession`.
 Listagens e detalhes filtram ownership e exclusão lógica, carregando a árvore
 com `selectinload`; respostas públicas são definidas em `schemas/track_schema.py`.
 
+### Gerenciamento de quizzes
+
+Os cinco endpoints de quiz ficam em `routers/v1/quiz_router.py` e mantêm o
+fluxo `router -> service -> repository -> model`: o router valida HTTP e
+autenticação, `QuizService` aplica as regras e controla a transação,
+`QuizRepository` executa as consultas e `Quiz`/`Answer` representam a
+persistência.
+
+Criação e listagem usam a Lesson da URL; detalhe, atualização e exclusão usam o
+Quiz da URL. Toda consulta autorizada atravessa `Lesson -> Step -> Track`,
+exige que os pais estejam ativos e filtra `Track.trk_user_id` pelo usuário
+atual. Inexistência, exclusão lógica e ownership incompatível são ocultados
+sob o mesmo `404`.
+
+A listagem aceita `page` e `page_size` e retorna `data`, `page`, `page_size`,
+`total_items` e `total_pages`. Quizzes são ordenados por atualização e ID
+decrescentes; Answers, por criação e ID crescentes. `selectinload` agrupa o
+carregamento das Answers e também preserva a composição
+`Lesson -> Quiz[] -> Answer[]` nas respostas de Track sem N+1.
+
+Os schemas públicos convertem os nomes físicos `qui_*` e `ans_*` em `id`,
+`lesson_id`, `question`, `answers`, `user_id`, `text` e `rate`. O DELETE é
+lógico e terminal: preserva as linhas de Quiz e Answer e não aciona cascata
+física. Consulte o
+[contrato HTTP](../specs/SDB-51-quiz-management/contracts/quizzes.md) para os
+cinco endpoints e seus códigos de resposta.
+
 ## Versionamento de API
 
 Novas versões (`v2`, `v3`, ...) devem ser adicionadas como novos módulos em `routers/`, preservando versões anteriores enquanto necessário para compatibilidade.
