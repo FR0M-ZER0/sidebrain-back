@@ -71,3 +71,24 @@ Bearer identifica o proprietário; `userId` não é aceito nos requests.
 
 Falhas usam Problem Details com `type`, `title`, `status` e `detail`; erros de
 validação também incluem `errors` por campo.
+
+## Quizzes
+
+O gerenciamento autenticado de quizzes está disponível em cinco endpoints:
+
+- `POST /api/v1/lessons/{lesson_id}/quizzes` cria um quiz na aula.
+- `GET /api/v1/lessons/{lesson_id}/quizzes` lista quizzes ativos com `page` e
+  `page_size`.
+- `GET /api/v1/quizzes/{quiz_id}` consulta um quiz e todas as suas respostas.
+- `PUT /api/v1/quizzes/{quiz_id}` substitui somente a pergunta.
+- `DELETE /api/v1/quizzes/{quiz_id}` realiza exclusão lógica e retorna `204`.
+
+A lista usa o envelope `data`, `page`, `page_size`, `total_items` e
+`total_pages`. Quizzes expõem `id`, `lesson_id`, `question` e `answers`; cada
+resposta expõe `id`, `user_id`, `text` e `rate`. Nomes físicos do banco,
+timestamps e flags de exclusão não fazem parte da resposta direta.
+
+Recursos inexistentes, excluídos, pertencentes a outra pessoa ou contidos em
+uma hierarquia excluída retornam o mesmo `404`, sem revelar ownership. O fluxo
+segue `router -> service -> repository -> model`. Consulte o
+[contrato completo](./specs/SDB-51-quiz-management/contracts/quizzes.md).

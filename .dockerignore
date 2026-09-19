@@ -22,6 +22,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.venv/
 env/
 venv/
 ENV/
@@ -32,6 +33,13 @@ pip-delete-this-directory.txt
 .mypy_cache/
 .dmypy.json
 *.egg-info/
+
+# Build and package artifacts
+node_modules/
+dist/
+build/
+Dockerfile*
+.dockerignore
 
 # Version control
 .git/

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 
 class KnowledgeAlternative(BaseModel):
@@ -40,9 +46,11 @@ class KnowledgeQuestion(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_question(self) -> "KnowledgeQuestion":
+    def validate_question(self) -> KnowledgeQuestion:
         if len(self.alternatives) != 4:
-            raise ValueError("Cada pergunta deve possuir exatamente quatro alternativas.")
+            raise ValueError(
+                "Cada pergunta deve possuir exatamente quatro alternativas."
+            )
 
         alternative_ids = [alternative.id for alternative in self.alternatives]
         if len(alternative_ids) != len(set(alternative_ids)):
@@ -99,7 +107,7 @@ class AssessmentContext(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_context(self) -> "AssessmentContext":
+    def validate_context(self) -> AssessmentContext:
         if self.skip:
             return self
         if not self.subject:
@@ -130,17 +138,24 @@ class KnowledgeAssessmentResult(BaseModel):
         return assessment_id
 
     @model_validator(mode="after")
-    def validate_result(self) -> "KnowledgeAssessmentResult":
+    def validate_result(self) -> KnowledgeAssessmentResult:
         if self.status == "generated":
             if len(self.questions) != 5:
-                raise ValueError("Resultados gerados devem possuir exatamente cinco perguntas.")
+                raise ValueError(
+                    "Resultados gerados devem possuir exatamente cinco "
+                    "perguntas."
+                )
             if self.level is not None:
-                raise ValueError("Resultados gerados não devem informar level.")
+                raise ValueError(
+                    "Resultados gerados não devem informar level."
+                )
             return self
 
         if self.status == "skipped":
             if self.level != "beginner":
-                raise ValueError("Resultados pulados devem indicar level='beginner'.")
+                raise ValueError(
+                    "Resultados pulados devem indicar level='beginner'."
+                )
             if self.questions:
                 raise ValueError("Resultados pulados não podem ter perguntas.")
             return self

@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 
+from main import app
 from sidebrain_back.routers.v1.feedback_router import router
 from sidebrain_back.schemas.feedback_schema import (
     FeedbackCreate,
@@ -14,6 +16,11 @@ def test_feedback_routes_are_registered_under_api_v1():
 
     assert "/v1/lessons/{lesson_id}/feedbacks" in paths
     assert "/v1/feedbacks/{feedback_id}" in paths
+
+
+def test_feedback_routes_are_registered_in_aggregated_application():
+    response = TestClient(app).get(f"/api/v1/feedbacks/{uuid4()}")
+    assert response.status_code == 401
 
 
 @pytest.mark.parametrize(
