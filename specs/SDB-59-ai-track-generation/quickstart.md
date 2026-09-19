@@ -17,6 +17,10 @@ uv run alembic upgrade head
 Inicie a API e o worker conforme os comandos do ambiente do projeto. Não é
 necessário endpoint novo para validar esta feature; use o fluxo interno que
 publica a task ou invoque a task em teste com um `request_id` determinístico.
+O contrato de entrada é `request_id`, `user_id`, `goal`, `topic` e os campos
+opcionais `knowledge_level` e `assessment_answers`. Falhas de conexão, timeout
+e rate limit são repetidas até três tentativas totais; falhas de validação,
+persistência e erros permanentes retornam falha tratável sem detalhes internos.
 
 ## Validações automatizadas
 

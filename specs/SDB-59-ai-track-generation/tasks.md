@@ -17,19 +17,19 @@ description: "Task list for AI track generation"
 
 **Purpose**: Preparar os pontos de extensão para o worker e a persistência da geração sem criar endpoint HTTP.
 
-- [ ] T001 [P] Registrar o módulo de tasks da geração no ciclo de inicialização do worker em `src/sidebrain_back/core/celery_app.py`, preservando serialização JSON e o broker/backend Redis existentes
-- [ ] T002 [P] Criar os módulos de geração previstos na estrutura do plano em `src/sidebrain_back/schemas/`, `src/sidebrain_back/services/`, `src/sidebrain_back/repositories/` e `src/sidebrain_back/tasks/`, mantendo as dependências `tasks -> services -> repositories -> models`
-- [ ] T003 [P] Adicionar fixtures e helpers compartilhados para contexto, resposta estruturada, sessão assíncrona e cliente Groq mockado em `tests/conftest.py`
+- [X] T001 [P] Registrar o módulo de tasks da geração no ciclo de inicialização do worker em `src/sidebrain_back/core/celery_app.py`, preservando serialização JSON e o broker/backend Redis existentes
+- [X] T002 [P] Criar os módulos de geração previstos na estrutura do plano em `src/sidebrain_back/schemas/`, `src/sidebrain_back/services/`, `src/sidebrain_back/repositories/` e `src/sidebrain_back/tasks/`, mantendo as dependências `tasks -> services -> repositories -> models`
+- [X] T003 [P] Adicionar fixtures e helpers compartilhados para contexto, resposta estruturada, sessão assíncrona e cliente Groq mockado em `tests/conftest.py`
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
 **Purpose**: Estabelecer a chave idempotente e os contratos internos que todas as histórias utilizam.
 
-- [ ] T004 Adicionar `trk_generation_request_id` opcional e único ao modelo `Track` em `src/sidebrain_back/models/track_model.py`, sem expor o campo nos schemas públicos
-- [ ] T005 Criar migration reversível para adicionar/remover `track.trk_generation_request_id` e sua restrição `UNIQUE` em `migrations/versions/adiciona_idempotencia_da_geracao_de_trilhas.py`, incluindo downgrade sem erro
-- [ ] T006 [P] Definir `LearningContext`, `GenerationInput`, `GeneratedTrack`, `GeneratedStep`, `GeneratedLesson`, `GeneratedQuiz`, `GeneratedMission` e payloads de sucesso/falha em `src/sidebrain_back/schemas/generation_schema.py`; aplicar `goal`/`topic` obrigatórios, `knowledge_level`/`assessment_answers` opcionais, títulos com “1-255 caracteres”, posições “inteiro positivo, único e contíguo”, enums de domínio e valores positivos
-- [ ] T007 [P] Definir códigos de erro e exceções tratáveis da geração em `src/sidebrain_back/core/errors.py` ou módulo dedicado `src/sidebrain_back/services/generation_errors.py`, sem expor SQL, stack trace, prompt, token ou resposta bruta do provedor
-- [ ] T008 Criar teste de contrato do payload da task, incluindo campos obrigatórios `request_id`, `user_id`, `goal` e `topic`, opcionais omitidos, saída `succeeded`/`failed` e códigos de erro em `tests/contract/test_generation_task_contract.py`
+- [X] T004 Adicionar `trk_generation_request_id` opcional e único ao modelo `Track` em `src/sidebrain_back/models/track_model.py`, sem expor o campo nos schemas públicos
+- [X] T005 Criar migration reversível para adicionar/remover `track.trk_generation_request_id` e sua restrição `UNIQUE` em `migrations/versions/adiciona_idempotencia_da_geracao_de_trilhas.py`, incluindo downgrade sem erro
+- [X] T006 [P] Definir `LearningContext`, `GenerationInput`, `GeneratedTrack`, `GeneratedStep`, `GeneratedLesson`, `GeneratedQuiz`, `GeneratedMission` e payloads de sucesso/falha em `src/sidebrain_back/schemas/generation_schema.py`; aplicar `goal`/`topic` obrigatórios, `knowledge_level`/`assessment_answers` opcionais, títulos com “1-255 caracteres”, posições “inteiro positivo, único e contíguo”, enums de domínio e valores positivos
+- [X] T007 [P] Definir códigos de erro e exceções tratáveis da geração em `src/sidebrain_back/core/errors.py` ou módulo dedicado `src/sidebrain_back/services/generation_errors.py`, sem expor SQL, stack trace, prompt, token ou resposta bruta do provedor
+- [X] T008 Criar teste de contrato do payload da task, incluindo campos obrigatórios `request_id`, `user_id`, `goal` e `topic`, opcionais omitidos, saída `succeeded`/`failed` e códigos de erro em `tests/contract/test_generation_task_contract.py`
 
 **Checkpoint**: Migration, modelos internos e contrato serializável prontos; as histórias podem ser implementadas nos limites definidos abaixo.
 
@@ -41,19 +41,19 @@ description: "Task list for AI track generation"
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Testar validação de contexto, enums, limites textuais, posições únicas/contíguas e rejeição de conteúdo inválido nas etapas posteriores em `tests/unit/test_generation_schema.py`
-- [ ] T010 [P] [US1] Testar montagem do prompt com objetivo, tópico, nível e respostas disponíveis, exigindo todas as etapas e conteúdo detalhado somente na posição 1, em `tests/unit/test_generation_prompt.py`
-- [ ] T011 [P] [US1] Testar task com resposta válida, resposta vazia/malformada, campos ausentes, enum inválido e falha de validação antes de qualquer `session.add`/flush em `tests/unit/test_generation_task.py`
-- [ ] T012 [US1] Testar integração da geração de estrutura com todas as etapas na ordem e níveis esperados em `tests/integration/test_generation_structure.py`
+- [X] T009 [P] [US1] Testar validação de contexto, enums, limites textuais, posições únicas/contíguas e rejeição de conteúdo inválido nas etapas posteriores em `tests/unit/test_generation_schema.py`
+- [X] T010 [P] [US1] Testar montagem do prompt com objetivo, tópico, nível e respostas disponíveis, exigindo todas as etapas e conteúdo detalhado somente na posição 1, em `tests/unit/test_generation_prompt.py`
+- [X] T011 [P] [US1] Testar task com resposta válida, resposta vazia/malformada, campos ausentes, enum inválido e falha de validação antes de qualquer `session.add`/flush em `tests/unit/test_generation_task.py`
+- [X] T012 [US1] Testar integração da geração de estrutura com todas as etapas na ordem e níveis esperados em `tests/integration/test_generation_structure.py`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Implementar serialização do contexto e prompt JSON estruturado usando `sidebrain_back.core.groq_client.get_groq_client` em `src/sidebrain_back/services/generation_service.py`, sem enviar IDs físicos ao provedor
-- [ ] T014 [US1] Implementar validação completa de `GeneratedTrack` em `src/sidebrain_back/schemas/generation_schema.py`, rejeitando etapas fora de ordem, níveis duplicados indevidos, posições inválidas, campos ausentes, valores fora do domínio e conteúdo posterior à primeira etapa
-- [ ] T015 [US1] Implementar orquestração do contexto, chamada única ao Groq, validação antes da persistência e payload serializável de sucesso/falha em `src/sidebrain_back/services/generation_service.py`
-- [ ] T016 [US1] Implementar task Celery de geração com entrada `request_id`, `user_id`, `goal`, `topic`, `knowledge_level` e `assessment_answers` em `src/sidebrain_back/tasks/generate_track_task.py`, classificando conexão/timeout/rate limit como transitórios e limitando a três tentativas totais com backoff/jitter
-- [ ] T017 [US1] Implementar criação transacional de Track e Steps em `src/sidebrain_back/repositories/generation_repository.py`, preservando `status=idle`, todas as posições contíguas e o `trk_generation_request_id` único
-- [ ] T018 [US1] Registrar logs estruturados com `request_id`, task id e categoria do erro, sem prompt completo, credenciais ou detalhes internos, em `src/sidebrain_back/tasks/generate_track_task.py`
+- [X] T013 [P] [US1] Implementar serialização do contexto e prompt JSON estruturado usando `sidebrain_back.core.groq_client.get_groq_client` em `src/sidebrain_back/services/generation_service.py`, sem enviar IDs físicos ao provedor
+- [X] T014 [US1] Implementar validação completa de `GeneratedTrack` em `src/sidebrain_back/schemas/generation_schema.py`, rejeitando etapas fora de ordem, níveis duplicados indevidos, posições inválidas, campos ausentes, valores fora do domínio e conteúdo posterior à primeira etapa
+- [X] T015 [US1] Implementar orquestração do contexto, chamada única ao Groq, validação antes da persistência e payload serializável de sucesso/falha em `src/sidebrain_back/services/generation_service.py`
+- [X] T016 [US1] Implementar task Celery de geração com entrada `request_id`, `user_id`, `goal`, `topic`, `knowledge_level` e `assessment_answers` em `src/sidebrain_back/tasks/generate_track_task.py`, classificando conexão/timeout/rate limit como transitórios e limitando a três tentativas totais com backoff/jitter
+- [X] T017 [US1] Implementar criação transacional de Track e Steps em `src/sidebrain_back/repositories/generation_repository.py`, preservando `status=idle`, todas as posições contíguas e o `trk_generation_request_id` único
+- [X] T018 [US1] Registrar logs estruturados com `request_id`, task id e categoria do erro, sem prompt completo, credenciais ou detalhes internos, em `src/sidebrain_back/tasks/generate_track_task.py`
 
 **Checkpoint**: US1 deve gerar uma estrutura completa válida ou falhar de forma tratável sem registros parciais.
 
@@ -65,16 +65,16 @@ description: "Task list for AI track generation"
 
 ### Tests for User Story 2
 
-- [ ] T019 [P] [US2] Testar validação de lições com posições únicas/contíguas, título “1-255 caracteres”, texto não vazio, exatamente um quiz por lição e missão opcional compatível em `tests/unit/test_generation_initial_content.py`
-- [ ] T020 [P] [US2] Testar persistência da primeira etapa com lições ordenadas, quiz associado a cada lição e missão com título, dificuldade, `xp_reward`, critério e `criteria_value` em `tests/integration/test_generation_initial_content.py`
-- [ ] T021 [US2] Testar criação válida sem missão na primeira etapa quando a estratégia não a prevê em `tests/integration/test_generation_without_mission.py`
+- [X] T019 [P] [US2] Testar validação de lições com posições únicas/contíguas, título “1-255 caracteres”, texto não vazio, exatamente um quiz por lição e missão opcional compatível em `tests/unit/test_generation_initial_content.py`
+- [X] T020 [P] [US2] Testar persistência da primeira etapa com lições ordenadas, quiz associado a cada lição e missão com título, dificuldade, `xp_reward`, critério e `criteria_value` em `tests/integration/test_generation_initial_content.py`
+- [X] T021 [US2] Testar criação válida sem missão na primeira etapa quando a estratégia não a prevê em `tests/integration/test_generation_without_mission.py`
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Completar a validação de conteúdo inicial em `src/sidebrain_back/schemas/generation_schema.py`, garantindo quiz obrigatório por lição, `GeneratedMission` no máximo uma e campos numéricos positivos compatíveis com os enums do domínio
-- [ ] T023 [US2] Implementar montagem de Lesson, Quiz e Mission somente para a etapa de `position == 1` em `src/sidebrain_back/repositories/generation_repository.py`, respeitando `lsn_position` e `status=idle`
-- [ ] T024 [US2] Integrar a materialização do conteúdo inicial ao fluxo transacional de `src/sidebrain_back/services/generation_service.py`, sem gerar ou persistir respostas, feedbacks, progresso de missão ou arquivos de lição
-- [ ] T025 [US2] Atualizar o contrato de resultado e asserções de task em `tests/contract/test_generation_task_contract.py` para retornar `track_id` somente em sucesso e mensagem pública estável em falha
+- [X] T022 [US2] Completar a validação de conteúdo inicial em `src/sidebrain_back/schemas/generation_schema.py`, garantindo quiz obrigatório por lição, `GeneratedMission` no máximo uma e campos numéricos positivos compatíveis com os enums do domínio
+- [X] T023 [US2] Implementar montagem de Lesson, Quiz e Mission somente para a etapa de `position == 1` em `src/sidebrain_back/repositories/generation_repository.py`, respeitando `lsn_position` e `status=idle`
+- [X] T024 [US2] Integrar a materialização do conteúdo inicial ao fluxo transacional de `src/sidebrain_back/services/generation_service.py`, sem gerar ou persistir respostas, feedbacks, progresso de missão ou arquivos de lição
+- [X] T025 [US2] Atualizar o contrato de resultado e asserções de task em `tests/contract/test_generation_task_contract.py` para retornar `track_id` somente em sucesso e mensagem pública estável em falha
 
 **Checkpoint**: US2 deve entregar a primeira etapa pronta para estudo, com missão opcional, sem depender de endpoint novo.
 
@@ -86,16 +86,16 @@ description: "Task list for AI track generation"
 
 ### Tests for User Story 3
 
-- [ ] T026 [P] [US3] Testar rejeição de lição, quiz ou missão não vazios em etapa posterior e confirmação de que a instrução enviada à IA delimita conteúdo detalhado à primeira etapa em `tests/unit/test_generation_future_steps.py`
-- [ ] T027 [P] [US3] Testar reexecução com o mesmo `request_id`, retorno da trilha existente, conflito de unicidade e novo pedido com identificador diferente em `tests/integration/test_generation_idempotency.py`
-- [ ] T028 [P] [US3] Testar rollback de Track, Steps, Lessons, Quizzes e Mission quando a persistência falhar, e ausência de `Answer`, `Feedback`, `MissionProgress` e `LessonFile`, em `tests/integration/test_generation_transaction.py`
+- [X] T026 [P] [US3] Testar rejeição de lição, quiz ou missão não vazios em etapa posterior e confirmação de que a instrução enviada à IA delimita conteúdo detalhado à primeira etapa em `tests/unit/test_generation_future_steps.py`
+- [X] T027 [P] [US3] Testar reexecução com o mesmo `request_id`, retorno da trilha existente, conflito de unicidade e novo pedido com identificador diferente em `tests/integration/test_generation_idempotency.py`
+- [X] T028 [P] [US3] Testar rollback de Track, Steps, Lessons, Quizzes e Mission quando a persistência falhar, e ausência de `Answer`, `Feedback`, `MissionProgress` e `LessonFile`, em `tests/integration/test_generation_transaction.py`
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Implementar busca por `request_id` e retorno da trilha associada antes da chamada à IA em `src/sidebrain_back/repositories/generation_repository.py`, tratando conflito de unicidade sem duplicar registros
-- [ ] T030 [US3] Garantir em `src/sidebrain_back/repositories/generation_repository.py` que etapas com `position > 1` sejam persistidas sem lições, quizzes ou missões e que somente relações da etapa 1 sejam montadas
-- [ ] T031 [US3] Envolver a gravação completa em `async with session.begin()` e mapear falhas de persistência/idempotência para erro tratável em `src/sidebrain_back/services/generation_service.py`
-- [ ] T032 [US3] Ajustar reexecução, retry e resultado final da task em `src/sidebrain_back/tasks/generate_track_task.py` para reutilizar trilha concluída, preservar task pendente do fluxo existente e não repetir falhas permanentes/validação
+- [X] T029 [US3] Implementar busca por `request_id` e retorno da trilha associada antes da chamada à IA em `src/sidebrain_back/repositories/generation_repository.py`, tratando conflito de unicidade sem duplicar registros
+- [X] T030 [US3] Garantir em `src/sidebrain_back/repositories/generation_repository.py` que etapas com `position > 1` sejam persistidas sem lições, quizzes ou missões e que somente relações da etapa 1 sejam montadas
+- [X] T031 [US3] Envolver a gravação completa em `async with session.begin()` e mapear falhas de persistência/idempotência para erro tratável em `src/sidebrain_back/services/generation_service.py`
+- [X] T032 [US3] Ajustar reexecução, retry e resultado final da task em `src/sidebrain_back/tasks/generate_track_task.py` para reutilizar trilha concluída, preservar task pendente do fluxo existente e não repetir falhas permanentes/validação
 
 **Checkpoint**: US3 deve preservar a geração futura, impedir duplicatas e garantir zero registros parciais em qualquer falha.
 
@@ -103,10 +103,10 @@ description: "Task list for AI track generation"
 
 **Purpose**: Validar migração, qualidade e o quickstart completo.
 
-- [ ] T033 [P] Adicionar teste de aplicação e reversão da migration de idempotência em `tests/integration/test_generation_migration.py`
-- [ ] T034 [P] Atualizar documentação do fluxo interno, limites de retry e ausência de endpoint em `specs/SDB-59-ai-track-generation/quickstart.md`
-- [ ] T035 Executar `uv run pytest tests/unit tests/integration tests/contract` e corrigir regressões da feature mantendo os contratos em `tests/contract/`, `tests/integration/` e `tests/unit/`
-- [ ] T036 Executar `uv run ruff check .` e corrigir somente problemas introduzidos pela geração de trilhas
+- [X] T033 [P] Adicionar teste de aplicação e reversão da migration de idempotência em `tests/integration/test_generation_migration.py`
+- [X] T034 [P] Atualizar documentação do fluxo interno, limites de retry e ausência de endpoint em `specs/SDB-59-ai-track-generation/quickstart.md`
+- [X] T035 Executar `uv run pytest tests/unit tests/integration tests/contract` e corrigir regressões da feature mantendo os contratos em `tests/contract/`, `tests/integration/` e `tests/unit/`
+- [X] T036 Executar `uv run ruff check .` e corrigir somente problemas introduzidos pela geração de trilhas
 
 ## Dependencies & Execution Order
 
