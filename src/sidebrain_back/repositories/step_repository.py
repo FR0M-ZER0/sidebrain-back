@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
+from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.models.feedback_model import Feedback
 from sidebrain_back.models.lesson_file_model import LessonFile
 from sidebrain_back.models.lesson_model import Lesson
@@ -15,80 +16,97 @@ from sidebrain_back.models.mission_progress_model import MissionProgress
 from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.step_model import Step
 from sidebrain_back.models.track_model import Track
-from sidebrain_back.models.user_model import User
 
 
-class TrackRepository:
+class StepRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(
-        self, user: User, title: str, description: str | None
-    ) -> Track:
-        track = Track(
-            trk_user_id=user.usr_id,
-            trk_title=title,
-            trk_description=description,
-            trk_is_deleted=False,
-            trk_deleted_at=None,
-            steps=[],
-        )
-        self.db.add(track)
-        await self.db.flush()
-        return track
-
-    async def list(
-        self, user_id: UUID, offset: int, limit: int
-    ) -> tuple[list[Track], int]:
-        filters = (
-            Track.trk_user_id == user_id,
-            Track.trk_is_deleted.is_(False),
-        )
-        total = await self.db.scalar(
-            select(func.count()).select_from(Track).where(*filters)
-        )
+    async def get_accessible_track(
+        self, user_id: UUID, track_id: UUID
+    ) -> Track | None:
         result = await self.db.execute(
-            select(Track)
-            .where(*filters)
-            .order_by(Track.trk_created_at.desc(), Track.trk_id.desc())
-            .offset(offset)
-            .limit(limit)
-            .options(self._hierarchy_options(user_id))
-        )
-        return list(result.scalars().unique().all()), int(total or 0)
-
-    async def get(self, user_id: UUID, track_id: UUID) -> Track | None:
-        result = await self.db.execute(
-            select(Track)
-            .where(
+            select(Track).where(
                 Track.trk_id == track_id,
                 Track.trk_user_id == user_id,
                 Track.trk_is_deleted.is_(False),
             )
-            .options(self._hierarchy_options(user_id))
+        )
+        return result.scalar_one_or_none()
+
+    async def create(
+        self, track_id: UUID, level: StepLevelEnum, title: str
+    ) -> Step:
+        step = Step(
+            stp_track_id=track_id,
+            stp_level=level,
+            stp_title=title,
+            stp_is_deleted=False,
+            stp_deleted_at=None,
+            lessons=[],
+            missions=[],
+        )
+        self.db.add(step)
+        await self.db.flush()
+        return step
+
+    async def list(
+        self, user_id: UUID, track_id: UUID, offset: int, limit: int
+    ) -> tuple[list[Step], int]:
+        filters = (
+            Step.stp_track_id == track_id,
+            Step.stp_is_deleted.is_(False),
+            Track.trk_id == track_id,
+            Track.trk_user_id == user_id,
+            Track.trk_is_deleted.is_(False),
+        )
+        total = await self.db.scalar(
+            select(func.count())
+            .select_from(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(*filters)
+        )
+        result = await self.db.execute(
+            select(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(*filters)
+            .options(*self._hierarchy_options(user_id))
+            .order_by(Step.stp_updated_at.desc(), Step.stp_id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.scalars().unique().all()), int(total or 0)
+
+    async def get(
+        self, user_id: UUID, track_id: UUID, step_id: UUID
+    ) -> Step | None:
+        result = await self.db.execute(
+            select(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_track_id == track_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_user_id == user_id,
+                Track.trk_is_deleted.is_(False),
+            )
+            .options(*self._hierarchy_options(user_id))
         )
         return result.scalars().unique().one_or_none()
 
     async def update(
-        self,
-        track: Track,
-        title: str | None,
-        description: str | None,
-        update_description: bool,
-    ) -> Track:
-        now = datetime.now(UTC).replace(tzinfo=None)
-        if title is not None:
-            track.trk_title = title
-        if update_description:
-            track.trk_description = description
-        track.trk_updated_at = now
-        return track
+        self, step: Step, level: StepLevelEnum, title: str
+    ) -> Step:
+        step.stp_level = level
+        step.stp_title = title
+        step.stp_updated_at = datetime.now(UTC).replace(tzinfo=None)
+        return step
 
-    async def soft_delete(self, track: Track) -> None:
+    async def soft_delete(self, step: Step) -> None:
         now = datetime.now(UTC).replace(tzinfo=None)
-        track.trk_is_deleted = True
-        track.trk_deleted_at = now
-        track.trk_updated_at = now
+        step.stp_is_deleted = True
+        step.stp_deleted_at = now
+        step.stp_updated_at = now
 
     @staticmethod
     def _hierarchy_options(user_id: UUID):
@@ -114,12 +132,10 @@ class TrackRepository:
                 )
             )
         )
-        return selectinload(
-            Track.steps.and_(Step.stp_is_deleted.is_(False))
-        ).options(lessons, missions)
+        return lessons, missions
 
 
-def get_track_repository(
+def get_step_repository(
     db: AsyncSession = Depends(get_db),  # noqa: B008
-) -> TrackRepository:
-    return TrackRepository(db)
+) -> StepRepository:
+    return StepRepository(db)
