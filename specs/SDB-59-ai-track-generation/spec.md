@@ -8,6 +8,14 @@
 
 **Input**: User description: "SDB-59 - Criar funcionalidade para geração de trilha"
 
+## Clarifications
+
+### Session 2026-09-19
+
+- Q: Como a task deve tratar falhas temporárias na chamada do provedor de IA? → A: Repetir falhas transitórias com limite de tentativas; falhas permanentes e respostas inválidas encerram com erro.
+- Q: Como o sistema deve tratar uma nova solicitação com o mesmo contexto enquanto a geração anterior está pendente ou já foi concluída? → A: Solicitação idempotente: reutilizar a task ou trilha associada ao mesmo identificador de solicitação.
+- Q: Qual deve ser o limite máximo de tentativas para falhas transitórias do provedor de IA? → A: 3 tentativas.
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Gerar a estrutura de uma trilha personalizada (Priority: P1)
@@ -59,9 +67,10 @@ Como produto, quero registrar as etapas futuras apenas como estrutura para que s
 - A IA pode retornar etapas fora de ordem, níveis duplicados indevidos, posições inválidas ou conteúdo posterior à primeira etapa; o resultado deve ser rejeitado antes da persistência.
 - A primeira etapa pode não ter missão quando a estratégia de geração indicar que ela não é aplicável.
 - Uma resposta vazia, malformada ou incompatível com os dados esperados não deve criar registros parciais.
+- Falhas transitórias na chamada do provedor de IA devem ser repetidas até três tentativas no total; falhas permanentes, respostas inválidas ou o esgotamento das tentativas devem encerrar a task com erro tratável.
 - Falhas na chamada de IA, na validação ou na persistência devem deixar a trilha sem alterações incompletas.
 - Títulos, textos, níveis, dificuldades, critérios e valores fora dos limites do domínio devem ser rejeitados com erro tratável pelo fluxo que acompanha a geração.
-- Reexecuções da mesma solicitação não devem gerar registros duplicados sem que o fluxo de acompanhamento determine explicitamente uma nova geração.
+- Uma nova execução com o mesmo identificador de solicitação deve reutilizar a task ou trilha associada, sem criar registros duplicados; uma nova trilha exige um identificador diferente.
 
 ## Requirements
 
@@ -112,5 +121,5 @@ Como produto, quero registrar as etapas futuras apenas como estrutura para que s
 - Os enums e regras de domínio vigentes definem os níveis de etapa, dificuldades, critérios e limites de campos.
 - A resposta da IA será obtida em formato estruturado, mas ainda precisará ser validada contra os schemas internos antes da persistência.
 - A geração de conteúdo das etapas posteriores será implementada em uma task separada, usando a etapa existente e o progresso do usuário.
-- A reexecução e a idempotência serão coordenadas pelo fluxo de acompanhamento da task e pelas regras de persistência existentes.
+- Solicitações com o mesmo identificador são idempotentes: o fluxo de acompanhamento deve reutilizar a task ou trilha associada, enquanto uma nova geração exige um identificador diferente.
 - Os erros seguirão o formato de erro padronizado do produto e não revelarão detalhes internos do provedor de IA ou da persistência.
