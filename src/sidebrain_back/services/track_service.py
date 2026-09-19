@@ -30,15 +30,9 @@ class TrackService:
             track = await self.repository.create(
                 user, payload.title, payload.description
             )
+            response = TrackResponse.model_validate(track)
             await self.db.commit()
-            loaded_track = await self.repository.get(user.usr_id, track.trk_id)
-            if loaded_track is None:
-                raise ProblemDetailError(
-                    500,
-                    "Erro interno",
-                    "Não foi possível carregar a trilha criada.",
-                )
-            return TrackResponse.model_validate(loaded_track)
+            return response
         except Exception as error:
             await self.db.rollback()
             raise ProblemDetailError(
@@ -81,15 +75,9 @@ class TrackService:
                 payload.description,
                 "description" in payload.model_fields_set,
             )
+            response = TrackResponse.model_validate(track)
             await self.db.commit()
-            loaded_track = await self.repository.get(user.usr_id, track_id)
-            if loaded_track is None:
-                raise ProblemDetailError(
-                    500,
-                    "Erro interno",
-                    "Não foi possível carregar a trilha atualizada.",
-                )
-            return TrackResponse.model_validate(loaded_track)
+            return response
         except Exception as error:
             await self.db.rollback()
             raise ProblemDetailError(

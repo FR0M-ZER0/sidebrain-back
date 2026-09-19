@@ -34,15 +34,9 @@ class FeedbackService:
             feedback = await self.repository.create(
                 lesson_id, user.usr_id, payload.text
             )
+            response = FeedbackResponse.model_validate(feedback)
             await self.db.commit()
-            loaded = await self.repository.get(feedback.fbk_id)
-            if loaded is None:
-                raise ProblemDetailError(
-                    500,
-                    "Erro interno",
-                    "Não foi possível carregar o feedback criado.",
-                )
-            return FeedbackResponse.model_validate(loaded)
+            return response
         except ProblemDetailError:
             await self.db.rollback()
             raise
@@ -87,15 +81,9 @@ class FeedbackService:
             )
         try:
             await self.repository.update(feedback, payload.text)
+            response = FeedbackResponse.model_validate(feedback)
             await self.db.commit()
-            loaded = await self.repository.get(feedback_id)
-            if loaded is None:
-                raise ProblemDetailError(
-                    500,
-                    "Erro interno",
-                    "Não foi possível carregar o feedback atualizado.",
-                )
-            return FeedbackResponse.model_validate(loaded)
+            return response
         except ProblemDetailError:
             await self.db.rollback()
             raise

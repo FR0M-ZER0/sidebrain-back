@@ -31,8 +31,10 @@ class TrackRepository:
             trk_description=description,
             trk_is_deleted=False,
             trk_deleted_at=None,
+            steps=[],
         )
         self.db.add(track)
+        await self.db.flush()
         return track
 
     async def list(

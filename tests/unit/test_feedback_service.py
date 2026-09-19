@@ -1,4 +1,5 @@
 from datetime import datetime
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -38,11 +39,15 @@ class FakeRepository:
 
 
 class FakeSession:
+    def __init__(self):
+        self.committed = False
+        self.rolled_back = False
+
     async def commit(self):
-        pass
+        self.committed = True
 
     async def rollback(self):
-        pass
+        self.rolled_back = True
 
 
 @pytest.mark.anyio
@@ -83,3 +88,56 @@ async def test_create_returns_not_found_for_deleted_or_missing_lesson():
 
     assert error.value.status_code == 404
     assert repository.created is None
+
+
+class InvalidResponseRepository(FakeRepository):
+    def __init__(self, *, operation: str):
+        feedback = SimpleNamespace(
+            fbk_id=uuid4(),
+            fbk_user_id=uuid4(),
+            fbk_text="texto",
+        )
+        super().__init__(feedback=feedback)
+        self.operation = operation
+
+    async def create(self, lesson_id, user_id, text):
+        self.feedback.fbk_user_id = user_id
+        return self.feedback
+
+    async def update(self, feedback, text):
+        feedback.fbk_text = text
+        return feedback
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("operation", ["create", "update"])
+async def test_response_is_validated_before_feedback_commit(operation):
+    repository = InvalidResponseRepository(operation=operation)
+    session = FakeSession()
+    service = FeedbackService(repository, session)
+    user = User(
+        usr_id=repository.feedback.fbk_user_id,
+        usr_email="u@example.com",
+        usr_name="U",
+        usr_password_hash="hash",
+    )
+
+    with pytest.raises(ProblemDetailError) as error:
+        if operation == "create":
+            await service.create_feedback(
+                user,
+                uuid4(),
+                FeedbackCreate(text="texto"),
+            )
+        else:
+            from sidebrain_back.schemas.feedback_schema import FeedbackUpdate
+
+            await service.update_feedback(
+                user,
+                repository.feedback.fbk_id,
+                FeedbackUpdate(text="texto atualizado"),
+            )
+
+    assert error.value.status_code == 500
+    assert session.committed is False
+    assert session.rolled_back is True
