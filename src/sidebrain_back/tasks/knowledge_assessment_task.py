@@ -81,7 +81,7 @@ def prepare_knowledge_assessment_task(
                 exc,
             ),
         )
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
     except Exception as exc:
         logger.error(
             "Knowledge assessment failed.",

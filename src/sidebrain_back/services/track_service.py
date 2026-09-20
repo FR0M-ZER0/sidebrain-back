@@ -7,6 +7,7 @@ from sidebrain_back.core.database import get_db
 from sidebrain_back.core.errors import ProblemDetailError
 from sidebrain_back.models.user_model import User
 from sidebrain_back.repositories.track_repository import (
+    StepProgressContext,
     TrackRepository,
     get_track_repository,
 )
@@ -19,9 +20,49 @@ from sidebrain_back.schemas.track_schema import (
 
 
 class TrackService:
+    PROGRESS_THRESHOLD = 0.80
+
     def __init__(self, repository: TrackRepository, db: AsyncSession):
         self.repository = repository
         self.db = db
+
+    @classmethod
+    def completion_ratio(
+        cls, active_lessons_total: int, active_lessons_completed: int
+    ) -> float:
+        if active_lessons_total <= 0:
+            return 0.0
+        return min(active_lessons_completed, active_lessons_total) / (
+            active_lessons_total
+        )
+
+    @classmethod
+    def should_prepare_next_step(
+        cls, progress: StepProgressContext | tuple[int, int] | object
+    ) -> bool:
+        if isinstance(progress, StepProgressContext):
+            ratio = progress.completion_ratio
+            total = progress.active_lessons_total
+        else:
+            total, completed = progress  # type: ignore[misc]
+            ratio = cls.completion_ratio(total, completed)
+        return total > 0 and ratio >= cls.PROGRESS_THRESHOLD
+
+    async def get_next_step_to_prepare(self, step_id: UUID):
+        progress = await self.repository.get_step_progress(step_id)
+        if not self.should_prepare_next_step(progress):
+            return None
+        return await self.repository.get_next_eligible_step(step_id)
+
+    async def enqueue_next_step_preparation(self, step_id: UUID):
+        next_step = await self.get_next_step_to_prepare(step_id)
+        if next_step is None:
+            return None
+        from sidebrain_back.tasks.prepare_next_step_content_task import (
+            prepare_next_step_content_task,
+        )
+
+        return prepare_next_step_content_task.delay(str(next_step.stp_id))
 
     async def create_track(
         self, user: User, payload: TrackCreate

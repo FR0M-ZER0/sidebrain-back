@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -16,6 +17,13 @@ from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.step_model import Step
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.models.user_model import User
+
+
+@dataclass(frozen=True)
+class StepProgressContext:
+    active_lessons_total: int
+    active_lessons_completed: int
+    completion_ratio: float
 
 
 class TrackRepository:
@@ -89,6 +97,132 @@ class TrackRepository:
         track.trk_is_deleted = True
         track.trk_deleted_at = now
         track.trk_updated_at = now
+
+    async def get_step_progress(self, step_id: UUID) -> StepProgressContext:
+        filters = (
+            Lesson.lsn_step_id == step_id,
+            Lesson.lsn_is_deleted.is_(False),
+            Step.stp_is_deleted.is_(False),
+            Track.trk_is_deleted.is_(False),
+        )
+        total = int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(Lesson)
+                .join(Step, Step.stp_id == Lesson.lsn_step_id)
+                .join(Track, Track.trk_id == Step.stp_track_id)
+                .where(*filters)
+            )
+            or 0
+        )
+        completed = int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(Lesson)
+                .join(Step, Step.stp_id == Lesson.lsn_step_id)
+                .join(Track, Track.trk_id == Step.stp_track_id)
+                .where(*filters, Lesson.lsn_status == "done")
+            )
+            or 0
+        )
+        return StepProgressContext(
+            active_lessons_total=total,
+            active_lessons_completed=completed,
+            completion_ratio=completed / total if total else 0.0,
+        )
+
+    async def get_next_eligible_step(self, step_id: UUID) -> Step | None:
+        current = await self.db.scalar(
+            select(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_is_deleted.is_(False),
+            )
+        )
+        if current is None:
+            return None
+
+        steps = await self.db.scalars(
+            select(Step)
+            .where(
+                Step.stp_track_id == current.stp_track_id,
+                Step.stp_is_deleted.is_(False),
+            )
+            .options(
+                selectinload(
+                    Step.lessons.and_(Lesson.lsn_is_deleted.is_(False))
+                ),
+                selectinload(
+                    Step.missions.and_(Mission.msn_is_deleted.is_(False))
+                ),
+            )
+            .order_by(Step.stp_updated_at, Step.stp_id)
+        )
+        ordered_steps = list(steps.all())
+        try:
+            current_index = next(
+                index
+                for index, candidate in enumerate(ordered_steps)
+                if candidate.stp_id == current.stp_id
+            )
+        except StopIteration:
+            return None
+
+        for candidate in ordered_steps[current_index + 1 :]:
+            if not candidate.lessons and not candidate.missions:
+                return candidate
+        return None
+
+    async def get_step_for_generation(self, step_id: UUID) -> Step | None:
+        result = await self.db.execute(
+            select(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_is_deleted.is_(False),
+            )
+            .options(
+                selectinload(Step.track).options(
+                    selectinload(
+                        Track.steps.and_(Step.stp_is_deleted.is_(False))
+                    ).options(
+                        selectinload(
+                            Step.lessons.and_(Lesson.lsn_is_deleted.is_(False))
+                        )
+                    )
+                ),
+                selectinload(
+                    Step.lessons.and_(Lesson.lsn_is_deleted.is_(False))
+                ),
+                selectinload(
+                    Step.missions.and_(Mission.msn_is_deleted.is_(False))
+                ),
+            )
+            .with_for_update()
+        )
+        return result.scalars().unique().one_or_none()
+
+    async def has_active_generated_content(self, step_id: UUID) -> bool:
+        lesson_exists = await self.db.scalar(
+            select(Lesson.lsn_id)
+            .where(
+                Lesson.lsn_step_id == step_id,
+                Lesson.lsn_is_deleted.is_(False),
+            )
+            .limit(1)
+        )
+        mission_exists = await self.db.scalar(
+            select(Mission.msn_id)
+            .where(
+                Mission.msn_step_id == step_id,
+                Mission.msn_is_deleted.is_(False),
+            )
+            .limit(1)
+        )
+        return lesson_exists is not None or mission_exists is not None
 
     @staticmethod
     def _hierarchy_options(user_id: UUID):

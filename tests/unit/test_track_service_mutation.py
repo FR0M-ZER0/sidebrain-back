@@ -21,6 +21,13 @@ def test_patch_requires_a_field_and_normalizes_title():
     assert payload.model_fields_set == {"title"}
 
 
+def test_progress_threshold_is_inclusive_and_ignores_empty_steps():
+    assert TrackService.completion_ratio(5, 4) == 0.8
+    assert TrackService.should_prepare_next_step((5, 4)) is True
+    assert TrackService.should_prepare_next_step((5, 3)) is False
+    assert TrackService.should_prepare_next_step((0, 0)) is False
+
+
 @pytest.mark.anyio
 async def test_repository_mutations_preserve_omitted_description():
     repository = TrackRepository(SimpleNamespace())
