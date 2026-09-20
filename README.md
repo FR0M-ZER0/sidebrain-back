@@ -72,13 +72,22 @@ Bearer identifica o proprietário; `userId` não é aceito nos requests.
 Falhas usam Problem Details com `type`, `title`, `status` e `detail`; erros de
 validação também incluem `errors` por campo.
 
+## Geração incremental de conteúdo
+
+Ao atingir 80% das Lessons ativas de um Step, o serviço pode enfileirar a task
+`tasks.prepare_next_step_content` para preparar o próximo Step em background.
+A task recebe somente `step_id`, usa o contexto da Track e dos Steps anteriores,
+valida o payload do provedor e persiste Lessons, Quizzes e Missions em uma
+transação única. Locks de linha e a guarda de conteúdo ativo evitam duplicação;
+falhas transitórias têm retry limitado.
+
 ## Quizzes
 
 O gerenciamento autenticado de quizzes está disponível em cinco endpoints:
 
 - `POST /api/v1/lessons/{lesson_id}/quizzes` cria um quiz na aula.
 - `GET /api/v1/lessons/{lesson_id}/quizzes` lista quizzes ativos com `page` e
-  `page_size`.
+  `page_size`. 
 - `GET /api/v1/quizzes/{quiz_id}` consulta um quiz e todas as suas respostas.
 - `PUT /api/v1/quizzes/{quiz_id}` substitui somente a pergunta.
 - `DELETE /api/v1/quizzes/{quiz_id}` realiza exclusão lógica e retorna `204`.
