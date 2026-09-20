@@ -15,4 +15,5 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="America/Sao_Paulo",
     enable_utc=True,
+    imports=("sidebrain_back.tasks.generate_track_task",),
 )
