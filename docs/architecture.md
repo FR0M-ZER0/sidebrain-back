@@ -133,6 +133,13 @@ delegam para `TrackService`, que usa `TrackRepository` com `AsyncSession`.
 Listagens e detalhes filtram ownership e exclusão lógica, carregando a árvore
 com `selectinload`; respostas públicas são definidas em `schemas/track_schema.py`.
 
+Quando o progresso de um Step alcança 80% das Lessons ativas, `TrackService`
+calcula o próximo Step elegível e enfileira
+`tasks.prepare_next_step_content` sem aguardar o provedor externo. A task abre
+sua própria sessão, valida o contexto e persiste Lesson, Quiz e Mission em uma
+transação atômica, usando lock de linha e retry limitado para preservar
+idempotência e consistência.
+
 ### Gerenciamento de quizzes
 
 Os cinco endpoints de quiz ficam em `routers/v1/quiz_router.py` e mantêm o
