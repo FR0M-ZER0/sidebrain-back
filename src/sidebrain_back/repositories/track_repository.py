@@ -131,6 +131,21 @@ class TrackRepository:
             completion_ratio=completed / total if total else 0.0,
         )
 
+    async def get_active_step_for_user(
+        self, track_id: UUID, step_id: UUID, user_id: UUID
+    ) -> Step | None:
+        return await self.db.scalar(
+            select(Step)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_track_id == track_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_user_id == user_id,
+                Track.trk_is_deleted.is_(False),
+            )
+        )
+
     async def get_next_eligible_step(self, step_id: UUID) -> Step | None:
         current = await self.db.scalar(
             select(Step)

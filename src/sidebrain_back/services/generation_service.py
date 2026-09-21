@@ -8,6 +8,9 @@ from sidebrain_back.core.groq_client import get_groq_client
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
+from sidebrain_back.repositories.generation_request_repository import (
+    GenerationRequestRepository,
+)
 from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
     GenerationInput,
@@ -20,9 +23,15 @@ from sidebrain_back.services.generation_errors import (
 
 
 class GenerationService:
-    def __init__(self, repository: GenerationRepository, db: AsyncSession):
+    def __init__(
+        self,
+        repository: GenerationRepository,
+        db: AsyncSession,
+        request_repository: GenerationRequestRepository | None = None,
+    ):
         self.repository = repository
         self.db = db
+        self.request_repository = request_repository
 
     @staticmethod
     def build_prompt(payload: GenerationInput) -> str:
@@ -80,6 +89,11 @@ class GenerationService:
     async def generate(self, payload: GenerationInput):
         existing = await self.repository.get_by_request_id(payload.request_id)
         if existing:
+            if self.request_repository:
+                await self.request_repository.mark_succeeded(
+                    payload.request_id, existing.trk_id
+                )
+                await self.db.commit()
             return GenerationSuccess(
                 request_id=payload.request_id, track_id=existing.trk_id
             )
@@ -91,6 +105,10 @@ class GenerationService:
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
                 )
+                if self.request_repository:
+                    await self.request_repository.mark_succeeded(
+                        payload.request_id, track.trk_id
+                    )
         except IntegrityError:
             await self.db.rollback()
             existing = await self.repository.get_by_request_id(

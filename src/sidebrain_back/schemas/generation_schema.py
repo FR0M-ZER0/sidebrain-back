@@ -38,6 +38,22 @@ class LearningContext(BaseModel):
     _validate_goal = field_validator("goal", "topic")(_required_text)
 
 
+class GenerationAccepted(BaseModel):
+    status: str = "pending"
+    request_id: UUID
+
+
+class PrepareNextAccepted(BaseModel):
+    status: str = "accepted"
+    step_id: UUID
+    task_id: str
+
+
+class PrepareNextSkipped(BaseModel):
+    status: str = "skipped"
+    reason: str = "no_eligible_next_step"
+
+
 class GenerationInput(LearningContext):
     request_id: UUID
     user_id: UUID

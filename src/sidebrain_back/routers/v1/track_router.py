@@ -4,6 +4,11 @@ from fastapi import APIRouter, Depends, Query, Response, status
 
 from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
+from sidebrain_back.schemas.generation_schema import (
+    GenerationAccepted,
+    PrepareNextAccepted,
+    PrepareNextSkipped,
+)
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.track_schema import (
     TrackCreate,
@@ -19,14 +24,32 @@ router = APIRouter(prefix="/v1/tracks", tags=["Tracks"])
 
 
 @router.post(
-    "", response_model=TrackResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=GenerationAccepted, status_code=status.HTTP_202_ACCEPTED
 )
 async def create_track(
     payload: TrackCreate,
     user: User = Depends(get_current_user),  # noqa: B008
     service: TrackService = Depends(get_track_service),  # noqa: B008
-) -> TrackResponse:
+) -> GenerationAccepted:
     return await service.create_track(user, payload)
+
+
+@router.post(
+    "/{track_id}/steps/{step_id}/prepare-next",
+    response_model=PrepareNextAccepted | PrepareNextSkipped,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def prepare_next_step(
+    track_id: UUID,
+    step_id: UUID,
+    response: Response,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: TrackService = Depends(get_track_service),  # noqa: B008
+) -> PrepareNextAccepted | PrepareNextSkipped:
+    result = await service.prepare_next_step(user, track_id, step_id)
+    if isinstance(result, PrepareNextSkipped):
+        response.status_code = status.HTTP_200_OK
+    return result
 
 
 @router.get("", response_model=PaginatedResponse[TrackResponse])
