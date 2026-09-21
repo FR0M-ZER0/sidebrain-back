@@ -102,9 +102,7 @@ class GeneratedTrack(BaseModel):
             lesson_positions = [lesson.position for lesson in step.lessons]
             if step.position != 1 and (step.lessons or step.mission):
                 raise ValueError("etapas futuras não podem ter conteúdo")
-            if lesson_positions != list(
-                range(1, len(lesson_positions) + 1)
-            ):
+            if lesson_positions != list(range(1, len(lesson_positions) + 1)):
                 raise ValueError("lições devem ter posições contíguas")
         return self
 
