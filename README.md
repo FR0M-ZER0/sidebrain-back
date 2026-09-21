@@ -41,9 +41,14 @@ docker compose up -d
 uv run alembic upgrade head
 ```
 
-6. Por fim, rode a API em ambiente dev usando:
+6. Rode a API em ambiente dev usando:
 ```bash
 uv run dev
+```
+
+7. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
+```bash
+uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
 
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
@@ -63,7 +68,11 @@ Para verificar as padronizações usadas neste projeto, bem como demais document
 As trilhas autenticadas estão disponíveis em `/api/v1/tracks`. A credencial
 Bearer identifica o proprietário; `userId` não é aceito nos requests.
 
-- `POST /api/v1/tracks` cria uma trilha.
+- `POST /api/v1/tracks` aceita um contexto de aprendizagem e retorna `202` com
+  `request_id`; a geração ocorre no worker Celery.
+- `POST /api/v1/tracks/{track_id}/steps/{step_id}/prepare-next` enfileira a
+  preparação do próximo Step elegível e retorna `202`, ou `200` com
+  `status=skipped` quando não há próximo Step.
 - `GET /api/v1/tracks` lista trilhas ativas com `page` e `page_size`.
 - `GET /api/v1/tracks/{track_id}` retorna a hierarquia filtrada.
 - `PATCH /api/v1/tracks/{track_id}` atualiza título e/ou descrição.
@@ -80,6 +89,10 @@ As etapas de uma trilha própria estão disponíveis em
 
 Falhas usam Problem Details com `type`, `title`, `status` e `detail`; erros de
 validação também incluem `errors` por campo.
+
+Repetir um `request_id` com o mesmo contexto é idempotente. Reutilizá-lo com
+outro usuário ou contexto retorna `409` com `error_code` de conflito. O worker
+persiste `succeeded` ou `failed` e um `error_code` sem criar uma Track parcial.
 
 ## Geração incremental de conteúdo
 
