@@ -3,6 +3,7 @@ import json
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sidebrain_back.core.constants import Env
 from sidebrain_back.core.groq_client import get_groq_client
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
@@ -47,7 +48,7 @@ class GenerationService:
 
     def generate_with_ai(self, payload: GenerationInput) -> GeneratedTrack:
         response = get_groq_client().chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=Env.GROQ_MODEL,
             messages=[{"role": "user", "content": self.build_prompt(payload)}],
             response_format={"type": "json_object"},
         )
