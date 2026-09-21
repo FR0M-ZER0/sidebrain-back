@@ -2,7 +2,16 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +24,12 @@ if TYPE_CHECKING:
 
 class Track(Base):
     __tablename__ = "track"
+    __table_args__ = (
+        UniqueConstraint(
+            "trk_generation_request_id",
+            name="uq_track_generation_request_id",
+        ),
+    )
 
     trk_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -28,6 +43,9 @@ class Track(Base):
     )
     trk_title: Mapped[str] = mapped_column(String(255), nullable=False)
     trk_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    trk_generation_request_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     trk_created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
