@@ -13,6 +13,7 @@ from sidebrain_back.models.badge_model import Badge
 from sidebrain_back.models.badge_progress_model import BadgeProgress
 from sidebrain_back.models.day_streak_model import DayStreak
 from sidebrain_back.models.feedback_model import Feedback
+from sidebrain_back.models.generation_request_model import GenerationRequest
 from sidebrain_back.models.lesson_file_model import LessonFile
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.login_model import Login

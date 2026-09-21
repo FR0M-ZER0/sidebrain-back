@@ -38,6 +38,22 @@ class LearningContext(BaseModel):
     _validate_goal = field_validator("goal", "topic")(_required_text)
 
 
+class GenerationAccepted(BaseModel):
+    status: str = "pending"
+    request_id: UUID
+
+
+class PrepareNextAccepted(BaseModel):
+    status: str = "accepted"
+    step_id: UUID
+    task_id: str
+
+
+class PrepareNextSkipped(BaseModel):
+    status: str = "skipped"
+    reason: str = "no_eligible_next_step"
+
+
 class GenerationInput(LearningContext):
     request_id: UUID
     user_id: UUID
@@ -102,9 +118,7 @@ class GeneratedTrack(BaseModel):
             lesson_positions = [lesson.position for lesson in step.lessons]
             if step.position != 1 and (step.lessons or step.mission):
                 raise ValueError("etapas futuras não podem ter conteúdo")
-            if lesson_positions != list(
-                range(1, len(lesson_positions) + 1)
-            ):
+            if lesson_positions != list(range(1, len(lesson_positions) + 1)):
                 raise ValueError("lições devem ter posições contíguas")
         return self
 

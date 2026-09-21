@@ -10,6 +10,7 @@ from pydantic import (
     model_validator,
 )
 
+from sidebrain_back.schemas.generation_schema import LearningContext
 from sidebrain_back.schemas.quiz_schema import (
     AnswerResponse as DirectAnswerResponse,
 )
@@ -33,8 +34,27 @@ class TrackInput(BaseModel):
         return value
 
 
-class TrackCreate(TrackInput):
-    pass
+class TrackCreate(LearningContext):
+    goal: str | None = None
+    topic: str | None = None
+    request_id: UUID | None = None
+    title: str | None = Field(default=None, max_length=255)
+
+    @field_validator("title")
+    @classmethod
+    def normalize_legacy_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("O título não pode ser vazio.")
+        return value
+
+    @model_validator(mode="after")
+    def require_context_or_legacy_title(self) -> "TrackCreate":
+        if self.title is None and (not self.goal or not self.topic):
+            raise ValueError("goal e topic são obrigatórios.")
+        return self
 
 
 class TrackUpdate(BaseModel):

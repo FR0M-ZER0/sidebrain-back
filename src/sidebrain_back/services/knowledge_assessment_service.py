@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sidebrain_back.schemas.knowledge_assessment_schema import (
     AssessmentContext,
@@ -32,6 +32,12 @@ class KnowledgeAssessmentService:
         raw_result = self.generator.generate(subject, objective)
         if not isinstance(raw_result, dict):
             raise ValueError("Resultado inválido retornado pelo gerador.")
+
+        raw_result = dict(raw_result)
+        try:
+            UUID(str(raw_result.get("assessment_id")))
+        except (ValueError, AttributeError, TypeError):
+            raw_result["assessment_id"] = str(uuid4())
 
         result = KnowledgeAssessmentResult.model_validate(raw_result)
         return result

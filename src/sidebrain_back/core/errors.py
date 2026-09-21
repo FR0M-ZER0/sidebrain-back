@@ -13,11 +13,13 @@ class ProblemDetailError(Exception):
         title: str,
         detail: str,
         errors: list[dict[str, Any]] | None = None,
+        error_code: str | None = None,
     ) -> None:
         self.status_code = status_code
         self.title = title
         self.detail = detail
         self.errors = errors
+        self.error_code = error_code
 
 
 def _problem(
@@ -25,6 +27,7 @@ def _problem(
     title: str,
     detail: str,
     errors: list[dict[str, Any]] | None = None,
+    error_code: str | None = None,
 ) -> JSONResponse:
     body: dict[str, Any] = {
         "type": f"https://sidebrain.api/errors/{status_code}",
@@ -34,6 +37,8 @@ def _problem(
     }
     if errors:
         body["errors"] = errors
+    if error_code:
+        body["error_code"] = error_code
     return JSONResponse(status_code=status_code, content=body)
 
 
@@ -47,6 +52,7 @@ def register_error_handlers(application: FastAPI) -> None:
             error.title,
             error.detail,
             error.errors,
+            error.error_code,
         )
 
     @application.exception_handler(RequestValidationError)

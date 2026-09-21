@@ -3,9 +3,13 @@ import json
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sidebrain_back.core.constants import Env
 from sidebrain_back.core.groq_client import get_groq_client
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
+)
+from sidebrain_back.repositories.generation_request_repository import (
+    GenerationRequestRepository,
 )
 from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
@@ -19,9 +23,15 @@ from sidebrain_back.services.generation_errors import (
 
 
 class GenerationService:
-    def __init__(self, repository: GenerationRepository, db: AsyncSession):
+    def __init__(
+        self,
+        repository: GenerationRepository,
+        db: AsyncSession,
+        request_repository: GenerationRequestRepository | None = None,
+    ):
         self.repository = repository
         self.db = db
+        self.request_repository = request_repository
 
     @staticmethod
     def build_prompt(payload: GenerationInput) -> str:
@@ -37,17 +47,32 @@ class GenerationService:
             ],
         }
         return (
-            "Gere uma trilha completa em JSON. Inclua todas as etapas "
-            "na ordem "
-            "da progressão. Gere conteúdo detalhado somente para a etapa de "
-            "posição 1; etapas posteriores devem conter apenas posição, nível "
-            "e título. Não inclua texto fora do JSON. Contexto: "
+            "Gere uma trilha completa em JSON. Retorne um único "
+            "objeto JSON, sem texto fora dele, com exatamente as "
+            "chaves title, description e steps. Não retorne uma "
+            "lista. Inclua todas as etapas na ordem da progressão, "
+            "com position contíguas a partir de 1. Gere conteúdo "
+            "detalhado somente para a etapa de posição 1; etapas "
+            "posteriores devem conter apenas posição, nível e "
+            "título, com lessons=[] e mission=null. Cada etapa tem "
+            "position, level, title, lessons e mission. level deve "
+            "ser um de beginner, intermediate, advanced, pro, sem "
+            "repetir. Cada lesson da etapa 1 tem position, title, "
+            "text e quiz.question, com positions contíguas a "
+            "partir de 1. mission pode ser null ou ter title, "
+            "difficulty (easy, medium, hard, very_hard), "
+            "xp_reward, criteria (number_of_lessons_completed, "
+            "get_all_answer_right_in_a_lesson, complete_a_step, "
+            "complete_a_track, number_of_steps_completed, "
+            "get_all_answers_right) e criteria_value. Não crie IDs, "
+            "timestamps, objectives, content ou outros campos. "
+            "Contexto: "
             f"{json.dumps(context, ensure_ascii=True)}"
         )
 
     def generate_with_ai(self, payload: GenerationInput) -> GeneratedTrack:
         response = get_groq_client().chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=Env.GROQ_MODEL,
             messages=[{"role": "user", "content": self.build_prompt(payload)}],
             response_format={"type": "json_object"},
         )
@@ -64,6 +89,11 @@ class GenerationService:
     async def generate(self, payload: GenerationInput):
         existing = await self.repository.get_by_request_id(payload.request_id)
         if existing:
+            if self.request_repository:
+                await self.request_repository.mark_succeeded(
+                    payload.request_id, existing.trk_id
+                )
+                await self.db.commit()
             return GenerationSuccess(
                 request_id=payload.request_id, track_id=existing.trk_id
             )
@@ -75,6 +105,10 @@ class GenerationService:
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
                 )
+                if self.request_repository:
+                    await self.request_repository.mark_succeeded(
+                        payload.request_id, track.trk_id
+                    )
         except IntegrityError:
             await self.db.rollback()
             existing = await self.repository.get_by_request_id(
