@@ -38,11 +38,26 @@ class GenerationService:
             ],
         }
         return (
-            "Gere uma trilha completa em JSON. Inclua todas as etapas "
-            "na ordem "
-            "da progressão. Gere conteúdo detalhado somente para a etapa de "
-            "posição 1; etapas posteriores devem conter apenas posição, nível "
-            "e título. Não inclua texto fora do JSON. Contexto: "
+            "Gere uma trilha completa em JSON. Retorne um único "
+            "objeto JSON, sem texto fora dele, com exatamente as "
+            "chaves title, description e steps. Não retorne uma "
+            "lista. Inclua todas as etapas na ordem da progressão, "
+            "com position contíguas a partir de 1. Gere conteúdo "
+            "detalhado somente para a etapa de posição 1; etapas "
+            "posteriores devem conter apenas posição, nível e "
+            "título, com lessons=[] e mission=null. Cada etapa tem "
+            "position, level, title, lessons e mission. level deve "
+            "ser um de beginner, intermediate, advanced, pro, sem "
+            "repetir. Cada lesson da etapa 1 tem position, title, "
+            "text e quiz.question, com positions contíguas a "
+            "partir de 1. mission pode ser null ou ter title, "
+            "difficulty (easy, medium, hard, very_hard), "
+            "xp_reward, criteria (number_of_lessons_completed, "
+            "get_all_answer_right_in_a_lesson, complete_a_step, "
+            "complete_a_track, number_of_steps_completed, "
+            "get_all_answers_right) e criteria_value. Não crie IDs, "
+            "timestamps, objectives, content ou outros campos. "
+            "Contexto: "
             f"{json.dumps(context, ensure_ascii=True)}"
         )
 
