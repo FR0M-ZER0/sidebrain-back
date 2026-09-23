@@ -123,3 +123,25 @@ Recursos inexistentes, excluídos, pertencentes a outra pessoa ou contidos em
 uma hierarquia excluída retornam o mesmo `404`, sem revelar ownership. O fluxo
 segue `router -> service -> repository -> model`. Consulte o
 [contrato completo](./specs/SDB-51-quiz-management/contracts/quizzes.md).
+
+## Lições
+
+O gerenciamento autenticado de lições está disponível em cinco endpoints:
+
+- `POST /api/v1/steps/{step_id}/lessons` cria uma lição com estado `idle`.
+- `GET /api/v1/steps/{step_id}/lessons` lista lições ativas por posição, com
+  `page`, `page_size`, `total_items` e `total_pages`.
+- `GET /api/v1/lessons/{lesson_id}` consulta uma lição e seus filhos visíveis.
+- `PUT /api/v1/lessons/{lesson_id}` substitui `title`, `text`, `status` e
+  `position`.
+- `DELETE /api/v1/lessons/{lesson_id}` realiza exclusão lógica e retorna `204`.
+
+A posição é única por Step e continua reservada depois do soft delete;
+conflitos retornam `409`. Recursos inexistentes, removidos, sob pais removidos
+ou de outra pessoa retornam `404` sem revelar ownership. O contrato direto usa
+`files`, enquanto as hierarquias já publicadas por Track e Step preservam o
+nome `lesson_files` por compatibilidade.
+
+O fluxo segue `router -> service -> repository -> model`, com carregamento em
+lote de Feedbacks, Files, Quizzes e Answers. Consulte o
+[contrato completo](./specs/SDB-57-lesson-management/contracts/lessons.md).

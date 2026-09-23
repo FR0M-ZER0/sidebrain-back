@@ -11,10 +11,20 @@ from main import app
 from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.core.database import Base, engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.lesson_file_type_enum import LessonFileTypeEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
-from sidebrain_back.models import Answer, Lesson, Quiz, Step, Track, User
+from sidebrain_back.models import (
+    Answer,
+    Feedback,
+    Lesson,
+    LessonFile,
+    Quiz,
+    Step,
+    Track,
+    User,
+)
 
 
 @dataclass
@@ -133,6 +143,7 @@ def quiz_factory(db_session: AsyncSession):
         question: str = "What is a variable?",
         deleted: bool = False,
         updated_at: datetime | None = None,
+        flush: bool = True,
     ) -> Quiz:
         now = updated_at or datetime.now(UTC).replace(tzinfo=None)
         quiz = Quiz(
@@ -144,7 +155,8 @@ def quiz_factory(db_session: AsyncSession):
             qui_deleted_at=now if deleted else None,
         )
         db_session.add(quiz)
-        await db_session.flush()
+        if flush:
+            await db_session.flush()
         return quiz
 
     return create
@@ -160,6 +172,7 @@ def answer_factory(db_session: AsyncSession):
         text: str = "A named reference to a value",
         rate: AnswerRateEnum = AnswerRateEnum.PERFECT,
         created_at: datetime | None = None,
+        flush: bool = True,
     ) -> Answer:
         now = created_at or datetime.now(UTC).replace(tzinfo=None)
         answer = Answer(
@@ -172,8 +185,124 @@ def answer_factory(db_session: AsyncSession):
             ans_updated_at=now,
         )
         db_session.add(answer)
-        await db_session.flush()
+        if flush:
+            await db_session.flush()
         return answer
+
+    return create
+
+
+@pytest.fixture
+def step_factory(db_session: AsyncSession):
+    async def create(
+        track: Track,
+        *,
+        title: str = "Fundamentos",
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Step:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        step = Step(
+            stp_id=uuid4(),
+            stp_track_id=track.trk_id,
+            stp_level=StepLevelEnum.BEGINNER,
+            stp_title=title,
+            stp_status=StepStatusEnum.IDLE,
+            stp_is_deleted=deleted,
+            stp_deleted_at=now if deleted else None,
+        )
+        db_session.add(step)
+        if flush:
+            await db_session.flush()
+        return step
+
+    return create
+
+
+@pytest.fixture
+def lesson_factory(db_session: AsyncSession):
+    async def create(
+        step: Step,
+        *,
+        title: str = "Variáveis",
+        text: str = "Conteúdo",
+        status: LessonStatusEnum = LessonStatusEnum.IDLE,
+        position: int = 1,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Lesson:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        lesson = Lesson(
+            lsn_id=uuid4(),
+            lsn_step_id=step.stp_id,
+            lsn_title=title,
+            lsn_text=text,
+            lsn_status=status,
+            lsn_position=position,
+            lsn_is_deleted=deleted,
+            lsn_deleted_at=now if deleted else None,
+        )
+        db_session.add(lesson)
+        if flush:
+            await db_session.flush()
+        return lesson
+
+    return create
+
+
+@pytest.fixture
+def feedback_factory(db_session: AsyncSession):
+    async def create(
+        lesson: Lesson,
+        user: User,
+        *,
+        text: str = "Muito útil",
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Feedback:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        feedback = Feedback(
+            fbk_id=uuid4(),
+            fbk_lesson_id=lesson.lsn_id,
+            fbk_user_id=user.usr_id,
+            fbk_text=text,
+            fbk_created_at=now,
+            fbk_updated_at=now,
+            fbk_is_deleted=deleted,
+            fbk_deleted_at=now if deleted else None,
+        )
+        db_session.add(feedback)
+        if flush:
+            await db_session.flush()
+        return feedback
+
+    return create
+
+
+@pytest.fixture
+def lesson_file_factory(db_session: AsyncSession):
+    async def create(
+        lesson: Lesson,
+        *,
+        path: str = "/lessons/content.png",
+        file_type: LessonFileTypeEnum = LessonFileTypeEnum.IMAGE,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> LessonFile:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        lesson_file = LessonFile(
+            lsf_id=uuid4(),
+            lsf_lesson_id=lesson.lsn_id,
+            lsf_path=path,
+            lsf_file_type=file_type,
+            lsf_updated_at=now,
+            lsf_is_deleted=deleted,
+            lsf_deleted_at=now if deleted else None,
+        )
+        db_session.add(lesson_file)
+        if flush:
+            await db_session.flush()
+        return lesson_file
 
     return create
 
