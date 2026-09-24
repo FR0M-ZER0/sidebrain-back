@@ -3,6 +3,9 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.schemas.track_schema import (
+    LessonResponse as HierarchyLessonResponse,
+)
 from sidebrain_back.schemas.track_schema import TrackResponse
 
 
@@ -11,6 +14,11 @@ def test_track_id_is_public_uuid_field():
     assert "id" in fields
     assert fields["id"].validation_alias == "trk_id"
     assert UUID("00000000-0000-0000-0000-000000000001")
+
+
+def test_track_hierarchy_preserves_historical_lesson_files_name():
+    assert "lesson_files" in HierarchyLessonResponse.model_fields
+    assert "files" not in HierarchyLessonResponse.model_fields
 
 
 def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():

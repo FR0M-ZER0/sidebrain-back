@@ -2,6 +2,14 @@ from fastapi.testclient import TestClient
 
 from main import app
 from sidebrain_back.schemas.step_schema import StepCreate
+from sidebrain_back.schemas.track_schema import (
+    LessonResponse as HierarchyLessonResponse,
+)
+
+
+def test_step_hierarchy_preserves_historical_lesson_files_name():
+    assert "lesson_files" in HierarchyLessonResponse.model_fields
+    assert "files" not in HierarchyLessonResponse.model_fields
 
 
 def test_step_endpoints_require_authentication():

@@ -167,6 +167,26 @@ física. Consulte o
 [contrato HTTP](../specs/SDB-51-quiz-management/contracts/quizzes.md) para os
 cinco endpoints e seus códigos de resposta.
 
+### Gerenciamento de lições
+
+Os cinco endpoints de Lesson ficam em `routers/v1/lesson_router.py` e seguem o
+fluxo `router -> service -> repository -> model`. Criação e listagem recebem o
+Step pela URL; detalhe, atualização e exclusão recebem o identificador da
+Lesson. `LessonService` controla a transação, e `LessonRepository` prova acesso
+pela cadeia `Lesson -> Step -> Track`, exigindo pais ativos e ownership da
+Track. Recursos indisponíveis ou alheios retornam o mesmo `404`.
+
+A listagem usa paginação normativa e ordena por posição crescente. A posição é
+única por Step, inclusive para Lessons removidas; a pré-validação e a constraint
+do PostgreSQL convertem conflitos em `409`. O `PUT` exige os quatro campos
+editáveis e o `DELETE` é lógico e terminal, sem alterar ou remover filhos.
+
+Feedbacks, LessonFiles e Quizzes ativos são carregados com `selectinload`, assim
+como as Answers dos Quizzes, mantendo quantidade constante de consultas. O
+contrato direto publica `files`; as hierarquias antigas de Track/Step continuam
+publicando `lesson_files`. Consulte o
+[contrato HTTP](../specs/SDB-57-lesson-management/contracts/lessons.md).
+
 ## Versionamento de API
 
 Novas versões (`v2`, `v3`, ...) devem ser adicionadas como novos módulos em `routers/`, preservando versões anteriores enquanto necessário para compatibilidade.
