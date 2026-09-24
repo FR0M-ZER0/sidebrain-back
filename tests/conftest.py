@@ -11,6 +11,9 @@ from main import app
 from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.core.database import Base, engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.knowledge_assessment_status_enum import (
+    KnowledgeAssessmentStatusEnum,
+)
 from sidebrain_back.enums.lesson_file_type_enum import LessonFileTypeEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
@@ -18,6 +21,10 @@ from sidebrain_back.enums.step_status_enum import StepStatusEnum
 from sidebrain_back.models import (
     Answer,
     Feedback,
+    KnowledgeAssessment,
+    KnowledgeAssessmentAlternative,
+    KnowledgeAssessmentAnswer,
+    KnowledgeAssessmentQuestion,
     Lesson,
     LessonFile,
     Quiz,
@@ -33,6 +40,16 @@ class LearningHierarchy:
     track: Track
     step: Step
     lesson: Lesson
+
+
+@dataclass
+class KnowledgeAssessmentHierarchy:
+    owner: User
+    other_user: User
+    assessment: KnowledgeAssessment
+    questions: list[KnowledgeAssessmentQuestion]
+    correct_alternatives: list[KnowledgeAssessmentAlternative]
+    incorrect_alternatives: list[KnowledgeAssessmentAlternative]
 
 
 @pytest.fixture
@@ -303,6 +320,195 @@ def lesson_file_factory(db_session: AsyncSession):
         if flush:
             await db_session.flush()
         return lesson_file
+
+    return create
+
+
+@pytest.fixture
+def knowledge_assessment_factory(db_session: AsyncSession):
+    async def create(
+        *,
+        owner: User | None = None,
+        subject: str = "Python",
+        objective: str | None = "Avaliar fundamentos",
+        skip: bool = False,
+        status: KnowledgeAssessmentStatusEnum = (
+            KnowledgeAssessmentStatusEnum.PENDING
+        ),
+        fingerprint: str | None = None,
+        flush: bool = True,
+    ) -> KnowledgeAssessment:
+        assessment_owner = owner or User(
+            usr_id=uuid4(),
+            usr_email=f"{uuid4()}@example.com",
+            usr_name="Assessment Owner",
+            usr_password_hash="test-hash",
+            usr_is_deleted=False,
+        )
+        if owner is None:
+            db_session.add(assessment_owner)
+        now = datetime.now(UTC).replace(tzinfo=None)
+        terminal = {
+            KnowledgeAssessmentStatusEnum.SKIPPED,
+            KnowledgeAssessmentStatusEnum.COMPLETED,
+        }
+        assessment = KnowledgeAssessment(
+            kas_id=uuid4(),
+            kas_user_id=assessment_owner.usr_id,
+            kas_subject=subject,
+            kas_objective=objective,
+            kas_skip=skip,
+            kas_context_fingerprint=fingerprint or uuid4().hex * 2,
+            kas_status=status,
+            kas_score=(
+                0
+                if status is KnowledgeAssessmentStatusEnum.COMPLETED
+                else None
+            ),
+            kas_level=(
+                StepLevelEnum.BEGINNER if status in terminal else None
+            ),
+            kas_error_code=(
+                "generation_failed"
+                if status is KnowledgeAssessmentStatusEnum.FAILED
+                else None
+            ),
+            kas_completed_at=now if status in terminal else None,
+        )
+        db_session.add(assessment)
+        if flush:
+            await db_session.flush()
+        return assessment
+
+    return create
+
+
+@pytest.fixture
+def knowledge_question_factory(db_session: AsyncSession):
+    async def create(
+        assessment: KnowledgeAssessment,
+        *,
+        position: int = 1,
+        statement: str | None = None,
+        flush: bool = True,
+    ) -> KnowledgeAssessmentQuestion:
+        question = KnowledgeAssessmentQuestion(
+            kaq_id=uuid4(),
+            kaq_assessment_id=assessment.kas_id,
+            kaq_statement=statement or f"Pergunta {position}?",
+            kaq_position=position,
+        )
+        db_session.add(question)
+        if flush:
+            await db_session.flush()
+        return question
+
+    return create
+
+
+@pytest.fixture
+def knowledge_alternative_factory(db_session: AsyncSession):
+    async def create(
+        question: KnowledgeAssessmentQuestion,
+        *,
+        position: int = 1,
+        text: str | None = None,
+        is_correct: bool = False,
+        flush: bool = True,
+    ) -> KnowledgeAssessmentAlternative:
+        alternative = KnowledgeAssessmentAlternative(
+            kaa_id=uuid4(),
+            kaa_question_id=question.kaq_id,
+            kaa_text=text or f"Alternativa {position}",
+            kaa_position=position,
+            kaa_is_correct=is_correct,
+        )
+        db_session.add(alternative)
+        if flush:
+            await db_session.flush()
+        return alternative
+
+    return create
+
+
+@pytest.fixture
+def knowledge_answer_factory(db_session: AsyncSession):
+    async def create(
+        assessment: KnowledgeAssessment,
+        question: KnowledgeAssessmentQuestion,
+        alternative: KnowledgeAssessmentAlternative,
+        *,
+        flush: bool = True,
+    ) -> KnowledgeAssessmentAnswer:
+        answer = KnowledgeAssessmentAnswer(
+            kar_id=uuid4(),
+            kar_assessment_id=assessment.kas_id,
+            kar_question_id=question.kaq_id,
+            kar_alternative_id=alternative.kaa_id,
+        )
+        db_session.add(answer)
+        if flush:
+            await db_session.flush()
+        return answer
+
+    return create
+
+
+@pytest.fixture
+def knowledge_assessment_hierarchy_factory(
+    db_session: AsyncSession,
+    knowledge_assessment_factory,
+    knowledge_question_factory,
+    knowledge_alternative_factory,
+):
+    async def create() -> KnowledgeAssessmentHierarchy:
+        owner = User(
+            usr_id=uuid4(),
+            usr_email=f"{uuid4()}@example.com",
+            usr_name="Assessment Owner",
+            usr_password_hash="test-hash",
+            usr_is_deleted=False,
+        )
+        other_user = User(
+            usr_id=uuid4(),
+            usr_email=f"{uuid4()}@example.com",
+            usr_name="Other User",
+            usr_password_hash="test-hash",
+            usr_is_deleted=False,
+        )
+        db_session.add_all([owner, other_user])
+        await db_session.flush()
+        assessment = await knowledge_assessment_factory(
+            owner=owner,
+            status=KnowledgeAssessmentStatusEnum.GENERATED,
+        )
+        questions = []
+        correct_alternatives = []
+        incorrect_alternatives = []
+        for question_position in range(1, 6):
+            question = await knowledge_question_factory(
+                assessment,
+                position=question_position,
+            )
+            questions.append(question)
+            for alternative_position in range(1, 5):
+                alternative = await knowledge_alternative_factory(
+                    question,
+                    position=alternative_position,
+                    is_correct=alternative_position == 1,
+                )
+                if alternative.kaa_is_correct:
+                    correct_alternatives.append(alternative)
+                else:
+                    incorrect_alternatives.append(alternative)
+        return KnowledgeAssessmentHierarchy(
+            owner=owner,
+            other_user=other_user,
+            assessment=assessment,
+            questions=questions,
+            correct_alternatives=correct_alternatives,
+            incorrect_alternatives=incorrect_alternatives,
+        )
 
     return create
 

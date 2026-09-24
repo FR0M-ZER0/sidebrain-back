@@ -60,6 +60,35 @@ Rode o comando abaixo para abrir a interface do flower e monitorar o andamento d
 uv run celery -A sidebrain_back.core.celery_app flower
 ```
 
+## Avaliações de conhecimento
+
+A base autenticada é `/api/v1/assessments`:
+
+- `POST /api/v1/assessments` inicia a avaliação e retorna `202 pending` com
+  `Location`; um contexto ativo já gerado é reutilizado com `200 generated`.
+- `GET /api/v1/assessments/{assessment_id}` deve ser consultado por polling até
+  `generated`, `skipped` ou `failed`, e também retorna o resultado `completed`.
+- `POST /api/v1/assessments/{assessment_id}/answers` recebe exatamente cinco
+  pares `question_id`/`alternative_id` e conclui a avaliação.
+
+`subject` é obrigatório mesmo com `skip=true`. Nesse caminho, o worker não chama
+o provider e persiste `skipped`, `level=beginner`, `score=null` e nenhuma
+pergunta. Uma avaliação respondida usa os cortes: 0–1 `beginner`, 2–3
+`intermediate`, 4 `advanced` e 5 `pro`.
+
+Suba PostgreSQL e Redis, aplique as migrations e execute API e worker em
+terminais separados:
+
+```bash
+docker compose up -d
+uv run alembic upgrade head
+uv run dev
+uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
+```
+
+O gabarito, IDs do provider e detalhes de falha nunca aparecem na API. IDs
+inexistentes e avaliações de outra pessoa retornam o mesmo `404`.
+
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)
 

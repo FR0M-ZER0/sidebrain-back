@@ -190,3 +190,34 @@ publicando `lesson_files`. Consulte o
 ## Versionamento de API
 
 Novas versões (`v2`, `v3`, ...) devem ser adicionadas como novos módulos em `routers/`, preservando versões anteriores enquanto necessário para compatibilidade.
+
+### Avaliações de conhecimento
+
+Os endpoints em `routers/v1/knowledge_assessment_router.py` seguem o fluxo
+`router -> service -> repository -> model`. O router autentica, valida o
+contrato HTTP e define status/headers; `KnowledgeAssessmentService` aplica
+deduplicação, estados, correção e limites transacionais;
+`KnowledgeAssessmentRepository` concentra SQL, ownership, locks e montagem do
+agregado.
+
+O POST persiste um `assessment_id` canônico em `pending` e efetiva o commit
+antes de publicar `tasks.prepare_knowledge_assessment`. A task abre uma sessão
+própria. No fluxo normal, ela lê o registro sem lock, chama o provider e só
+então obtém `FOR UPDATE` para persistir atomicamente cinco perguntas e vinte
+alternativas. Assim, nenhuma chamada externa mantém lock ou transação longa.
+No skip, a task não cria o provider e transiciona diretamente para
+`skipped/beginner`.
+
+O agregado possui os estados `pending`, `generated`, `skipped`, `completed` e
+`failed`. O índice parcial por usuário e fingerprint impede dois estados ativos
+do mesmo contexto. Respostas são aceitas apenas em `generated`; a avaliação é
+bloqueada, os cinco vínculos são validados, a correção usa exclusivamente
+`is_correct` persistido e respostas, score, level e `completed_at` são gravados
+na mesma transação.
+
+Todas as consultas combinam `assessment_id` e `user_id` na mesma cláusula para
+que inexistência e ownership incompatível produzam o mesmo `404`. Perguntas,
+alternativas e respostas usam `selectinload`, mantendo quantidade constante de
+consultas e ordem por posição. Schemas públicos convertem `kas_*`, `kaq_*` e
+`kaa_*` em nomes de negócio e nunca expõem o gabarito. O nível pertence à
+avaliação e ao assunto; o fluxo não altera User, Track, Step, Lesson ou Mission.

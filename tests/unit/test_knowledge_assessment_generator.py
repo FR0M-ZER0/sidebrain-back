@@ -19,8 +19,10 @@ class FakeCompletions:
     def __init__(self, *, content: str | None = None, error=None):
         self.content = content
         self.error = error
+        self.last_kwargs = None
 
-    def create(self, **_kwargs):
+    def create(self, **kwargs):
+        self.last_kwargs = kwargs
         if self.error is not None:
             raise self.error
         return SimpleNamespace(
@@ -39,6 +41,26 @@ def make_generator(*, content: str | None = None, error=None):
         )
     )
     return KnowledgeAssessmentGenerator(client)
+
+
+def _provider_payload() -> dict:
+    return {
+        "questions": [
+            {
+                "id": f"q{question}",
+                "statement": f"Pergunta {question}",
+                "alternatives": [
+                    {
+                        "id": f"q{question}a{alternative}",
+                        "text": f"A{alternative}",
+                    }
+                    for alternative in range(1, 5)
+                ],
+                "correct_alternative_id": f"q{question}a1",
+            }
+            for question in range(1, 6)
+        ]
+    }
 
 
 def test_provider_exception_is_not_replaced_by_synthetic_assessment():
@@ -76,3 +98,42 @@ def test_incomplete_provider_payload_is_rejected_without_fallback():
                 skip=False,
             )
         )
+
+
+def test_v2_prompt_delegates_only_questions_and_private_answer_key():
+    generator = make_generator(content=json.dumps(_provider_payload()))
+
+    payload = generator.generate("Python", "FastAPI")
+
+    assert payload.model_dump(mode="json") == _provider_payload()
+    request = generator.client.chat.completions
+    prompt = request.last_kwargs["messages"][1]["content"]
+    assert "correct_alternative_id" in prompt
+    assert "assessment_id" not in prompt
+    assert "'status'" not in prompt
+    assert "'level'" not in prompt
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda payload: payload["questions"].pop(),
+        lambda payload: payload["questions"].__setitem__(
+            1, payload["questions"][0]
+        ),
+        lambda payload: payload["questions"][0]["alternatives"].pop(),
+        lambda payload: payload["questions"][0].__setitem__(
+            "correct_alternative_id", "foreign"
+        ),
+        lambda payload: payload.__setitem__("status", "generated"),
+    ],
+)
+def test_generator_rejects_incomplete_duplicate_or_provider_owned_fields(
+    mutate,
+):
+    payload = _provider_payload()
+    mutate(payload)
+    generator = make_generator(content=json.dumps(payload))
+
+    with pytest.raises(ValueError):
+        generator.generate("Python")
