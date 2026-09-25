@@ -1,0 +1,155 @@
+name: CI - Integracao Continua
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: ["dev", "hml", "main"]
+
+jobs:
+  validate-standards:
+    name: "Validacao de Padroes (Branch, Commits & PR)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codigo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar Nome da Branch
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "🔍 Analisando branch de origem: $BRANCH_NAME"
+
+          # Bypass para branches de ambiente / releases
+          if [[ "$BRANCH_NAME" =~ ^(dev|hml|main|release\/.*)$ ]]; then
+            echo "✅ Branch de ambiente/release permitida: $BRANCH_NAME"
+            exit 0
+          fi
+
+          # Valida: tipo/ID-TASK-descricao-kebab-case
+          BRANCH_REGEX="^(feat|fix|hotfix|docs|style|refactor|chore|test|ci)\/([a-zA-Z0-9]+-[0-9]+)-[a-z0-9-]+$"
+
+          if [[ ! "$BRANCH_NAME" =~ $BRANCH_REGEX ]]; then
+            echo "::error title=Branch Fora do Padrão::A branch '$BRANCH_NAME' não segue o padrão do time."
+            echo "--------------------------------------------------"
+            echo "👉 Formato definido: tipo/task-id-descrição"
+            echo "👉 Exemplo esperado: ci/SDB-64-criar-workflow-ci"
+            echo "👉 Tipos aceitos: feat, fix, hotfix, docs, style, refactor, chore, test, ci"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+          echo "✅ Nome da branch aprovado!"
+
+      - name: Validar Mensagens de Commit
+        run: |
+          echo "🔍 Analisando commits do PR..."
+          COMMITS=$(git log --no-merges --format=%s ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          COMMIT_REGEX="^(feat|fix|docs|style|refactor|chore|test|ci)(!?)\(([a-zA-Z0-9]+-[0-9]+)\):\ .+$"
+
+          HAS_ERROR=0
+          while IFS= read -r MSG; do
+            if [ -n "$MSG" ]; then
+              if [[ ! "$MSG" =~ $COMMIT_REGEX ]]; then
+                echo "::error title=Commit Inválido::Commit fora da convenção: '$MSG'"
+                HAS_ERROR=1
+              else
+                echo "✅ Commit válido: $MSG"
+              fi
+            fi
+          done <<< "$COMMITS"
+
+          if [ $HAS_ERROR -ne 0 ]; then
+            echo "--------------------------------------------------"
+            echo "❌ Encontrado commit fora do padrão!"
+            echo "👉 Formato esperado: tipo(id-task): descrição curta"
+            echo "👉 Exemplo correto:  ci(SDB-64): adiciona workflow para CI"
+            echo "👉 Tipos aceitos:    feat, fix, docs, style, refactor, chore, test, ci"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+
+      - name: Validar Titulo do PR
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "🔍 Analisando título do PR: $PR_TITLE"
+
+          if [[ "$BRANCH_NAME" =~ ^(dev|hml)$ ]]; then
+            if [[ "$PR_TITLE" =~ ^(release|Release|RELEASE):?\ .+$ ]]; then
+              echo "✅ Título de PR de release aprovado: $PR_TITLE"
+              exit 0
+            fi
+          fi
+
+          PR_REGEX="^(\([a-zA-Z0-9]+-[0-9]+\)|(feat|fix|hotfix|docs|style|refactor|chore|test|ci)(!?)\([a-zA-Z0-9]+-[0-9]+\)):\ .+$"
+
+          if [[ ! "$PR_TITLE" =~ $PR_REGEX ]]; then
+            echo "::error title=Título do PR Inválido::O título '$PR_TITLE' não atende ao padrão."
+            echo "--------------------------------------------------"
+            echo "👉 Formato esperado: (id-task): Descrição OU tipo(id-task): Descrição"
+            echo "👉 Exemplo oficial:  (SDB-64): Adiciona workflow para CI"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+          echo "✅ Título do Pull Request aprovado!"
+
+  lint-and-test:
+    name: "Qualidade de Codigo (Ruff & Pytest)"
+    runs-on: ubuntu-latest
+    needs: [validate-standards]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sidebrain_admin
+          POSTGRES_PASSWORD: sidebrain_super_secret_2026
+          POSTGRES_DB: sidebrain_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      HOST: 0.0.0.0
+      PORT: 8000
+      MODE: test
+      DATABASE_URL: postgresql+asyncpg://sidebrain_admin:sidebrain_super_secret_2026@localhost:5432/sidebrain_db
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: sidebrain_admin
+      POSTGRES_PASSWORD: sidebrain_super_secret_2026
+      POSTGRES_DB: sidebrain_db
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      GROQ_API_KEY: mock_groq_api_key_for_testing
+      GROQ_MODEL: llama-3.3-70b-versatile
+
+    steps:
+      - name: Checkout Codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Dependencias
+        run: uv sync --all-groups
+
+      - name: Executar Ruff Linter
+        run: uv run ruff check
+
+      - name: Executar Ruff Formatter Check
+        run: uv run ruff format --check
+
+      - name: Executar Testes com Pytest
+        run: uv run pytest
