@@ -35,6 +35,7 @@ class LearningContext(BaseModel):
     topic: str = Field(min_length=1)
     knowledge_level: StepLevelEnum | None = None
     assessment_answers: list[AssessmentAnswer] | None = None
+    assessment_id: UUID | None = None
 
     _validate_goal = field_validator("goal", "topic")(_required_text)
 

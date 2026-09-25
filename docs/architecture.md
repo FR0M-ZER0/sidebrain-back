@@ -220,4 +220,7 @@ que inexistência e ownership incompatível produzam o mesmo `404`. Perguntas,
 alternativas e respostas usam `selectinload`, mantendo quantidade constante de
 consultas e ordem por posição. Schemas públicos convertem `kas_*`, `kaq_*` e
 `kaa_*` em nomes de negócio e nunca expõem o gabarito. O nível pertence à
-avaliação e ao assunto; o fluxo não altera User, Track, Step, Lesson ou Mission.
+avaliação e ao assunto. Quando uma geração de trilha usa uma avaliação concluída
+(ou ignorada), `GenerationRequest.assessment_id` preserva a referência à avaliação;
+o vínculo é opcional e usa `ON DELETE SET NULL`. O snapshot de nível e respostas
+enviado à geração continua armazenado na própria solicitação.

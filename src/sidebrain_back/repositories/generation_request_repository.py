@@ -41,6 +41,7 @@ class GenerationRequestRepository:
         topic: str,
         knowledge_level: str | None,
         assessment_answers: list[dict] | None,
+        assessment_id: UUID | None = None,
     ) -> GenerationRequest:
         request = GenerationRequest(
             request_id=request_id,
@@ -50,6 +51,7 @@ class GenerationRequestRepository:
             topic=topic,
             knowledge_level=knowledge_level,
             assessment_answers=assessment_answers,
+            assessment_id=assessment_id,
             status=GenerationStatusEnum.PENDING,
         )
         self.db.add(request)

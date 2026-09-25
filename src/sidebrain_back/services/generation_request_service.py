@@ -23,6 +23,11 @@ class GenerationRequestService:
                 answer.model_dump(mode="json")
                 for answer in context.assessment_answers or []
             ],
+            "assessment_id": (
+                str(context.assessment_id)
+                if context.assessment_id
+                else None
+            ),
         }
 
     @classmethod
