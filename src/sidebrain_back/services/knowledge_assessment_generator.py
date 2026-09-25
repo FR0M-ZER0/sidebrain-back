@@ -4,6 +4,9 @@ import json
 
 from sidebrain_back.core.constants import Env
 from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.schemas.knowledge_assessment_schema import (
+    GeneratedAssessmentPayload,
+)
 
 
 class KnowledgeAssessmentGenerator:
@@ -15,18 +18,20 @@ class KnowledgeAssessmentGenerator:
         return (
             "Responda somente em JSON. Crie uma avaliação de conhecimento "
             f"para o assunto '{subject}'.{objective_text} "
-            "Retorne um objeto com os campos 'assessment_id', 'status', "
-            "'level', e 'questions'. 'assessment_id' deve ser um UUID "
-            "v4 válido (ex.: '123e4567-e89b-12d3-a456-426614174000'). "
-            "Não use slugs ou códigos como 'async-fastapi-001'. "
-            "'status' deve ser 'generated'. "
-            "'level' deve ser null. 'questions' deve conter exatamente "
-            "5 itens, "
-            "cada um com 'id', 'statement' e 'alternatives' (4 alternativas). "
-            "Cada alternativa deve ter 'id' e 'text'."
+            "Retorne um objeto que contenha somente 'questions'. "
+            "'questions' deve conter exatamente 5 itens distintos; cada "
+            "item deve possuir 'id', 'statement', 'alternatives' com "
+            "exatamente 4 alternativas distintas e "
+            "'correct_alternative_id'. Cada alternativa deve possuir "
+            "somente 'id' e 'text'. O 'correct_alternative_id' deve ser o "
+            "id de exatamente uma alternativa da própria pergunta."
         )
 
-    def generate(self, subject: str, objective: str | None = None) -> dict:
+    def generate(
+        self,
+        subject: str,
+        objective: str | None = None,
+    ) -> GeneratedAssessmentPayload:
         if not subject or not subject.strip():
             raise ValueError("Assunto obrigatório para gerar a avaliação.")
 
@@ -55,8 +60,6 @@ class KnowledgeAssessmentGenerator:
             raise ValueError("Resposta vazia do provedor.")
 
         payload = json.loads(content)
-
         if not isinstance(payload, dict):
             raise ValueError("Resposta do provedor inválida.")
-
-        return payload
+        return GeneratedAssessmentPayload.model_validate(payload)

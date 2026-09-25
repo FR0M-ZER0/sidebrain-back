@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from sidebrain_back.models.badge_progress_model import BadgeProgress
     from sidebrain_back.models.day_streak_model import DayStreak
     from sidebrain_back.models.feedback_model import Feedback
+    from sidebrain_back.models.knowledge_assessment_model import (
+        KnowledgeAssessment,
+    )
     from sidebrain_back.models.login_model import Login
     from sidebrain_back.models.mission_progress_model import MissionProgress
     from sidebrain_back.models.track_model import Track
@@ -64,6 +67,9 @@ class User(Base):
     )
     day_streak: Mapped[Optional["DayStreak"]] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
+    knowledge_assessments: Mapped[list["KnowledgeAssessment"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
