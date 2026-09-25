@@ -17,6 +17,7 @@ def test_generation_input_requires_stable_request_and_learning_context():
 
     assert payload.knowledge_level is None
     assert payload.assessment_answers is None
+    assert payload.assessment_id is None
 
 
 def test_generation_results_are_serializable_success_or_failure():
