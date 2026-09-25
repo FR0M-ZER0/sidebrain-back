@@ -3,6 +3,7 @@ from sidebrain_back.schemas.generation_schema import GeneratedTrack
 
 def test_initial_content_is_limited_to_first_step():
     generated = GeneratedTrack(
+        icon="📘",
         title="Python",
         description="Fundamentos",
         steps=[

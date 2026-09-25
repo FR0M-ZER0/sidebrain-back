@@ -187,6 +187,9 @@ class StepResponse(PublicModel):
 
 class TrackResponse(PublicModel):
     id: UUID = Field(alias="trk_id", serialization_alias="id")
+    icon: str | None = Field(
+        default=None, alias="trk_icon", serialization_alias="icon"
+    )
     title: str = Field(alias="trk_title", serialization_alias="title")
     description: str | None = Field(
         default=None,

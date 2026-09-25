@@ -47,9 +47,13 @@ class GenerationService:
             ],
         }
         return (
-            "Gere uma trilha completa em JSON. Retorne um único "
+            "Gere uma trilha completa em JSON. Escolha um único emoji "
+            "que represente o tema e o objetivo de aprendizagem e retorne-o "
+            "no campo icon. Retorne um único "
             "objeto JSON, sem texto fora dele, com exatamente as "
-            "chaves title, description e steps. Não retorne uma "
+            "chaves icon, title, description e steps. O campo icon deve "
+            "conter apenas um emoji, sem texto ou espaço adicional. "
+            "Não retorne uma "
             "lista. Inclua todas as etapas na ordem da progressão, "
             "com position contíguas a partir de 1. Gere conteúdo "
             "detalhado somente para a etapa de posição 1; etapas "

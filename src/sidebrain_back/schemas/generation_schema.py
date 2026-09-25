@@ -108,11 +108,14 @@ class GeneratedStep(BaseModel):
 
 class GeneratedTrack(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    icon: str = Field(min_length=1, max_length=32)
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
     steps: list[GeneratedStep] = Field(min_length=1)
 
-    _validate_text = field_validator("title", "description")(_required_text)
+    _validate_text = field_validator("icon", "title", "description")(
+        _required_text
+    )
 
     @model_validator(mode="after")
     def validate_structure(self) -> "GeneratedTrack":

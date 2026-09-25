@@ -3,6 +3,7 @@ from sidebrain_back.schemas.generation_schema import GeneratedTrack
 
 def test_generation_structure_keeps_ordered_levels():
     generated = GeneratedTrack(
+        icon="📘",
         title="Python",
         description="Fundamentos",
         steps=[

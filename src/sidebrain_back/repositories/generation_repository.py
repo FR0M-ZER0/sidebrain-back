@@ -32,6 +32,7 @@ class GenerationRepository:
         track = Track(
             trk_user_id=user_id,
             trk_generation_request_id=request_id,
+            trk_icon=generated.icon,
             trk_title=generated.title,
             trk_description=generated.description,
             trk_is_deleted=False,

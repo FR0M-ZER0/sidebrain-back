@@ -18,6 +18,7 @@ def _step(position: int, **extra):
 def test_generated_track_requires_contiguous_positions_and_future_structure():
     with pytest.raises(ValidationError):
         GeneratedTrack(
+            icon="📘",
             title="Trilha",
             description="Descrição",
             steps=[_step(1), _step(3)],
@@ -25,6 +26,7 @@ def test_generated_track_requires_contiguous_positions_and_future_structure():
 
     with pytest.raises(ValidationError):
         GeneratedTrack(
+            icon="📘",
             title="Trilha",
             description="Descrição",
             steps=[
@@ -48,6 +50,7 @@ def test_generated_track_requires_contiguous_positions_and_future_structure():
 
 def test_generated_track_accepts_first_step_content_and_optional_mission():
     generated = GeneratedTrack(
+        icon="📘",
         title="Trilha",
         description="Descrição",
         steps=[
