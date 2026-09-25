@@ -24,6 +24,8 @@ def test_generation_prompt_contains_context_and_future_content_boundary():
     prompt = GenerationService.build_prompt(payload)
 
     assert "Aprender Python" in prompt
+    assert "um único emoji" in prompt
+    assert "campo icon" in prompt
     assert "beginner" in prompt
     assert "somente para a etapa de posição 1" in prompt
     future_instruction = (
