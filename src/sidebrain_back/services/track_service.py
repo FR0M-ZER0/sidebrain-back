@@ -17,6 +17,7 @@ from sidebrain_back.repositories.track_repository import (
 )
 from sidebrain_back.schemas.generation_schema import (
     GenerationAccepted,
+    GenerationProgress,
     LearningContext,
     PrepareNextAccepted,
     PrepareNextSkipped,
@@ -201,6 +202,25 @@ class TrackService:
             raise ProblemDetailError(
                 500, "Erro interno", "Não foi possível criar a trilha."
             ) from error
+
+    async def get_generation_progress(
+        self, user: User, request_id: UUID
+    ) -> GenerationProgress:
+        request = await self.generation_requests.get_by_request_and_user(
+            request_id, user.usr_id
+        )
+        if request is None:
+            raise ProblemDetailError(
+                404, "Não encontrado", "Solicitação de geração não encontrada"
+            )
+        progress = GenerationProgress(
+            request_id=request.request_id,
+            status=request.status,
+            track_id=request.track_id,
+            error_code=request.error_code,
+        )
+        await self.db.rollback()
+        return progress
 
     async def _create_legacy_track(
         self, user: User, payload: TrackCreate

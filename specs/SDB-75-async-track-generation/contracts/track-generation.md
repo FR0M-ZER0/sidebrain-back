@@ -31,6 +31,28 @@ Base: `/api/v1`
 
 A resposta não contém Track e não espera o provedor externo. Repetição com o mesmo usuário, `request_id` e fingerprint retorna o mesmo identificador sem publicar uma segunda task.
 
+## GET `/tracks/generations/{request_id}/events`
+
+Abre uma conexão `text/event-stream` autenticada para acompanhar a solicitação.
+O primeiro evento é enviado imediatamente; as atualizações seguintes são
+enviadas quando o estado persistido muda. A conexão é encerrada após um estado
+terminal (`succeeded` ou `failed`). Enquanto não há mudança, o servidor envia
+comentários de keep-alive.
+
+Exemplo:
+
+```text
+event: generation
+data: {"request_id":"uuid","status":"pending","track_id":null,"error_code":null}
+
+event: generation
+data: {"request_id":"uuid","status":"succeeded","track_id":"uuid","error_code":null}
+```
+
+O payload de falha inclui `error_code` e `status: "failed"`. A solicitação é
+localizada por `request_id` e pelo usuário autenticado; inexistência ou
+ownership incompatível retorna o mesmo `404` Problem Details.
+
 ### Conflito `409`
 
 O mesmo `request_id` com usuário ou contexto diferente retorna Problem Details RFC 9457:

@@ -9,6 +9,7 @@ from pydantic import (
 )
 
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
@@ -41,6 +42,13 @@ class LearningContext(BaseModel):
 class GenerationAccepted(BaseModel):
     status: str = "pending"
     request_id: UUID
+
+
+class GenerationProgress(BaseModel):
+    request_id: UUID
+    status: GenerationStatusEnum
+    track_id: UUID | None = None
+    error_code: str | None = None
 
 
 class PrepareNextAccepted(BaseModel):

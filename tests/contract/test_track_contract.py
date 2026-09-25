@@ -10,6 +10,7 @@ def test_track_endpoints_require_authentication():
 
     for method, path in (
         ("post", "/api/v1/tracks"),
+        ("get", "/api/v1/tracks/generations/not-a-uuid/events"),
         ("get", "/api/v1/tracks"),
         ("get", "/api/v1/tracks/not-a-uuid"),
         ("patch", "/api/v1/tracks/not-a-uuid"),
