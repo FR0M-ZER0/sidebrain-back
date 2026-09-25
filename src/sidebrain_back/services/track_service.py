@@ -204,10 +204,10 @@ class TrackService:
             ) from error
 
     async def get_generation_progress(
-        self, user: User, request_id: UUID
+        self, user_id: UUID, request_id: UUID
     ) -> GenerationProgress:
         request = await self.generation_requests.get_by_request_and_user(
-            request_id, user.usr_id
+            request_id, user_id
         )
         if request is None:
             raise ProblemDetailError(

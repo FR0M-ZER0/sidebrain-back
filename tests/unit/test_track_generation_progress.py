@@ -5,7 +5,6 @@ import pytest
 
 from sidebrain_back.core.errors import ProblemDetailError
 from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
-from sidebrain_back.models.user_model import User
 from sidebrain_back.services.track_service import TrackService
 
 
@@ -26,15 +25,6 @@ class FakeSession:
         pass
 
 
-def _user(user_id):
-    return User(
-        usr_id=user_id,
-        usr_email="user@example.com",
-        usr_name="User",
-        usr_password_hash="hash",
-    )
-
-
 @pytest.mark.anyio
 async def test_get_generation_progress_returns_owned_request_state():
     user_id = uuid4()
@@ -51,7 +41,7 @@ async def test_get_generation_progress_returns_owned_request_state():
     service = TrackService(None, FakeSession(), requests)
 
     progress = await service.get_generation_progress(
-        _user(user_id), request_id
+        user_id, request_id
     )
 
     assert progress.model_dump() == {
@@ -69,6 +59,6 @@ async def test_get_generation_progress_hides_missing_or_unowned_request():
     service = TrackService(None, FakeSession(), FakeGenerationRequests(None))
 
     with pytest.raises(ProblemDetailError) as error:
-        await service.get_generation_progress(_user(uuid4()), uuid4())
+        await service.get_generation_progress(uuid4(), uuid4())
 
     assert error.value.status_code == 404

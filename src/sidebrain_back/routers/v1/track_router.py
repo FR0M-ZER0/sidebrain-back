@@ -32,7 +32,8 @@ async def stream_generation_progress(
     user: User = Depends(get_current_user),  # noqa: B008
     service: TrackService = Depends(get_track_service),  # noqa: B008
 ) -> StreamingResponse:
-    progress = await service.get_generation_progress(user, request_id)
+    user_id = user.usr_id
+    progress = await service.get_generation_progress(user_id, request_id)
 
     async def events():
         current = progress
@@ -44,7 +45,9 @@ async def stream_generation_progress(
             await asyncio.sleep(1)
             if await request.is_disconnected():
                 break
-            updated = await service.get_generation_progress(user, request_id)
+            updated = await service.get_generation_progress(
+                user_id, request_id
+            )
             if updated.status != current.status:
                 current = updated
                 yield (
