@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -8,10 +10,14 @@ from sqlalchemy.orm import DeclarativeBase
 from sidebrain_back.core.constants import Env
 
 DATABASE_URL = (
-    f"postgresql+asyncpg://"
-    f"{Env.POSTGRES_USER}:{Env.POSTGRES_PASSWORD}"
-    f"@{Env.POSTGRES_HOST}:{Env.POSTGRES_PORT}"
-    f"/{Env.POSTGRES_DB}"
+    os.getenv("DATABASE_URL")
+    or getattr(Env, "DATABASE_URL", None)
+    or (
+        f"postgresql+asyncpg://"
+        f"{Env.POSTGRES_USER}:{Env.POSTGRES_PASSWORD}"
+        f"@{Env.POSTGRES_HOST}:{Env.POSTGRES_PORT}"
+        f"/{Env.POSTGRES_DB}"
+    )
 )
 
 engine = create_async_engine(DATABASE_URL, echo=Env.MODE == "dev")

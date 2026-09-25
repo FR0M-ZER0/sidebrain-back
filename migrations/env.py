@@ -1,10 +1,18 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
 
 from sidebrain_back.core.constants import Env
 from sidebrain_back.core.database import Base
@@ -27,13 +35,16 @@ from sidebrain_back.models.user_model import User
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option(
-    "sqlalchemy.url",
-    (
+
+database_url = (
+    os.getenv("DATABASE_URL")
+    or getattr(Env, "DATABASE_URL", None)
+    or (
         f"postgresql+asyncpg://{Env.POSTGRES_USER}:{Env.POSTGRES_PASSWORD}"
         f"@{Env.POSTGRES_HOST}:{Env.POSTGRES_PORT}/{Env.POSTGRES_DB}"
-    ),
+    )
 )
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
