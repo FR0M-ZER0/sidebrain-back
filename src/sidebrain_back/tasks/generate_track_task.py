@@ -3,7 +3,7 @@ import logging
 from uuid import UUID
 
 from celery.exceptions import MaxRetriesExceededError
-from groq import APIConnectionError, APITimeoutError, RateLimitError
+from groq import APIConnectionError, APITimeoutError, GroqError, RateLimitError
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -77,6 +77,21 @@ def generate_track_task(self, **kwargs) -> dict:
         )
         result = GenerationFailure(
             request_id=payload.request_id, error_code=error.code
+        )
+        asyncio.run(_mark_failed(payload.request_id, result.error_code))
+        return result.model_dump(mode="json")
+    except GroqError as error:
+        logger.exception(
+            "track generation provider request failed",
+            extra={
+                "request_id": str(payload.request_id),
+                "task_id": self.request.id,
+                "error_category": type(error).__name__,
+            },
+        )
+        result = GenerationFailure(
+            request_id=payload.request_id,
+            error_code="generation_provider_failed",
         )
         asyncio.run(_mark_failed(payload.request_id, result.error_code))
         return result.model_dump(mode="json")
