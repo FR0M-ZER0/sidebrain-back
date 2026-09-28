@@ -46,17 +46,21 @@ def generate_track_task(self, **kwargs) -> dict:
         )
         asyncio.run(_mark_failed(request_id, result.error_code))
         return result.model_dump(mode="json")
+    return asyncio.run(_process_generation(payload, self))
+
+
+async def _process_generation(payload: GenerationInput, task) -> dict:
     try:
-        return asyncio.run(_run_generation(payload))
+        return await _run_generation(payload)
     except TRANSIENT_ERRORS as error:
         try:
-            raise self.retry(exc=error)
+            task.retry(exc=error)
         except MaxRetriesExceededError:
             logger.warning(
                 "track generation retries exhausted",
                 extra={
                     "request_id": str(payload.request_id),
-                    "task_id": self.request.id,
+                    "task_id": task.request.id,
                     "error_category": "transient",
                 },
             )
@@ -64,28 +68,28 @@ def generate_track_task(self, **kwargs) -> dict:
                 request_id=payload.request_id,
                 error_code="generation_transient_failed",
             )
-            asyncio.run(_mark_failed(payload.request_id, result.error_code))
+            await _mark_failed(payload.request_id, result.error_code)
             return result.model_dump(mode="json")
     except GenerationError as error:
         logger.warning(
             "track generation failed",
             extra={
                 "request_id": str(payload.request_id),
-                "task_id": self.request.id,
+                "task_id": task.request.id,
                 "error_category": error.code,
             },
         )
         result = GenerationFailure(
             request_id=payload.request_id, error_code=error.code
         )
-        asyncio.run(_mark_failed(payload.request_id, result.error_code))
+        await _mark_failed(payload.request_id, result.error_code)
         return result.model_dump(mode="json")
     except GroqError as error:
         logger.exception(
             "track generation provider request failed",
             extra={
                 "request_id": str(payload.request_id),
-                "task_id": self.request.id,
+                "task_id": task.request.id,
                 "error_category": type(error).__name__,
             },
         )
@@ -93,7 +97,7 @@ def generate_track_task(self, **kwargs) -> dict:
             request_id=payload.request_id,
             error_code="generation_provider_failed",
         )
-        asyncio.run(_mark_failed(payload.request_id, result.error_code))
+        await _mark_failed(payload.request_id, result.error_code)
         return result.model_dump(mode="json")
 
 

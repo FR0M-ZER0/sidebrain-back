@@ -80,3 +80,19 @@ async def test_sse_reuses_captured_user_id_after_orm_user_expires(monkeypatch):
     assert '"status":"pending"' in events[0]
     assert '"status":"succeeded"' in events[1]
     assert user.read_count == 1
+
+
+@pytest.mark.anyio
+async def test_get_generation_status_returns_owned_request_state():
+    user_id = uuid4()
+    request_id = uuid4()
+    user = ExpiringUser(user_id)
+    service = FakeTrackService(user_id, request_id)
+
+    progress = await track_router.get_generation_status(
+        request_id, user, service
+    )
+
+    assert progress.request_id == request_id
+    assert progress.status == GenerationStatusEnum.PENDING
+    assert user.read_count == 1
