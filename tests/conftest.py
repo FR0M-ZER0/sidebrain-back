@@ -365,9 +365,7 @@ def knowledge_assessment_factory(db_session: AsyncSession):
                 if status is KnowledgeAssessmentStatusEnum.COMPLETED
                 else None
             ),
-            kas_level=(
-                StepLevelEnum.BEGINNER if status in terminal else None
-            ),
+            kas_level=(StepLevelEnum.BEGINNER if status in terminal else None),
             kas_error_code=(
                 "generation_failed"
                 if status is KnowledgeAssessmentStatusEnum.FAILED

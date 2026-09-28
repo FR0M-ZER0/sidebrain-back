@@ -62,12 +62,12 @@ class KnowledgeAssessmentQuestion(Base):
     assessment: Mapped["KnowledgeAssessment"] = relationship(
         back_populates="questions"
     )
-    alternatives: Mapped[
-        list["KnowledgeAssessmentAlternative"]
-    ] = relationship(
-        back_populates="question",
-        cascade="all, delete-orphan",
-        order_by="KnowledgeAssessmentAlternative.kaa_position.asc()",
+    alternatives: Mapped[list["KnowledgeAssessmentAlternative"]] = (
+        relationship(
+            back_populates="question",
+            cascade="all, delete-orphan",
+            order_by="KnowledgeAssessmentAlternative.kaa_position.asc()",
+        )
     )
     answers: Mapped[list["KnowledgeAssessmentAnswer"]] = relationship(
         back_populates="question",

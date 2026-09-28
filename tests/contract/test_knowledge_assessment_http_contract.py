@@ -130,8 +130,8 @@ def test_create_assessment_returns_location_and_state_specific_status(
     test_app, assessment_status, expected_status
 ):
     service = AssessmentHttpService(assessment_status)
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     response = TestClient(test_app).post(
@@ -166,8 +166,8 @@ def test_create_assessment_returns_location_and_state_specific_status(
     ],
 )
 def test_create_assessment_rejects_invalid_or_extra_fields(test_app, payload):
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: AssessmentHttpService()
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        AssessmentHttpService()
     )
 
     response = TestClient(test_app).post(
@@ -199,8 +199,8 @@ def test_publish_failure_uses_problem_details_503(test_app):
             error_code="generation_failed",
         )
     )
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     response = TestClient(test_app).post(
@@ -240,8 +240,8 @@ def _duplicate_answers_payload():
 
 def test_submit_answers_returns_completed_without_answer_key(test_app):
     service = AssessmentHttpService()
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     response = TestClient(test_app).post(
@@ -277,8 +277,8 @@ def test_submit_answers_maps_service_errors_to_problem_details(
             error_code=error_code,
         )
     )
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     response = TestClient(test_app).post(
@@ -303,8 +303,8 @@ def test_submit_answers_maps_service_errors_to_problem_details(
 def test_submit_answers_rejects_cardinality_duplicates_and_extras(
     test_app, payload
 ):
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: AssessmentHttpService()
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        AssessmentHttpService()
     )
 
     response = TestClient(test_app).post(
@@ -318,8 +318,8 @@ def test_submit_answers_rejects_cardinality_duplicates_and_extras(
 
 def test_skip_flow_is_pending_then_skipped_and_rejects_answers(test_app):
     pending_service = AssessmentHttpService()
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: pending_service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        pending_service
     )
     create_response = TestClient(test_app).post(
         "/api/v1/assessments",
@@ -333,8 +333,8 @@ def test_skip_flow_is_pending_then_skipped_and_rejects_answers(test_app):
     skipped_service = AssessmentHttpService(
         KnowledgeAssessmentStatusEnum.SKIPPED
     )
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: skipped_service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        skipped_service
     )
     get_response = TestClient(test_app).get(
         f"/api/v1/assessments/{assessment_id}"
@@ -396,8 +396,8 @@ def test_get_assessment_projects_each_public_state(
     error_code,
 ):
     service = AssessmentHttpService(assessment_status)
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     response = TestClient(test_app).get(
@@ -432,8 +432,8 @@ def test_get_assessment_returns_identical_404_for_missing_and_unowned(
         "Avaliação não encontrada.",
     )
     service = AssessmentHttpService(error=error)
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
 
     first = TestClient(test_app).get(f"/api/v1/assessments/{uuid4()}")
@@ -444,13 +444,11 @@ def test_get_assessment_returns_identical_404_for_missing_and_unowned(
 
 
 def test_get_assessment_rejects_invalid_uuid(test_app):
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: AssessmentHttpService()
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        AssessmentHttpService()
     )
 
-    response = TestClient(test_app).get(
-        "/api/v1/assessments/not-a-uuid"
-    )
+    response = TestClient(test_app).get("/api/v1/assessments/not-a-uuid")
 
     assert response.status_code == 422
     assert response.json()["status"] == 422

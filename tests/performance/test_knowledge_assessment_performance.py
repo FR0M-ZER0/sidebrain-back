@@ -85,8 +85,7 @@ async def test_sc007_confirmation_p95_under_two_seconds_with_100_requests(
 
 
 @pytest.mark.anyio
-async def test_sc008_real_worker_p95_under_thirty_seconds_for_100_assessments(
-):
+async def test_sc008_real_worker_p95_under_thirty_seconds_for_100_assessments():  # noqa: E501
     if os.getenv("RUN_REAL_ASSESSMENT_PERFORMANCE") != "1":
         pytest.skip(
             "Requer PostgreSQL, Redis e worker Celery reais; execute com "
