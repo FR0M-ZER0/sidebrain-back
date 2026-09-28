@@ -9,6 +9,7 @@ from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.quiz_schema import (
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
     QuizUpdateRequest,
 )
@@ -82,6 +83,14 @@ class ReadRepository:
         quiz.qui_is_deleted = True
         quiz.qui_updated_at = "same-instant"
         quiz.qui_deleted_at = quiz.qui_updated_at
+
+    async def create_answer(self, quiz_id, user_id, text, rate):
+        return SimpleNamespace(
+            ans_id=uuid4(),
+            ans_user_id=user_id,
+            ans_text=text,
+            ans_rate=rate,
+        )
 
 
 class FailingRepository(CreateRepository):
@@ -238,6 +247,47 @@ async def test_get_returns_not_found_for_unavailable_quiz():
         await service.get_quiz(make_user(), uuid4())
 
     assert error.value.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_submit_answer_saves_text_and_self_rating():
+    quiz = make_quiz()
+    session = FakeSession()
+
+    class SingleReadUser:
+        def __init__(self):
+            self.user_id = uuid4()
+            self.read_count = 0
+
+        @property
+        def usr_id(self):
+            self.read_count += 1
+            if self.read_count > 1:
+                raise AssertionError(
+                    "user ORM fields must not be read after rollback"
+                )
+            return self.user_id
+
+    class FakeEvaluator:
+        def evaluate(self, question, answer):
+            assert question == quiz.qui_question
+            assert answer == "My answer"
+            return AnswerRateEnum.PERFECT
+
+    service = QuizService(ReadRepository(quiz=quiz), session, FakeEvaluator())
+    user = SingleReadUser()
+
+    response = await service.submit_quiz_answer(
+        user,
+        quiz.qui_id,
+        QuizAnswerCreateRequest(text="  My answer  "),
+    )
+
+    assert response.text == "My answer"
+    assert response.user_id == user.user_id
+    assert response.rate == AnswerRateEnum.PERFECT
+    assert session.committed is True
+    assert user.read_count == 1
 
 
 @pytest.mark.anyio

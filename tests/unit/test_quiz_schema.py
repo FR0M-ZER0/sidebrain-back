@@ -6,6 +6,7 @@ import pytest
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.schemas.quiz_schema import (
     AnswerResponse,
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
     QuizResponse,
     QuizUpdateRequest,
@@ -83,3 +84,10 @@ def test_answer_response_rejects_unknown_rate():
                 "ans_rate": "invalid",
             }
         )
+
+
+def test_quiz_answer_request_accepts_only_student_text():
+    request = QuizAnswerCreateRequest(text="  Open response  ")
+    assert request.text == "Open response"
+    with pytest.raises(ValueError):
+        QuizAnswerCreateRequest(text="Answer", rate="perfect")

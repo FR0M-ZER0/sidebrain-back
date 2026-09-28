@@ -48,6 +48,14 @@ class CreateQuizService:
         quiz = self._quiz(uuid4())
         return quiz.model_copy(update={"id": quiz_id})
 
+    async def submit_quiz_answer(self, user, quiz_id, payload):
+        return AnswerResponse(
+            id=uuid4(),
+            user_id=user.usr_id,
+            text=payload.text,
+            rate=AnswerRateEnum.PERFECT,
+        )
+
     async def update_quiz(self, user, quiz_id, payload):
         quiz = await self.get_quiz(user, quiz_id)
         return quiz.model_copy(update={"question": payload.question})
@@ -177,6 +185,46 @@ def test_get_quiz_returns_public_contract(test_app):
     assert body["id"] == str(quiz_id)
     assert set(body) == {"id", "lesson_id", "question", "answers"}
     assert set(body["answers"][0]) == {"id", "user_id", "text", "rate"}
+
+
+def test_submit_quiz_answer_returns_created_answer(test_app):
+    test_app.dependency_overrides[get_quiz_service] = CreateQuizService
+    quiz_id = uuid4()
+
+    response = TestClient(test_app).post(
+        f"/api/v1/quizzes/{quiz_id}/answers",
+        json={"text": "  my response  "},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["text"] == "my response"
+    assert response.json()["rate"] == "perfect"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [{}, {"text": "   "}, {"text": "Answer", "rate": "perfect"}],
+)
+def test_submit_quiz_answer_rejects_invalid_payload(test_app, payload):
+    test_app.dependency_overrides[get_quiz_service] = CreateQuizService
+
+    response = TestClient(test_app).post(
+        f"/api/v1/quizzes/{uuid4()}/answers",
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["status"] == 422
+
+
+def test_submit_quiz_answer_requires_authentication():
+    response = TestClient(app).post(
+        f"/api/v1/quizzes/{uuid4()}/answers",
+        json={"text": "Answer"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["status"] == 401
 
 
 @pytest.mark.parametrize(

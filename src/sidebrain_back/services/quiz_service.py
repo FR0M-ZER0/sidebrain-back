@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import Depends
@@ -14,16 +15,29 @@ from sidebrain_back.repositories.quiz_repository import (
 )
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.quiz_schema import (
+    AnswerResponse,
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
     QuizResponse,
     QuizUpdateRequest,
 )
+from sidebrain_back.services.quiz_evaluation_service import (
+    QuizEvaluationService,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class QuizService:
-    def __init__(self, repository: QuizRepository, db: AsyncSession):
+    def __init__(
+        self,
+        repository: QuizRepository,
+        db: AsyncSession,
+        evaluator: QuizEvaluationService | None = None,
+    ):
         self.repository = repository
         self.db = db
+        self.evaluator = evaluator or QuizEvaluationService()
 
     async def _require_lesson(
         self,
@@ -106,6 +120,45 @@ class QuizService:
     ) -> QuizResponse:
         quiz = await self._require_quiz(user.usr_id, quiz_id)
         return QuizResponse.model_validate(quiz)
+
+    async def submit_quiz_answer(
+        self,
+        user: User,
+        quiz_id: UUID,
+        payload: QuizAnswerCreateRequest,
+    ) -> AnswerResponse:
+        user_id = user.usr_id
+        try:
+            quiz = await self._require_quiz(user_id, quiz_id)
+            question = quiz.qui_question
+            await self.db.rollback()
+            rate = self.evaluator.evaluate(question, payload.text)
+            answer = await self.repository.create_answer(
+                quiz_id,
+                user_id,
+                payload.text,
+                rate,
+            )
+            response = AnswerResponse.model_validate(answer)
+            await self.db.commit()
+            return response
+        except ProblemDetailError:
+            await self.db.rollback()
+            raise
+        except Exception as error:
+            await self.db.rollback()
+            logger.exception(
+                "Quiz answer evaluation or persistence failed",
+                extra={
+                    "quiz_id": str(quiz_id),
+                    "user_id": str(user_id),
+                },
+            )
+            raise ProblemDetailError(
+                500,
+                "Erro interno",
+                "Não foi possível registrar a resposta do quiz.",
+            ) from error
 
     async def update_quiz(
         self,

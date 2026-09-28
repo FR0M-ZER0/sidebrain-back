@@ -6,6 +6,8 @@ from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.quiz_schema import (
+    AnswerResponse,
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
     QuizResponse,
     QuizUpdateRequest,
@@ -55,6 +57,20 @@ async def get_quiz(
     service: QuizService = Depends(get_quiz_service),  # noqa: B008
 ) -> QuizResponse:
     return await service.get_quiz(user, quiz_id)
+
+
+@router.post(
+    "/quizzes/{quiz_id}/answers",
+    response_model=AnswerResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_quiz_answer(
+    quiz_id: UUID,
+    payload: QuizAnswerCreateRequest,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: QuizService = Depends(get_quiz_service),  # noqa: B008
+) -> AnswerResponse:
+    return await service.submit_quiz_answer(user, quiz_id, payload)
 
 
 @router.put("/quizzes/{quiz_id}", response_model=QuizResponse)

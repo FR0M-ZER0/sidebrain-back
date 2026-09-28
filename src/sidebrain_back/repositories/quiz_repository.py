@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
+from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.models.answer_model import Answer
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.step_model import Step
@@ -47,6 +49,23 @@ class QuizRepository:
         self.db.add(quiz)
         await self.db.flush()
         return quiz
+
+    async def create_answer(
+        self,
+        quiz_id: UUID,
+        user_id: UUID,
+        text: str,
+        rate: AnswerRateEnum,
+    ) -> Answer:
+        answer = Answer(
+            ans_question_id=quiz_id,
+            ans_user_id=user_id,
+            ans_text=text,
+            ans_rate=rate,
+        )
+        self.db.add(answer)
+        await self.db.flush()
+        return answer
 
     async def get_accessible_quiz(
         self,
