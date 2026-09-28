@@ -77,5 +77,8 @@ jobs:
       - name: Executar Format Check (Ruff)
         run: uv run ruff format --check .
 
+      - name: Executar Migrações do Banco (Alembic)
+        run: uv run alembic upgrade head
+
       - name: Executar Testes Automatizados (Pytest)
         run: uv run pytest
