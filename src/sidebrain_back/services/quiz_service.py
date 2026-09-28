@@ -24,6 +24,10 @@ from sidebrain_back.schemas.quiz_schema import (
 from sidebrain_back.services.quiz_evaluation_service import (
     QuizEvaluationService,
 )
+from sidebrain_back.services.track_service import (
+    TrackService,
+    get_track_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +38,12 @@ class QuizService:
         repository: QuizRepository,
         db: AsyncSession,
         evaluator: QuizEvaluationService | None = None,
+        track_service: TrackService | None = None,
     ):
         self.repository = repository
         self.db = db
         self.evaluator = evaluator or QuizEvaluationService()
+        self.track_service = track_service
 
     async def _require_lesson(
         self,
@@ -139,8 +145,25 @@ class QuizService:
                 payload.text,
                 rate,
             )
+            step_id = (
+                await self.repository.complete_lesson_if_quizzes_answered(
+                    quiz_id,
+                    user_id,
+                )
+            )
             response = AnswerResponse.model_validate(answer)
             await self.db.commit()
+            if step_id is not None and self.track_service is not None:
+                try:
+                    await self.track_service.enqueue_next_step_preparation(
+                        step_id
+                    )
+                except Exception:
+                    logger.exception(
+                        "Could not enqueue next step content after lesson "
+                        "completion",
+                        extra={"step_id": str(step_id)},
+                    )
             return response
         except ProblemDetailError:
             await self.db.rollback()
@@ -203,5 +226,6 @@ class QuizService:
 def get_quiz_service(
     repository: QuizRepository = Depends(get_quiz_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
+    track_service: TrackService = Depends(get_track_service),  # noqa: B008
 ) -> QuizService:
-    return QuizService(repository, db)
+    return QuizService(repository, db, track_service=track_service)

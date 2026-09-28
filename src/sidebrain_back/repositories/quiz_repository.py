@@ -2,12 +2,13 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.models.answer_model import Answer
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.quiz_model import Quiz
@@ -66,6 +67,57 @@ class QuizRepository:
         self.db.add(answer)
         await self.db.flush()
         return answer
+
+    async def complete_lesson_if_quizzes_answered(
+        self, quiz_id: UUID, user_id: UUID
+    ) -> UUID | None:
+        lesson_context = await self.db.execute(
+            select(Lesson.lsn_id, Lesson.lsn_step_id)
+            .join(Quiz, Quiz.qui_lesson_id == Lesson.lsn_id)
+            .where(Quiz.qui_id == quiz_id)
+        )
+        context = lesson_context.one_or_none()
+        if context is None:
+            return None
+
+        lesson_id, step_id = context
+        total_quizzes = int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(Quiz)
+                .where(
+                    Quiz.qui_lesson_id == lesson_id,
+                    Quiz.qui_is_deleted.is_(False),
+                )
+            )
+            or 0
+        )
+        answered_quizzes = int(
+            await self.db.scalar(
+                select(func.count(func.distinct(Answer.ans_question_id)))
+                .select_from(Answer)
+                .join(Quiz, Quiz.qui_id == Answer.ans_question_id)
+                .where(
+                    Quiz.qui_lesson_id == lesson_id,
+                    Quiz.qui_is_deleted.is_(False),
+                    Answer.ans_user_id == user_id,
+                )
+            )
+            or 0
+        )
+        if total_quizzes == 0 or answered_quizzes < total_quizzes:
+            return None
+
+        now = datetime.now(UTC).replace(tzinfo=None)
+        await self.db.execute(
+            update(Lesson)
+            .where(Lesson.lsn_id == lesson_id)
+            .values(
+                lsn_status=LessonStatusEnum.DONE,
+                lsn_updated_at=now,
+            )
+        )
+        return step_id
 
     async def get_accessible_quiz(
         self,

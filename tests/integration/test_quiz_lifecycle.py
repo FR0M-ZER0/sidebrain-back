@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from sidebrain_back.core.errors import ProblemDetailError
+from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.models.answer_model import Answer
 from sidebrain_back.models.quiz_model import Quiz
@@ -101,6 +102,46 @@ async def test_create_rejects_lesson_owned_by_another_user(
         )
 
     assert error.value.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_lesson_is_completed_after_user_answers_every_quiz(
+    db_session,
+    learning_hierarchy_factory,
+    quiz_factory,
+    answer_factory,
+):
+    hierarchy = await learning_hierarchy_factory()
+    first_quiz = await quiz_factory(hierarchy.lesson)
+    second_quiz = await quiz_factory(hierarchy.lesson)
+
+    repository = QuizRepository(db_session)
+    await answer_factory(
+        first_quiz,
+        hierarchy.user,
+        rate=AnswerRateEnum.GOOD,
+    )
+    assert (
+        await repository.complete_lesson_if_quizzes_answered(
+            first_quiz.qui_id,
+            hierarchy.user.usr_id,
+        )
+    ) is None
+
+    await answer_factory(
+        second_quiz,
+        hierarchy.user,
+        rate=AnswerRateEnum.GOOD,
+    )
+    completed_step_id = await repository.complete_lesson_if_quizzes_answered(
+        second_quiz.qui_id,
+        hierarchy.user.usr_id,
+    )
+    await db_session.flush()
+    await db_session.refresh(hierarchy.lesson)
+
+    assert completed_step_id == hierarchy.step.stp_id
+    assert hierarchy.lesson.lsn_status is LessonStatusEnum.DONE
 
 
 @pytest.mark.anyio

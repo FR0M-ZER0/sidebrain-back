@@ -92,6 +92,9 @@ class ReadRepository:
             ans_rate=rate,
         )
 
+    async def complete_lesson_if_quizzes_answered(self, quiz_id, user_id):
+        return None
+
 
 class FailingRepository(CreateRepository):
     async def create(self, lesson_id: UUID, question: str) -> Quiz:
@@ -288,6 +291,44 @@ async def test_submit_answer_saves_text_and_self_rating():
     assert response.rate == AnswerRateEnum.PERFECT
     assert session.committed is True
     assert user.read_count == 1
+
+
+@pytest.mark.anyio
+async def test_submit_answer_enqueues_next_step_when_lesson_finishes():
+    quiz = make_quiz()
+    step_id = uuid4()
+
+    class CompletingRepository(ReadRepository):
+        async def complete_lesson_if_quizzes_answered(self, quiz_id, user_id):
+            assert quiz_id == quiz.qui_id
+            return step_id
+
+    class Evaluator:
+        def evaluate(self, question, answer):
+            return AnswerRateEnum.GOOD
+
+    class TrackServiceSpy:
+        def __init__(self):
+            self.prepared_step_ids = []
+
+        async def enqueue_next_step_preparation(self, completed_step_id):
+            self.prepared_step_ids.append(completed_step_id)
+
+    track_service = TrackServiceSpy()
+    service = QuizService(
+        CompletingRepository(quiz=quiz),
+        FakeSession(),
+        Evaluator(),
+        track_service,
+    )
+
+    await service.submit_quiz_answer(
+        make_user(),
+        quiz.qui_id,
+        QuizAnswerCreateRequest(text="My answer"),
+    )
+
+    assert track_service.prepared_step_ids == [step_id]
 
 
 @pytest.mark.anyio
