@@ -15,6 +15,10 @@ keys:
 Uso:
     python seed.py
 
+Aviso:
+    Antes de inserir os dados, apaga todos os registros do schema atual
+    (exceto alembic_version). Use apenas no banco que deseja reinicializar.
+
 Configuração:
     Ajuste a variável DATABASE_URL abaixo (ou defina a env var
     DATABASE_URL) antes de rodar. Exemplo:
@@ -63,6 +67,8 @@ DATABASE_URL = os.environ.get(
     f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}"
     f"@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}",
 )
+
+SEED_USER_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
 
 metadata = sa.MetaData()
 
@@ -157,6 +163,7 @@ track = sa.Table(
     sa.Column("trk_id", sa.UUID(), primary_key=True),
     sa.Column("trk_user_id", sa.UUID(), nullable=False),
     sa.Column("trk_title", sa.String(255), nullable=False),
+    sa.Column("trk_icon", sa.String(32)),
     sa.Column("trk_description", sa.Text()),
     sa.Column("trk_created_at", sa.DateTime()),
     sa.Column("trk_updated_at", sa.DateTime()),
@@ -334,6 +341,31 @@ def uid() -> uuid.UUID:
 async def seed(session: AsyncSession) -> None:
     now = datetime.utcnow()
 
+    # Limpa os dados do schema atual, preservando o controle de migrations.
+    schema_result = await session.execute(sa.text("SELECT current_schema()"))
+    schema_name = schema_result.scalar_one()
+    tables_result = await session.execute(
+        sa.text(
+            "SELECT tablename FROM pg_tables "
+            "WHERE schemaname = current_schema() "
+            "AND tablename <> 'alembic_version'"
+        )
+    )
+    preparer = session.bind.dialect.identifier_preparer
+    table_names = [
+        f"{preparer.quote_identifier(schema_name)}."
+        f"{preparer.quote_identifier(table_name)}"
+        for table_name in tables_result.scalars()
+    ]
+    if table_names:
+        await session.execute(
+            sa.text(
+                "TRUNCATE TABLE "
+                + ", ".join(table_names)
+                + " RESTART IDENTITY CASCADE"
+            )
+        )
+
     # --- badges ---------------------------------------------------------
     badges = [
         {
@@ -378,26 +410,10 @@ async def seed(session: AsyncSession) -> None:
     # --- users ------------------------------------------------------------
     users = [
         {
-            "usr_id": uid(),
+            "usr_id": SEED_USER_ID,
             "usr_email": "ana.silva@example.com",
             "usr_name": "Ana Silva",
             "usr_password_hash": "hash_ana",
-            "usr_created_at": now,
-            "usr_updated_at": now,
-        },
-        {
-            "usr_id": uid(),
-            "usr_email": "bruno.costa@example.com",
-            "usr_name": "Bruno Costa",
-            "usr_password_hash": "hash_bruno",
-            "usr_created_at": now,
-            "usr_updated_at": now,
-        },
-        {
-            "usr_id": uid(),
-            "usr_email": "carla.mendes@example.com",
-            "usr_name": "Carla Mendes",
-            "usr_password_hash": "hash_carla",
             "usr_created_at": now,
             "usr_updated_at": now,
         },
@@ -420,13 +436,6 @@ async def seed(session: AsyncSession) -> None:
             "bpg_status": "in_progress",
             "bpg_updated_at": now,
         },
-        {
-            "bpg_id": uid(),
-            "bpg_user_id": users[1]["usr_id"],
-            "bpg_badge_id": badges[0]["bdg_id"],
-            "bpg_status": "done",
-            "bpg_updated_at": now,
-        },
     ]
     await session.execute(sa.insert(badge_progress), badge_progress_rows)
 
@@ -436,18 +445,6 @@ async def seed(session: AsyncSession) -> None:
             "dst_id": uid(),
             "dst_user_id": users[0]["usr_id"],
             "dst_value": 5,
-            "dst_updated_at": now,
-        },
-        {
-            "dst_id": uid(),
-            "dst_user_id": users[1]["usr_id"],
-            "dst_value": 12,
-            "dst_updated_at": now,
-        },
-        {
-            "dst_id": uid(),
-            "dst_user_id": users[2]["usr_id"],
-            "dst_value": 0,
             "dst_updated_at": now,
         },
     ]
@@ -467,12 +464,6 @@ async def seed(session: AsyncSession) -> None:
             "lgn_date": date.today() - timedelta(days=1),
             "lgn_updated_at": now,
         },
-        {
-            "lgn_id": uid(),
-            "lgn_user_id": users[1]["usr_id"],
-            "lgn_date": date.today(),
-            "lgn_updated_at": now,
-        },
     ]
     await session.execute(sa.insert(login), login_rows)
 
@@ -482,14 +473,16 @@ async def seed(session: AsyncSession) -> None:
             "trk_id": uid(),
             "trk_user_id": users[0]["usr_id"],
             "trk_title": "Introdução à Mineração de Dados",
+            "trk_icon": "⛏️",
             "trk_description": "Conceitos fundamentais de data mining.",
             "trk_created_at": now,
             "trk_updated_at": now,
         },
         {
             "trk_id": uid(),
-            "trk_user_id": users[1]["usr_id"],
+            "trk_user_id": users[0]["usr_id"],
             "trk_title": "SQL na Prática",
+            "trk_icon": "🗃️",
             "trk_description": "Consultas e modelagem em bancos relacionais.",
             "trk_created_at": now,
             "trk_updated_at": now,
@@ -596,7 +589,7 @@ async def seed(session: AsyncSession) -> None:
         {
             "fbk_id": uid(),
             "fbk_lesson_id": lessons[1]["lsn_id"],
-            "fbk_user_id": users[1]["usr_id"],
+            "fbk_user_id": users[0]["usr_id"],
             "fbk_text": "Poderia ter mais exemplos.",
             "fbk_created_at": now,
             "fbk_updated_at": now,
@@ -636,7 +629,7 @@ async def seed(session: AsyncSession) -> None:
         },
         {
             "mpg_id": uid(),
-            "mpg_user_id": users[1]["usr_id"],
+            "mpg_user_id": users[0]["usr_id"],
             "mpg_mission_id": missions[1]["msn_id"],
             "mpg_status": "in_progress",
             "mpg_finished_in": None,
@@ -679,7 +672,7 @@ async def seed(session: AsyncSession) -> None:
         {
             "ans_id": uid(),
             "ans_question_id": quizzes[1]["qui_id"],
-            "ans_user_id": users[1]["usr_id"],
+            "ans_user_id": users[0]["usr_id"],
             "ans_text": "WHERE",
             "ans_rate": "good",
             "ans_created_at": now,
