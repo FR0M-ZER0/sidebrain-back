@@ -69,7 +69,8 @@ class GenerationService:
             "get_all_answer_right_in_a_lesson, complete_a_step, "
             "complete_a_track, number_of_steps_completed, "
             "get_all_answers_right) e criteria_value. Não crie IDs, "
-            "timestamps, objectives, content ou outros campos. "
+            "timestamps, objectives, content ou outros campos. As lições devem"
+            "ter no mínimo 420 caracteres."
             "Contexto: "
             f"{json.dumps(context, ensure_ascii=True)}"
         )
