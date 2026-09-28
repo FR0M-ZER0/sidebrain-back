@@ -1,0 +1,84 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [dev, hml, main]
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: meu_usuario
+          POSTGRES_PASSWORD: minha_senha
+          POSTGRES_DB: meu_banco_de_dados
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      HOST: 127.0.0.1
+      PORT: 8080
+      MODE: test
+      DATABASE_URL: postgresql+asyncpg://meu_usuario:minha_senha@127.0.0.1:5432/meu_banco_de_dados
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: meu_usuario
+      POSTGRES_PASSWORD: minha_senha
+      POSTGRES_DB: meu_banco_de_dados
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      GROQ_API_KEY: mock_api_key_for_ci
+      GROQ_MODEL: llama-3.3-70b-versatile
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar arquivo de ambiente
+        run: cp .env.example .env
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Instalar dependências
+        run: uv sync --all-extras --dev
+
+      - name: Executar Linter (Ruff)
+        run: uv run ruff check .
+
+      - name: Executar Format Check (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Executar Migrações do Banco (Alembic)
+        run: uv run alembic upgrade head
+
+      - name: Executar Testes Automatizados (Pytest)
+        run: uv run pytest

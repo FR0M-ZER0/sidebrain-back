@@ -73,9 +73,7 @@ class KnowledgeAssessment(Base):
             "kas_user_id",
             "kas_context_fingerprint",
             unique=True,
-            postgresql_where=text(
-                "kas_status IN ('pending', 'generated')"
-            ),
+            postgresql_where=text("kas_status IN ('pending', 'generated')"),
         ),
     )
 
@@ -107,9 +105,7 @@ class KnowledgeAssessment(Base):
         default=KnowledgeAssessmentStatusEnum.PENDING,
         server_default=text("'pending'"),
     )
-    kas_score: Mapped[int | None] = mapped_column(
-        SmallInteger, nullable=True
-    )
+    kas_score: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     kas_level: Mapped[StepLevelEnum | None] = mapped_column(
         ENUM(
             StepLevelEnum,

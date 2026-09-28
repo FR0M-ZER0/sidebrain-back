@@ -258,8 +258,7 @@ async def test_concurrent_unique_violation_reuses_winning_assessment():
 
 
 @pytest.mark.anyio
-async def test_publish_failure_marks_created_assessment_failed_and_returns_503(
-):
+async def test_publish_failure_marks_created_assessment_failed_and_returns_503():  # noqa: E501
     user = SimpleNamespace(usr_id=uuid4())
     created = _assessment(user.usr_id)
     service, repository, db, publisher = _async_service(created=created)
@@ -508,9 +507,7 @@ async def test_get_projects_all_states_without_private_answer_key(
         db=MagicMock(),
     )
 
-    result = await service.get_knowledge_assessment(
-        user, assessment.kas_id
-    )
+    result = await service.get_knowledge_assessment(user, assessment.kas_id)
 
     assert result.status is state
     assert len(result.questions) == question_count
