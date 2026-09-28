@@ -110,8 +110,7 @@ async def test_accessible_query_uses_batched_hierarchy_loading():
     statement = db.execute.await_args.args[0]
     assert len(statement._with_options) == 2
     assert all(
-        "Load" in type(option).__name__
-        for option in statement._with_options
+        "Load" in type(option).__name__ for option in statement._with_options
     )
     db.execute.assert_awaited_once()
 

@@ -94,8 +94,7 @@ async def test_pending_to_generated_persists_complete_public_hierarchy(
     )
     assert len(generated.questions) == 5
     assert all(
-        len(question.alternatives) == 4
-        for question in generated.questions
+        len(question.alternatives) == 4 for question in generated.questions
     )
     public = generated.model_dump(mode="json")
     assert "is_correct" not in str(public)
@@ -106,11 +105,14 @@ async def test_pending_to_generated_persists_complete_public_hierarchy(
         assessment.kas_id, assessment.kas_user_id
     )
     assert persisted is not None
-    assert sum(
-        alternative.kaa_is_correct
-        for question in persisted.questions
-        for alternative in question.alternatives
-    ) == 5
+    assert (
+        sum(
+            alternative.kaa_is_correct
+            for question in persisted.questions
+            for alternative in question.alternatives
+        )
+        == 5
+    )
 
     second_generator = DeterministicGenerator()
     redelivery_service = KnowledgeAssessmentService(
@@ -244,9 +246,9 @@ async def test_invalid_cross_question_selection_rolls_back_everything(
     repository = KnowledgeAssessmentRepository(db_session)
     service = KnowledgeAssessmentService(repository=repository, db=db_session)
     payload = _answers_for_hierarchy(hierarchy)
-    payload.answers[0].alternative_id = (
-        hierarchy.correct_alternatives[1].kaa_id
-    )
+    payload.answers[0].alternative_id = hierarchy.correct_alternatives[
+        1
+    ].kaa_id
 
     with pytest.raises(ProblemDetailError) as raised:
         await service.submit_knowledge_assessment_answers(
@@ -289,13 +291,9 @@ async def test_two_concurrent_submissions_preserve_first_result():
                 skip=False,
                 context_fingerprint=uuid4().hex * 2,
             )
-            await repository.mark_generated(
-                assessment, _generated_payload()
-            )
+            await repository.mark_generated(assessment, _generated_payload())
             await seed_db.commit()
-            seeded = await repository.get_accessible(
-                assessment_id, user_id
-            )
+            seeded = await repository.get_accessible(assessment_id, user_id)
             assert seeded is not None
             payload = AssessmentAnswersRequest(
                 answers=[
@@ -341,8 +339,7 @@ async def test_two_concurrent_submissions_preserve_first_result():
             ).get_accessible(assessment_id, user_id)
             assert persisted is not None
             assert (
-                persisted.kas_status
-                is KnowledgeAssessmentStatusEnum.COMPLETED
+                persisted.kas_status is KnowledgeAssessmentStatusEnum.COMPLETED
             )
             assert persisted.kas_score == 5
             assert len(persisted.answers) == 5
@@ -439,8 +436,8 @@ async def test_public_end_to_end_create_generate_answer_and_get_completed(
         db=db_session,
         publisher=publisher,
     )
-    test_app.dependency_overrides[get_knowledge_assessment_service] = (
-        lambda: service
+    test_app.dependency_overrides[get_knowledge_assessment_service] = lambda: (
+        service
     )
     transport = httpx.ASGITransport(app=test_app)
 
@@ -470,9 +467,7 @@ async def test_public_end_to_end_create_generate_answer_and_get_completed(
         )
         assert status is KnowledgeAssessmentStatusEnum.GENERATED
 
-        generated = await client.get(
-            f"/api/v1/assessments/{assessment_id}"
-        )
+        generated = await client.get(f"/api/v1/assessments/{assessment_id}")
         assert generated.status_code == 200
         questions = generated.json()["questions"]
         assert len(questions) == 5

@@ -40,9 +40,7 @@ async def test_get_generation_progress_returns_owned_request_state():
     )
     service = TrackService(None, FakeSession(), requests)
 
-    progress = await service.get_generation_progress(
-        user_id, request_id
-    )
+    progress = await service.get_generation_progress(user_id, request_id)
 
     assert progress.model_dump() == {
         "request_id": request_id,

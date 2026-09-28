@@ -389,8 +389,7 @@ async def test_v2_skip_never_constructs_provider_and_is_idempotent():
             ).get_accessible(assessment_id, user_id)
             assert persisted is not None
             assert (
-                persisted.kas_status
-                is KnowledgeAssessmentStatusEnum.SKIPPED
+                persisted.kas_status is KnowledgeAssessmentStatusEnum.SKIPPED
             )
             assert persisted.kas_level.value == "beginner"
             assert persisted.kas_score is None

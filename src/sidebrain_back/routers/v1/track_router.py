@@ -51,8 +51,7 @@ async def stream_generation_progress(
             if updated.status != current.status:
                 current = updated
                 yield (
-                    f"event: generation\ndata: "
-                    f"{current.model_dump_json()}\n\n"
+                    f"event: generation\ndata: {current.model_dump_json()}\n\n"
                 )
             else:
                 elapsed_polls += 1

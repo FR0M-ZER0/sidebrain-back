@@ -24,9 +24,7 @@ class GenerationRequestService:
                 for answer in context.assessment_answers or []
             ],
             "assessment_id": (
-                str(context.assessment_id)
-                if context.assessment_id
-                else None
+                str(context.assessment_id) if context.assessment_id else None
             ),
         }
 

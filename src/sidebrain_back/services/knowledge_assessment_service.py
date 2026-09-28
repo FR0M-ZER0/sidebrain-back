@@ -196,8 +196,7 @@ class KnowledgeAssessmentService:
                 )
 
             questions = {
-                question.kaq_id: question
-                for question in assessment.questions
+                question.kaq_id: question for question in assessment.questions
             }
             submitted_question_ids = {
                 answer.question_id for answer in payload.answers

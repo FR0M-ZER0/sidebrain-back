@@ -508,9 +508,7 @@ async def test_get_projects_all_states_without_private_answer_key(
         db=MagicMock(),
     )
 
-    result = await service.get_knowledge_assessment(
-        user, assessment.kas_id
-    )
+    result = await service.get_knowledge_assessment(user, assessment.kas_id)
 
     assert result.status is state
     assert len(result.questions) == question_count
