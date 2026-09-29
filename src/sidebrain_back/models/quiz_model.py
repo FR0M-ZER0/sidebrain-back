@@ -39,7 +39,9 @@ class Quiz(Base):
 
     lesson: Mapped["Lesson"] = relationship(back_populates="quizzes")
     answers: Mapped[list["Answer"]] = relationship(
-        back_populates="quiz", cascade="all, delete-orphan"
+        back_populates="quiz",
+        cascade="all, delete-orphan",
+        order_by="(Answer.ans_created_at.asc(), Answer.ans_id.asc())",
     )
 
     def __repr__(self) -> str:
