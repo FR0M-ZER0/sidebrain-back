@@ -23,7 +23,11 @@ async_session = async_sessionmaker(
 
 async def get_db():
     async with async_session() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 # Classe base para a criação de todos os models do projeto

@@ -1,0 +1,107 @@
+name: CI & Standards Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [ "dev", "hml", "main" ]
+
+jobs:
+  validate-standards:
+    name: 'Standards Validation (Branch, Commits & PR)'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+
+      - name: Validar Nome da Branch
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "🔍 Analisando branch de origem: $BRANCH_NAME"
+
+          # Bypass para branches de fluxo Git Flow / Releases
+          if [[ "$BRANCH_NAME" =~ ^(dev|hml|main|release\/.*)$ ]]; then
+            echo "✅ Branch de ambiente/release permitida: $BRANCH_NAME"
+            exit 0
+          fi
+
+          # Valida: tipo/ID-JIRA-descricao-kebab-case
+          BRANCH_REGEX="^(feat|fix|hotfix|docs|style|refactor|chore|test|ci)\/([a-zA-Z0-9]+-[0-9]+)-[a-z0-9-]+$"
+
+          if [[ ! "$BRANCH_NAME" =~ $BRANCH_REGEX ]]; then
+            echo "::error title=Branch Fora do Padrão::A branch '$BRANCH_NAME' não segue o padrão do time."
+            echo "--------------------------------------------------"
+            echo "👉 Formato definido: tipo/task-id-descrição"
+            echo "👉 Exemplo esperado: ci/SDB-64-criar-workflow-ci"
+            echo "👉 Exemplo esperado: feat/pr-20-nova-funcionalidade"
+            echo "👉 Tipos aceitos: feat, fix, hotfix, docs, style, refactor, chore, test, ci"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+          echo "✅ Nome da branch aprovado!"
+
+
+      - name: Validar Mensagens de Commit
+        run: |
+          echo "🔍 Analisando commits do PR..."
+          
+          # Ignora commits automáticos de merge e pega apenas a primeira linha (%s)
+          COMMITS=$(git log --no-merges --format=%s ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          
+          # Valida: tipo(ID-JIRA): mensagem OU tipo!(ID-JIRA): mensagem para breaking change
+          COMMIT_REGEX="^(feat|fix|docs|style|refactor|chore|test|ci)(!?)\(([a-zA-Z0-9]+-[0-9]+)\):\ .+$"
+
+          HAS_ERROR=0
+
+          while IFS= read -r MSG; do
+            if [ -n "$MSG" ]; then
+              if [[ ! "$MSG" =~ $COMMIT_REGEX ]]; then
+                echo "::error title=Commit Inválido::Commit fora da convenção: '$MSG'"
+                HAS_ERROR=1
+              else
+                echo "✅ Commit válido: $MSG"
+              fi
+            fi
+          done <<< "$COMMITS"
+
+          if [ $HAS_ERROR -ne 0 ]; then
+            echo "--------------------------------------------------"
+            echo "❌ Encontrado commit fora do padrão!"
+            echo "👉 Formato esperado: tipo(id-task): descrição curta"
+            echo "👉 Exemplo correto:  ci(SDB-64): adiciona workflow para CI"
+            echo "👉 Breaking change:  feat!(pr-20): altera assinatura do endpoint"
+            echo "👉 Tipos aceitos:    feat, fix, docs, style, refactor, chore, test, ci"
+            echo "👉 Como corrigir:    git commit --amend (último commit) ou git rebase -i"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+
+      - name: Validar Título do PR
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "🔍 Analisando título do PR: $PR_TITLE"
+
+          # Tratamento especial para PR de Release (ex: dev -> hml ou hml -> main)
+          if [[ "$BRANCH_NAME" =~ ^(dev|hml)$ ]]; then
+            if [[ "$PR_TITLE" =~ ^(release|Release|RELEASE):?\ .+$ ]]; then
+              echo "✅ Título de PR de release aprovado: $PR_TITLE"
+              exit 0
+            fi
+          fi
+
+          # Aceita: (SDB-64): Adiciona... OU ci(SDB-64): Adiciona...
+          PR_REGEX="^(\([a-zA-Z0-9]+-[0-9]+\)|(feat|fix|hotfix|docs|style|refactor|chore|test|ci)(!?)\([a-zA-Z0-9]+-[0-9]+\)):\ .+$"
+
+          if [[ ! "$PR_TITLE" =~ $PR_REGEX ]]; then
+            echo "::error title=Título do PR Inválido::O título '$PR_TITLE' não atende ao padrão."
+            echo "--------------------------------------------------"
+            echo "👉 Formato esperado: (id-task): Descrição no imperativo"
+            echo "👉 Exemplo oficial:  (SDB-64): Adiciona workflow para CI"
+            echo "👉 Exemplo alternativo: ci(SDB-64): Adiciona workflow para CI"
+            echo "--------------------------------------------------"
+            exit 1
+          fi
+          echo "✅ Título do Pull Request aprovado!"
