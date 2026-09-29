@@ -7,6 +7,7 @@ from sidebrain_back.schemas.generation_schema import GeneratedTrack
 def test_future_steps_reject_detailed_content():
     with pytest.raises(ValidationError):
         GeneratedTrack(
+            icon="📘",
             title="Python",
             description="Fundamentos",
             steps=[

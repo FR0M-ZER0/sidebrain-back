@@ -24,6 +24,9 @@ from sidebrain_back.enums.knowledge_assessment_status_enum import (
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 
 if TYPE_CHECKING:
+    from sidebrain_back.models.generation_request_model import (
+        GenerationRequest,
+    )
     from sidebrain_back.models.knowledge_assessment_answer_model import (
         KnowledgeAssessmentAnswer,
     )
@@ -142,6 +145,9 @@ class KnowledgeAssessment(Base):
         cascade="all, delete-orphan",
         foreign_keys="KnowledgeAssessmentAnswer.kar_assessment_id",
         order_by="KnowledgeAssessmentAnswer.kar_created_at.asc()",
+    )
+    generation_requests: Mapped[list["GenerationRequest"]] = relationship(
+        back_populates="assessment"
     )
 
     def __repr__(self) -> str:

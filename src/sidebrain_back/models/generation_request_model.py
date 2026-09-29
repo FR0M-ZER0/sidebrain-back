@@ -1,13 +1,19 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, func, text
 from sqlalchemy.dialects.postgresql import ENUM, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sidebrain_back.core.database import Base
 from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
+
+if TYPE_CHECKING:
+    from sidebrain_back.models.knowledge_assessment_model import (
+        KnowledgeAssessment,
+    )
 
 
 class GenerationRequest(Base):
@@ -39,6 +45,16 @@ class GenerationRequest(Base):
     assessment_answers: Mapped[list[dict] | None] = mapped_column(
         JSON, nullable=True
     )
+    assessment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "knowledge_assessment.kas_id",
+            name="fk_generation_request_assessment_id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
     status: Mapped[GenerationStatusEnum] = mapped_column(
         ENUM(
             GenerationStatusEnum,
@@ -63,4 +79,8 @@ class GenerationRequest(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    assessment: Mapped["KnowledgeAssessment | None"] = relationship(
+        back_populates="generation_requests"
     )

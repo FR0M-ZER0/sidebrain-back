@@ -1,11 +1,14 @@
+import asyncio
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi.responses import StreamingResponse
 
 from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.generation_schema import (
     GenerationAccepted,
+    GenerationProgress,
     PrepareNextAccepted,
     PrepareNextSkipped,
 )
@@ -21,6 +24,59 @@ from sidebrain_back.services.track_service import (
 )
 
 router = APIRouter(prefix="/v1/tracks", tags=["Tracks"])
+
+
+@router.get("/generations/{request_id}", response_model=GenerationProgress)
+async def get_generation_status(
+    request_id: UUID,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: TrackService = Depends(get_track_service),  # noqa: B008
+) -> GenerationProgress:
+    user_id = user.usr_id
+    return await service.get_generation_progress(user_id, request_id)
+
+
+@router.get("/generations/{request_id}/events")
+async def stream_generation_progress(
+    request_id: UUID,
+    request: Request,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: TrackService = Depends(get_track_service),  # noqa: B008
+) -> StreamingResponse:
+    user_id = user.usr_id
+    progress = await service.get_generation_progress(user_id, request_id)
+
+    async def events():
+        current = progress
+        elapsed_polls = 0
+        yield f"event: generation\ndata: {current.model_dump_json()}\n\n"
+        while True:
+            if current.status.value in {"succeeded", "failed"}:
+                break
+            await asyncio.sleep(1)
+            if await request.is_disconnected():
+                break
+            updated = await service.get_generation_progress(
+                user_id, request_id
+            )
+            if updated.status != current.status:
+                current = updated
+                yield (
+                    f"event: generation\ndata: {current.model_dump_json()}\n\n"
+                )
+            else:
+                elapsed_polls += 1
+                if elapsed_polls % 15 == 0:
+                    yield ": keep-alive\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post(

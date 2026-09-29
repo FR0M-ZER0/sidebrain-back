@@ -42,6 +42,7 @@ class Track(Base):
         nullable=False,
     )
     trk_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    trk_icon: Mapped[str | None] = mapped_column(String(32), nullable=True)
     trk_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     trk_generation_request_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True

@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import Depends
@@ -14,16 +15,35 @@ from sidebrain_back.repositories.quiz_repository import (
 )
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.quiz_schema import (
+    AnswerResponse,
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
     QuizResponse,
     QuizUpdateRequest,
 )
+from sidebrain_back.services.quiz_evaluation_service import (
+    QuizEvaluationService,
+)
+from sidebrain_back.services.track_service import (
+    TrackService,
+    get_track_service,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class QuizService:
-    def __init__(self, repository: QuizRepository, db: AsyncSession):
+    def __init__(
+        self,
+        repository: QuizRepository,
+        db: AsyncSession,
+        evaluator: QuizEvaluationService | None = None,
+        track_service: TrackService | None = None,
+    ):
         self.repository = repository
         self.db = db
+        self.evaluator = evaluator or QuizEvaluationService()
+        self.track_service = track_service
 
     async def _require_lesson(
         self,
@@ -107,6 +127,62 @@ class QuizService:
         quiz = await self._require_quiz(user.usr_id, quiz_id)
         return QuizResponse.model_validate(quiz)
 
+    async def submit_quiz_answer(
+        self,
+        user: User,
+        quiz_id: UUID,
+        payload: QuizAnswerCreateRequest,
+    ) -> AnswerResponse:
+        user_id = user.usr_id
+        try:
+            quiz = await self._require_quiz(user_id, quiz_id)
+            question = quiz.qui_question
+            await self.db.rollback()
+            rate = self.evaluator.evaluate(question, payload.text)
+            answer = await self.repository.create_answer(
+                quiz_id,
+                user_id,
+                payload.text,
+                rate,
+            )
+            step_id = (
+                await self.repository.complete_lesson_if_quizzes_answered(
+                    quiz_id,
+                    user_id,
+                )
+            )
+            response = AnswerResponse.model_validate(answer)
+            await self.db.commit()
+            if step_id is not None and self.track_service is not None:
+                try:
+                    await self.track_service.enqueue_next_step_preparation(
+                        step_id
+                    )
+                except Exception:
+                    logger.exception(
+                        "Could not enqueue next step content after lesson "
+                        "completion",
+                        extra={"step_id": str(step_id)},
+                    )
+            return response
+        except ProblemDetailError:
+            await self.db.rollback()
+            raise
+        except Exception as error:
+            await self.db.rollback()
+            logger.exception(
+                "Quiz answer evaluation or persistence failed",
+                extra={
+                    "quiz_id": str(quiz_id),
+                    "user_id": str(user_id),
+                },
+            )
+            raise ProblemDetailError(
+                500,
+                "Erro interno",
+                "Não foi possível registrar a resposta do quiz.",
+            ) from error
+
     async def update_quiz(
         self,
         user: User,
@@ -150,5 +226,6 @@ class QuizService:
 def get_quiz_service(
     repository: QuizRepository = Depends(get_quiz_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
+    track_service: TrackService = Depends(get_track_service),  # noqa: B008
 ) -> QuizService:
-    return QuizService(repository, db)
+    return QuizService(repository, db, track_service=track_service)

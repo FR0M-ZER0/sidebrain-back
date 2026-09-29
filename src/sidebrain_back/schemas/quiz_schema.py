@@ -26,6 +26,19 @@ class QuizUpdateRequest(QuizQuestionRequest):
     pass
 
 
+class QuizAnswerCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(min_length=1, max_length=10_000)
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def strip_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+
 class PublicResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,

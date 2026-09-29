@@ -9,6 +9,7 @@ from pydantic import (
 )
 
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
@@ -34,6 +35,7 @@ class LearningContext(BaseModel):
     topic: str = Field(min_length=1)
     knowledge_level: StepLevelEnum | None = None
     assessment_answers: list[AssessmentAnswer] | None = None
+    assessment_id: UUID | None = None
 
     _validate_goal = field_validator("goal", "topic")(_required_text)
 
@@ -41,6 +43,13 @@ class LearningContext(BaseModel):
 class GenerationAccepted(BaseModel):
     status: str = "pending"
     request_id: UUID
+
+
+class GenerationProgress(BaseModel):
+    request_id: UUID
+    status: GenerationStatusEnum
+    track_id: UUID | None = None
+    error_code: str | None = None
 
 
 class PrepareNextAccepted(BaseModel):
@@ -100,11 +109,14 @@ class GeneratedStep(BaseModel):
 
 class GeneratedTrack(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    icon: str = Field(min_length=1, max_length=32)
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
     steps: list[GeneratedStep] = Field(min_length=1)
 
-    _validate_text = field_validator("title", "description")(_required_text)
+    _validate_text = field_validator("icon", "title", "description")(
+        _required_text
+    )
 
     @model_validator(mode="after")
     def validate_structure(self) -> "GeneratedTrack":

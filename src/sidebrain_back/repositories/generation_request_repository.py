@@ -19,6 +19,18 @@ class GenerationRequestRepository:
             )
         )
 
+    async def get_by_request_and_user(
+        self, request_id: UUID, user_id: UUID
+    ) -> GenerationRequest | None:
+        return await self.db.scalar(
+            select(GenerationRequest)
+            .where(
+                GenerationRequest.request_id == request_id,
+                GenerationRequest.user_id == user_id,
+            )
+            .execution_options(populate_existing=True)
+        )
+
     async def create_pending(
         self,
         *,
@@ -29,6 +41,7 @@ class GenerationRequestRepository:
         topic: str,
         knowledge_level: str | None,
         assessment_answers: list[dict] | None,
+        assessment_id: UUID | None = None,
     ) -> GenerationRequest:
         request = GenerationRequest(
             request_id=request_id,
@@ -38,6 +51,7 @@ class GenerationRequestRepository:
             topic=topic,
             knowledge_level=knowledge_level,
             assessment_answers=assessment_answers,
+            assessment_id=assessment_id,
             status=GenerationStatusEnum.PENDING,
         )
         self.db.add(request)

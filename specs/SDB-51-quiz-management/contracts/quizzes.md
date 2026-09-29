@@ -72,6 +72,21 @@ Response `200`: `QuizResponse`, incluindo todas as Answers associadas na ordem
 definida. UUID malformado retorna `422`; Quiz inexistente, excluído, com pai
 excluído ou de outra Track retorna `404`.
 
+## Enviar resposta de quiz
+
+`POST /quizzes/{quiz_id}/answers`
+
+Request:
+
+```json
+{"text": "Uma resposta aberta"}
+```
+
+O backend avalia a resposta em relação à pergunta usando a IA e persiste o
+resultado `rate` (`good`, `perfect`, `wrong` ou `almost_got_it`). Response `201`:
+`AnswerResponse` com o resultado da avaliação. Quiz inexistente, excluído ou
+inacessível retorna `404`.
+
 ## Atualizar quiz
 
 `PUT /quizzes/{quiz_id}`

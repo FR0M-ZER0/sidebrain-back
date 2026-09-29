@@ -6,9 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidebrain_back.core.database import get_db
 from sidebrain_back.core.errors import ProblemDetailError
+from sidebrain_back.enums.knowledge_assessment_status_enum import (
+    KnowledgeAssessmentStatusEnum,
+)
 from sidebrain_back.models.user_model import User
 from sidebrain_back.repositories.generation_request_repository import (
     GenerationRequestRepository,
+)
+from sidebrain_back.repositories.knowledge_assessment_repository import (
+    KnowledgeAssessmentRepository,
 )
 from sidebrain_back.repositories.track_repository import (
     StepProgressContext,
@@ -17,6 +23,7 @@ from sidebrain_back.repositories.track_repository import (
 )
 from sidebrain_back.schemas.generation_schema import (
     GenerationAccepted,
+    GenerationProgress,
     LearningContext,
     PrepareNextAccepted,
     PrepareNextSkipped,
@@ -40,12 +47,14 @@ class TrackService:
         repository: TrackRepository,
         db: AsyncSession,
         generation_requests: GenerationRequestRepository | None = None,
+        assessments: KnowledgeAssessmentRepository | None = None,
     ):
         self.repository = repository
         self.db = db
         self.generation_requests = (
             generation_requests or GenerationRequestRepository(db)
         )
+        self.assessments = assessments or KnowledgeAssessmentRepository(db)
 
     @classmethod
     def completion_ratio(
@@ -117,6 +126,19 @@ class TrackService:
         context = LearningContext.model_validate(
             payload.model_dump(exclude={"request_id", "title"})
         )
+        if context.assessment_id is not None:
+            assessment = await self.assessments.get_accessible(
+                context.assessment_id, user.usr_id
+            )
+            if assessment is None or assessment.kas_status not in (
+                KnowledgeAssessmentStatusEnum.COMPLETED,
+                KnowledgeAssessmentStatusEnum.SKIPPED,
+            ):
+                raise ProblemDetailError(
+                    404,
+                    "Não encontrado",
+                    "Avaliação de conhecimento não encontrada",
+                )
         generation_input = GenerationRequestService.build_input(
             context, user.usr_id, payload.request_id
         )
@@ -155,6 +177,7 @@ class TrackService:
                     answer.model_dump(mode="json")
                     for answer in context.assessment_answers or []
                 ],
+                assessment_id=context.assessment_id,
             )
             await self.db.commit()
             from sidebrain_back.tasks.generate_track_task import (
@@ -201,6 +224,25 @@ class TrackService:
             raise ProblemDetailError(
                 500, "Erro interno", "Não foi possível criar a trilha."
             ) from error
+
+    async def get_generation_progress(
+        self, user_id: UUID, request_id: UUID
+    ) -> GenerationProgress:
+        request = await self.generation_requests.get_by_request_and_user(
+            request_id, user_id
+        )
+        if request is None:
+            raise ProblemDetailError(
+                404, "Não encontrado", "Solicitação de geração não encontrada"
+            )
+        progress = GenerationProgress(
+            request_id=request.request_id,
+            status=request.status,
+            track_id=request.track_id,
+            error_code=request.error_code,
+        )
+        await self.db.rollback()
+        return progress
 
     async def _create_legacy_track(
         self, user: User, payload: TrackCreate
@@ -281,4 +323,9 @@ def get_track_service(
     repository: TrackRepository = Depends(get_track_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
 ) -> TrackService:
-    return TrackService(repository, db, GenerationRequestRepository(db))
+    return TrackService(
+        repository,
+        db,
+        GenerationRequestRepository(db),
+        KnowledgeAssessmentRepository(db),
+    )
