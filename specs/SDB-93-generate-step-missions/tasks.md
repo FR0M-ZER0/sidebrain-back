@@ -20,7 +20,7 @@
 
 **Purpose**: Confirmar que a dependência de CRUD está pronta antes de implementar a geração.
 
-- [ ] T001 Confirmar a entrega do CRUD reutilizável em `src/sidebrain_back/routers/v1/mission_router.py`, `src/sidebrain_back/services/mission_service.py`, `src/sidebrain_back/repositories/mission_repository.py` e `src/sidebrain_back/schemas/mission_schema.py`; se qualquer camada estiver ausente, bloquear a implementação SDB-93 até a conclusão da task externa de gerenciamento de missões, sem criar duplicatas nesta feature.
+- [X] T001 Verificar a entrega do CRUD reutilizável: `src/sidebrain_back/routers/v1/mission_router.py`, `src/sidebrain_back/services/mission_service.py`, `src/sidebrain_back/repositories/mission_repository.py` e `src/sidebrain_back/schemas/mission_schema.py` estão ausentes; implementação SDB-93 bloqueada até a conclusão da task externa de gerenciamento de missões, sem criar duplicatas nesta feature.
 
 ---
 
