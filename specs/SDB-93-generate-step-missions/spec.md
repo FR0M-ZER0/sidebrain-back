@@ -8,6 +8,14 @@
 
 **Input**: User description: "SDB-93 — geração de missões por IA integrada à criação de trilhas, preparação incremental de Steps e solicitação assíncrona sob demanda."
 
+## Clarifications
+
+### Session 2026-10-07
+
+- Q: Depois de receber `202 Accepted`, como o cliente deve saber se a geração terminou ou falhou? → A: Consultando o estado da tarefa, que informa pendente, em execução, concluída ou falha.
+- Q: A geração inicial deve sempre incluir pelo menos uma missão no primeiro Step, ou pode concluir sem missão quando a IA não a produzir? → A: A missão inicial é opcional; a Trilha pode ser concluída sem ela.
+- Q: Se o cliente repetir a solicitação enquanto a primeira geração ainda está em andamento e o Step continua sem missões, o que a API deve fazer? → A: Reutilizar a tarefa em andamento e retornar o mesmo `taskId`, sem agendar outra geração.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Solicitar missões para um Step (Priority: P1)
@@ -27,6 +35,8 @@ Como usuário autenticado que possui uma Trilha, quero solicitar missões para u
 5. **Given** uma solicitação sem credencial válida, **When** o cliente solicita a geração, **Then** o sistema responde `401 Unauthorized`.
 6. **Given** uma solicitação com `count` fora de 1 a 3, uma dificuldade não permitida ou foco fora do limite definido, **When** o cliente a envia, **Then** o sistema responde `422 Unprocessable Content` e não agenda geração alguma.
 7. **Given** duas solicitações concorrentes para o mesmo Step ainda sem missões, **When** ambas são processadas, **Then** no máximo um conjunto de missões ativas é persistido.
+8. **Given** uma solicitação aceita com um `taskId`, **When** o cliente consulta o estado dessa tarefa, **Then** recebe se ela está pendente, em execução, concluída ou falhou.
+9. **Given** uma geração pendente ou em execução para o Step, **When** o mesmo usuário repete a solicitação, **Then** a API responde com `202 Accepted` e o mesmo `taskId`, sem enfileirar outro trabalho.
 
 ### User Story 2 - Receber missões junto à geração inicial da Trilha (Priority: P1)
 
@@ -41,6 +51,7 @@ Como usuário que solicita uma Trilha personalizada, quero que a primeira etapa 
 1. **Given** um pedido válido de criação de Trilha, **When** a geração inicial termina com sucesso, **Then** o primeiro Step pode conter uma missão gerada pela IA e os Steps futuros permanecem sem Lessons e sem missão até serem preparados.
 2. **Given** uma resposta de IA válida para a missão inicial, **When** a Trilha é persistida, **Then** a missão respeita o Step ao qual pertence e suas regras de domínio.
 3. **Given** uma resposta inválida para a missão, **When** a Trilha é processada, **Then** nenhum dado de missão inválido é persistido e o fluxo existente de geração trata a falha sem criar persistência parcial.
+4. **Given** uma resposta de geração inicial sem missão, **When** os demais dados da Trilha são válidos, **Then** a Trilha pode ser concluída sem missão no primeiro Step.
 
 ### User Story 3 - Receber missões durante a preparação incremental (Priority: P1)
 
@@ -88,11 +99,14 @@ Como usuário que avança em uma Trilha, quero que a preparação do próximo St
 - **FR-014**: O prompt MUST orientar a IA a escolher critérios compatíveis com o conteúdo real do Step e uma dificuldade coerente com seu nível, sem substituir a validação rígida dos campos e enums.
 - **FR-015**: Falhas transitórias do provedor MUST usar tentativas limitadas com espera progressiva; falhas de parsing e validação MUST falhar sem retry automático.
 - **FR-016**: Falhas do processamento em segundo plano MUST ser registradas com identificadores da tarefa e do Step e uma categoria de erro; a resposta pública MUST seguir Problem Details e MUST NOT expor prompt ou resposta bruta do provedor.
-- **FR-017**: A geração inicial da Trilha MUST preservar o contrato atual: somente o primeiro Step recebe conteúdo inicial e pode receber missão gerada; Steps posteriores começam sem Lessons e sem missão.
+- **FR-017**: A geração inicial da Trilha MUST preservar o contrato atual: somente o primeiro Step recebe conteúdo inicial e pode receber missão gerada, mas a ausência de missão não impede a conclusão da Trilha; Steps posteriores começam sem Lessons e sem missão.
 - **FR-018**: A preparação incremental MUST continuar gerando missões junto ao conteúdo do Step elegível, preservar a prevenção de duplicatas e aplicar as mesmas regras centrais de validação e persistência de missões.
 - **FR-019**: Todas as origens de missões geradas por IA MUST convergir para as mesmas regras de domínio, valores positivos, validação e persistência; não deve haver uma rota alternativa que aceite regras divergentes.
 - **FR-020**: As missões geradas MUST estar disponíveis nas consultas de missões do Step e nas consultas individuais existentes, com lista de progresso vazia até que o usuário progrida.
 - **FR-021**: Os contratos HTTP existentes de criação de Trilha e preparação incremental MUST permanecer inalterados por esta funcionalidade.
+- **FR-022**: O cliente MUST poder consultar o estado de uma tarefa de geração pelo `taskId` retornado, distinguindo os estados pendente, em execução, concluída e falha.
+- **FR-023**: Enquanto houver uma geração pendente ou em execução para o mesmo Step, uma nova solicitação do proprietário MUST retornar `202 Accepted` com o `taskId` existente e MUST NOT enfileirar outra geração.
+- **FR-024**: A consulta do estado da tarefa MUST exigir autenticação e MUST estar disponível somente ao usuário proprietário da solicitação; tarefa inexistente ou de outro usuário MUST produzir a mesma resposta `404 Not Found`.
 
 ### Key Entities
 
@@ -116,6 +130,9 @@ Como usuário que avança em uma Trilha, quero que a preparação do próximo St
 - **SC-008**: Em 100% dos testes do fluxo de geração inicial, somente o primeiro Step recebe conteúdo inicial; em 100% dos testes incrementais, as missões usam as mesmas regras de validação do fluxo sob demanda.
 - **SC-009**: Em testes de inspeção do contexto enviado à IA, nenhum e-mail, hash, token ou outro dado sensível do usuário está presente.
 - **SC-010**: Clientes conseguem identificar se uma solicitação foi aceita ou ignorada apenas pelo status e campos documentados, e missões válidas tornam-se visíveis pelas consultas existentes do Step.
+- **SC-011**: Em 100% das consultas com `taskId` válido, o cliente consegue distinguir se a geração está pendente, em execução, concluída ou falhou.
+- **SC-012**: Em 100% dos testes de repetição enquanto a geração está pendente ou em execução, o cliente recebe o mesmo `taskId` e somente uma tarefa de geração é enfileirada.
+- **SC-013**: Em 100% das consultas de estado feitas por usuário diferente do proprietário, a resposta é indistinguível da resposta para tarefa inexistente.
 
 ## Assumptions
 
