@@ -89,6 +89,21 @@ uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 O gabarito, IDs do provider e detalhes de falha nunca aparecem na API. IDs
 inexistentes e avaliações de outra pessoa retornam o mesmo `404`.
 
+## Prompts para agentes
+
+Para usar o [prompt de criação de pull request](./docs/prompts/create-pr.md),
+é necessário ter o **GitHub CLI (`gh`) instalado** e autenticado com uma conta
+que tenha acesso ao repositório.
+
+Siga as [instruções oficiais de instalação](https://cli.github.com/) e, em
+seguida, verifique a instalação e faça a autenticação:
+
+```bash
+gh --version
+gh auth login
+gh auth status
+```
+
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)
 
