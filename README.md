@@ -5,6 +5,7 @@
 - **FastAPI**: Framework web moderno e de alta performance para construção de APIs
 - **Pydantic**: Validação de dados e serialização via modelos tipados
 - **SQLAlchemy**: ORM para comunicação com o banco de dados
+- **pgvector**: Extensão do PostgreSQL para armazenamento e busca de vetores
 - **uv**: Gerenciador de pacotes e ambientes Python, rápido e moderno
 - **Uvicorn**: Servidor ASGI para execução da aplicação FastAPI
 - **Alembic**: Ferramenta de migração de banco de dados para SQLAlchemy
@@ -36,17 +37,22 @@ cp .env.example .env
 docker compose up -d
 ```
 
-5. Rode as migrações:
+5. Habilite a extensão `vector` no banco da aplicação (uma vez por banco):
+```bash
+docker compose exec postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS vector;"'
+```
+
+6. Rode as migrações:
 ```bash
 uv run alembic upgrade head
 ```
 
-6. Rode a API em ambiente dev usando:
+7. Rode a API em ambiente dev usando:
 ```bash
 uv run dev
 ```
 
-7. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
+8. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
 ```bash
 uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
