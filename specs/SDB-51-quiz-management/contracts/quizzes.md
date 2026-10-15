@@ -1,7 +1,8 @@
 # Contrato HTTP: Quizzes
 
-Base path: `/api/v1`. Todos os endpoints exigem Bearer válido. Nesta versão, a
-credencial é o UUID do usuário reconhecido por `get_current_user`.
+Base path: `/api/v1`. Todos os endpoints exigem JWT Bearer válido, obtido por
+`POST /api/v1/auth/register` ou `POST /api/v1/auth/login`. O titular é resolvido
+por `get_current_user`; UUID puro é recusado.
 
 ## Representações
 

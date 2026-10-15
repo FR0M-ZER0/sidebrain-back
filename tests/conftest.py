@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -7,8 +9,25 @@ import pytest
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from main import app
-from sidebrain_back.core.auth import get_current_user
+_TEST_ENV = {
+    "HOST": "127.0.0.1",
+    "PORT": "8080",
+    "MODE": "test",
+    "POSTGRES_HOST": "127.0.0.1",
+    "POSTGRES_PORT": "5432",
+    "POSTGRES_USER": "sidebrain_test",
+    "POSTGRES_PASSWORD": "sidebrain_test",
+    "POSTGRES_DB": "sidebrain_test",
+    "REDIS_HOST": "127.0.0.1",
+    "REDIS_PORT": "6379",
+    "GROQ_API_KEY": "test-only-key",
+    "GROQ_MODEL": "test-model",
+    "JWT_SECRET_KEY": "test-only-secret-key-at-least-32-bytes",
+}
+for _name, _value in _TEST_ENV.items():
+    os.environ.setdefault(_name, _value)
+
+from main import app  # noqa: E402
 from sidebrain_back.core.database import Base, engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.enums.badge_criteria_enum import BadgeCriteriaEnum
@@ -37,6 +56,7 @@ from sidebrain_back.models import (
     Track,
     User,
 )
+from sidebrain_back.routers.v1.auth_router import get_current_user
 
 
 @dataclass

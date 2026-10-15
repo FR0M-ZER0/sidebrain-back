@@ -4,8 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
+from sidebrain_back.routers.v1.auth_router import get_current_user
 from sidebrain_back.schemas.generation_schema import (
     GenerationAccepted,
     GenerationProgress,
