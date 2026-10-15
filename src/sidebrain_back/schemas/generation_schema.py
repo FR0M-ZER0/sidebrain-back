@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -50,6 +51,13 @@ class GenerationProgress(BaseModel):
     status: GenerationStatusEnum
     track_id: UUID | None = None
     error_code: str | None = None
+    source: Literal["ai", "cache"] | None = None
+
+    def model_dump(self, *args, **kwargs):
+        result = super().model_dump(*args, **kwargs)
+        if self.source is None:
+            result.pop("source", None)
+        return result
 
 
 class PrepareNextAccepted(BaseModel):

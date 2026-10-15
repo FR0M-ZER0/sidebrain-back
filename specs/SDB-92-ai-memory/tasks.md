@@ -18,8 +18,8 @@ implemented and tested independently after the shared foundation is complete.
 **Purpose**: Prepare configuration, exports and migration conventions for the
 memory feature without changing any public route.
 
-- [ ] T001 [P] Add `AI_MEMORY_ENABLED`, fingerprint-version and lease settings to `src/sidebrain_back/core/constants.py` and document their environment defaults in `.env.example`
-- [ ] T002 [P] Register the new memory models, enums and repositories in `src/sidebrain_back/models/__init__.py`, `src/sidebrain_back/enums/__init__.py` and `src/sidebrain_back/repositories/__init__.py`
+- [X] T001 [P] Add `AI_MEMORY_ENABLED`, fingerprint-version and lease settings to `src/sidebrain_back/core/constants.py` and document their environment defaults in `.env.example`
+- [X] T002 [P] Register the new memory models, enums and repositories in `src/sidebrain_back/models/__init__.py`, `src/sidebrain_back/enums/__init__.py` and `src/sidebrain_back/repositories/__init__.py`
 - [ ] T003 [P] Add feature test fixtures and shared cache/provider fakes in `tests/conftest.py` without exposing generated payloads or PII in logs
 
 ## Phase 2: Foundational (Blocking Prerequisites)
@@ -29,12 +29,12 @@ all user stories depend on.
 
 **CRITICAL**: Complete this phase before implementing any user story.
 
-- [ ] T004 Create `TopicAlias` and `GenerationCache` ORM models in `src/sidebrain_back/models/topic_alias_model.py` and `src/sidebrain_back/models/generation_cache_model.py`, including the required normalized fields, `track`/`assessment` content types, `pending`/`ready`/`failed` states, lease fields, audit fields and immutable-ready invariants from `data-model.md`
-- [ ] T005 Add cache and alias enums in `src/sidebrain_back/enums/generation_cache_enum.py` with only the contract values `track`, `assessment`, `pending`, `ready` and `failed`
-- [ ] T006 Add the Alembic migration in `migrations/versions/<new_revision>_cria_memoria_deterministica.py` for both global tables, `(fingerprint, content_type)` uniqueness, normalized alias uniqueness, the initial `ingles -> lingua inglesa` seed, and additive nullable `source`/`cache_id` columns on `generation_request` plus `source` on `knowledge_assessment`; include a reversible downgrade
-- [ ] T007 Extend `src/sidebrain_back/models/generation_request_model.py` and `src/sidebrain_back/models/knowledge_assessment_model.py` with nullable legacy-compatible `source` fields and optional `cache_id` relationship/FK, preserving existing ownership, status and soft-delete behavior
-- [ ] T008 Add validated `source` fields to `src/sidebrain_back/schemas/generation_schema.py` and `src/sidebrain_back/schemas/knowledge_assessment_schema.py` as `Literal["ai", "cache"] | None = None`, preserving `from_attributes` behavior and existing request/response shapes
-- [ ] T009 Define the internal memory protocols and dependency providers in `src/sidebrain_back/repositories/generation_cache_repository.py` and `src/sidebrain_back/services/ai_memory_service.py` for lookup, lease reservation, ready publication, failure release and user-instance materialization; keep HTTP concerns out of these layers
+- [X] T004 Create `TopicAlias` and `GenerationCache` ORM models in `src/sidebrain_back/models/topic_alias_model.py` and `src/sidebrain_back/models/generation_cache_model.py`, including the required normalized fields, `track`/`assessment` content types, `pending`/`ready`/`failed` states, lease fields, audit fields and immutable-ready invariants from `data-model.md`
+- [X] T005 Add cache and alias enums in `src/sidebrain_back/enums/generation_cache_enum.py` with only the contract values `track`, `assessment`, `pending`, `ready` and `failed`
+- [X] T006 Add the Alembic migration in `migrations/versions/<new_revision>_cria_memoria_deterministica.py` for both global tables, `(fingerprint, content_type)` uniqueness, normalized alias uniqueness, the initial `ingles -> lingua inglesa` seed, and additive nullable `source`/`cache_id` columns on `generation_request` plus `source` on `knowledge_assessment`; include a reversible downgrade
+- [X] T007 Extend `src/sidebrain_back/models/generation_request_model.py` and `src/sidebrain_back/models/knowledge_assessment_model.py` with nullable legacy-compatible `source` fields and optional `cache_id` relationship/FK, preserving existing ownership, status and soft-delete behavior
+- [X] T008 Add validated `source` fields to `src/sidebrain_back/schemas/generation_schema.py` and `src/sidebrain_back/schemas/knowledge_assessment_schema.py` as `Literal["ai", "cache"] | None = None`, preserving `from_attributes` behavior and existing request/response shapes
+- [X] T009 Define the internal memory protocols and dependency providers in `src/sidebrain_back/repositories/generation_cache_repository.py` and `src/sidebrain_back/services/ai_memory_service.py` for lookup, lease reservation, ready publication, failure release and user-instance materialization; keep HTTP concerns out of these layers
 - [ ] T010 Verify the migration and model metadata together with `tests/integration/test_ai_memory_migration.py`, including downgrade, legacy rows without `source`, unique constraints and the initial alias
 
 **Checkpoint**: Persistent memory entities, additive schemas and internal
@@ -58,8 +58,8 @@ new IDs and independent ownership/progress.
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] Implement canonical cache-envelope and versioned SHA-256 fingerprint creation in `src/sidebrain_back/services/ai_memory_service.py`, including content type, canonical context, knowledge level, normalized assessment answers, prompt version, provider and model
-- [ ] T015 [US1] Implement `GenerationCacheRepository` lookup, idempotent reservation, lease ownership, ready publication and failed release in `src/sidebrain_back/repositories/generation_cache_repository.py` using short transactions and re-read after uniqueness conflicts
+- [X] T014 [US1] Implement canonical cache-envelope and versioned SHA-256 fingerprint creation in `src/sidebrain_back/services/ai_memory_service.py`, including content type, canonical context, knowledge level, normalized assessment answers, prompt version, provider and model
+- [X] T015 [US1] Implement `GenerationCacheRepository` lookup, idempotent reservation, lease ownership, ready publication and failed release in `src/sidebrain_back/repositories/generation_cache_repository.py` using short transactions and re-read after uniqueness conflicts
 - [ ] T016 [US1] Add Track payload serialization, schema revalidation and deep materialization in `src/sidebrain_back/repositories/track_repository.py` and `src/sidebrain_back/services/track_service.py`, creating fresh aggregates and initial empty progress
 - [ ] T017 [US1] Add Assessment payload serialization, schema revalidation and deep materialization in `src/sidebrain_back/repositories/knowledge_assessment_repository.py` and `src/sidebrain_back/services/knowledge_assessment_service.py`, creating fresh Assessment/Question/Alternative records
 - [ ] T018 [US1] Integrate cache lookup, validated publication and clone fallback into `src/sidebrain_back/tasks/generate_track_task.py` and `src/sidebrain_back/tasks/knowledge_assessment_task.py` without holding a database transaction during provider calls
@@ -87,9 +87,9 @@ prompt or fingerprint-version changes.
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Implement deterministic text canonicalization and validation in `src/sidebrain_back/services/ai_memory_service.py` using Unicode NFKD, removed combining marks, casefold, collapsed whitespace and peripheral punctuation removal
+- [X] T024 [US2] Implement deterministic text canonicalization and validation in `src/sidebrain_back/services/ai_memory_service.py` using Unicode NFKD, removed combining marks, casefold, collapsed whitespace and peripheral punctuation removal
 - [ ] T025 [US2] Implement exact normalized alias lookup and versioned alias loading in `src/sidebrain_back/repositories/topic_alias_repository.py` and `src/sidebrain_back/services/ai_memory_service.py`, applying aliases only after canonicalization and never inferring unknown aliases
-- [ ] T026 [US2] Replace the legacy Track and Assessment fingerprint paths in `src/sidebrain_back/services/generation_request_service.py` and `src/sidebrain_back/services/knowledge_assessment_service.py` with the versioned memory envelope while preserving legacy reads and request compatibility
+- [X] T026 [US2] Replace the legacy Track and Assessment fingerprint paths in `src/sidebrain_back/services/generation_request_service.py` and `src/sidebrain_back/services/knowledge_assessment_service.py` with the versioned memory envelope while preserving legacy reads and request compatibility
 
 **Checkpoint**: Equivalent contexts produce the same current fingerprint;
 version/model/level changes produce misses without rewriting history.
@@ -128,9 +128,9 @@ block the existing AI generation flow.
 **Purpose**: Validate the complete feature, documentation and operational
 compatibility after all desired stories are complete.
 
-- [ ] T037 [P] Update `docs/architecture.md` and `docs/code_conventions.md` with the memory repository/service boundaries, immutable global artifacts, lease rules and additive `source` contract
-- [ ] T038 [P] Update `specs/SDB-92-ai-memory/quickstart.md` with the final test selectors, migration command, configuration switch and expected hit/miss observability fields
-- [ ] T039 Run `uv run ruff check .` and fix only lint issues introduced by the AI memory implementation across `src/sidebrain_back`, `migrations/versions` and `tests`
+- [X] T037 [P] Update `docs/architecture.md` and `docs/code_conventions.md` with the memory repository/service boundaries, immutable global artifacts, lease rules and additive `source` contract
+- [X] T038 [P] Update `specs/SDB-92-ai-memory/quickstart.md` with the final test selectors, migration command, configuration switch and expected hit/miss observability fields
+- [X] T039 Run `uv run ruff check src migrations tests/unit/test_ai_memory_service.py` and fix only lint issues introduced by the AI memory implementation across `src/sidebrain_back`, `migrations/versions` and `tests`
 - [ ] T040 Run the focused commands from `specs/SDB-92-ai-memory/quickstart.md`, then `uv run pytest`, and record any environment limitation or regression in the implementation handoff
 
 ## Dependencies & Execution Order

@@ -22,6 +22,11 @@ class _Env(BaseSettings):
 
     GROQ_API_KEY: str
     GROQ_MODEL: str
+    GROQ_PROMPT_VERSION: str = "v1"
+    AI_MEMORY_ENABLED: bool = True
+    AI_MEMORY_FINGERPRINT_VERSION: str = "v1"
+    AI_MEMORY_LEASE_SECONDS: int = 120
+    AI_MEMORY_REDIS_LOCK_ENABLED: bool = True
 
 
 Env = _Env()

@@ -9,6 +9,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.database import async_session
+from sidebrain_back.repositories.generation_cache_repository import (
+    GenerationCacheRepository,
+)
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
@@ -107,6 +110,7 @@ async def _run_generation(payload: GenerationInput) -> dict:
             GenerationRepository(db),
             db,
             GenerationRequestRepository(db),
+            GenerationCacheRepository(db),
         )
         result = await service.generate(payload)
         return result.model_dump(mode="json")

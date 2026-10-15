@@ -121,6 +121,7 @@ class KnowledgeAssessment(Base):
     kas_error_code: Mapped[str | None] = mapped_column(
         String(100), nullable=True
     )
+    source: Mapped[str | None] = mapped_column(String(16), nullable=True)
     kas_created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )

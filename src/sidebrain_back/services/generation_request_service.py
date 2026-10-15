@@ -1,11 +1,10 @@
-import hashlib
-import json
 from uuid import UUID, uuid4
 
 from sidebrain_back.schemas.generation_schema import (
     GenerationInput,
     LearningContext,
 )
+from sidebrain_back.services.ai_memory_service import AIMemoryService
 
 
 class GenerationRequestService:
@@ -30,13 +29,11 @@ class GenerationRequestService:
 
     @classmethod
     def fingerprint(cls, context: LearningContext) -> str:
-        normalized = json.dumps(
-            cls.normalize_context(context),
-            ensure_ascii=True,
-            sort_keys=True,
-            separators=(",", ":"),
+        fingerprint, _ = AIMemoryService.fingerprint(
+            content_type="track",
+            canonical_context=cls.normalize_context(context),
         )
-        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+        return fingerprint
 
     @classmethod
     def build_input(

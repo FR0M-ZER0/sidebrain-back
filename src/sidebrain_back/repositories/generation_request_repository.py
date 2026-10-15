@@ -42,6 +42,8 @@ class GenerationRequestRepository:
         knowledge_level: str | None,
         assessment_answers: list[dict] | None,
         assessment_id: UUID | None = None,
+        source: str | None = None,
+        cache_id: UUID | None = None,
     ) -> GenerationRequest:
         request = GenerationRequest(
             request_id=request_id,
@@ -52,6 +54,8 @@ class GenerationRequestRepository:
             knowledge_level=knowledge_level,
             assessment_answers=assessment_answers,
             assessment_id=assessment_id,
+            source=source,
+            cache_id=cache_id,
             status=GenerationStatusEnum.PENDING,
         )
         self.db.add(request)
@@ -66,6 +70,19 @@ class GenerationRequestRepository:
         request.track_id = track_id
         request.error_code = None
         request.updated_at = datetime.now(UTC).replace(tzinfo=None)
+
+    async def set_source(
+        self,
+        request_id: UUID,
+        *,
+        source: str,
+        cache_id: UUID | None = None,
+    ) -> None:
+        request = await self.get(request_id)
+        if request is None:
+            return
+        request.source = source
+        request.cache_id = cache_id
 
     async def mark_failed(self, request_id: UUID, error_code: str) -> None:
         request = await self.get(request_id)

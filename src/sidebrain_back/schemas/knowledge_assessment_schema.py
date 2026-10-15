@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Self
+from typing import Literal, Self
 from uuid import UUID, uuid4
 
 from pydantic import (
@@ -330,6 +330,7 @@ class AssessmentDetail(BaseModel):
         default=None,
         validation_alias=AliasChoices("error_code", "kas_error_code"),
     )
+    source: Literal["ai", "cache"] | None = None
     created_at: datetime = Field(
         validation_alias=AliasChoices("created_at", "kas_created_at")
     )
@@ -340,6 +341,12 @@ class AssessmentDetail(BaseModel):
         default=None,
         validation_alias=AliasChoices("completed_at", "kas_completed_at"),
     )
+
+    def model_dump(self, *args, **kwargs):
+        result = super().model_dump(*args, **kwargs)
+        if self.source is None:
+            result.pop("source", None)
+        return result
 
     @model_validator(mode="after")
     def validate_state(self) -> Self:

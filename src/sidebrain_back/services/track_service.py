@@ -240,6 +240,7 @@ class TrackService:
             status=request.status,
             track_id=request.track_id,
             error_code=request.error_code,
+            source=getattr(request, "source", None),
         )
         await self.db.rollback()
         return progress

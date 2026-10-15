@@ -113,3 +113,11 @@ Todo schema deve ocultar os nomes de campos vindos do banco de dados, utilizando
 ```python
 model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 ```
+
+### Memória de geração
+
+Repositórios de memória devem manter operações de lookup, reserva, publicação e
+liberação de lease fora de routers. Fingerprints devem ser calculados a partir
+de envelopes versionados e nunca incluir identidade, tokens ou payload em
+logs. Artefatos `ready` são imutáveis; mudanças de modelo ou prompt produzem
+uma nova chave.

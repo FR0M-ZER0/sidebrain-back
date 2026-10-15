@@ -224,3 +224,15 @@ avaliação e ao assunto. Quando uma geração de trilha usa uma avaliação con
 (ou ignorada), `GenerationRequest.assessment_id` preserva a referência à avaliação;
 o vínculo é opcional e usa `ON DELETE SET NULL`. O snapshot de nível e respostas
 enviado à geração continua armazenado na própria solicitação.
+## Memória determinística de IA
+
+Os artefatos globais de geração ficam separados das instâncias pertencentes ao
+usuário. `AIMemoryService` é responsável por canonicalização e fingerprint;
+`GenerationCacheRepository` encapsula lookup e lease persistida. A publicação
+de um artefato ocorre somente após a validação do schema de conteúdo, e uma
+instância de usuário nunca compartilha IDs ou progresso com outra instância.
+
+Lookup, lock e persistência do cache são otimizações: falhas devem registrar um
+miss e seguir pelo fluxo normal do provedor. A chamada externa não deve ocorrer
+com uma transação de banco aberta. O campo aditivo `source` identifica `ai` ou
+`cache`; históricos sem esse campo permanecem como `null`.

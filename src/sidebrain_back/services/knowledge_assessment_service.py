@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from fastapi import Depends
@@ -29,11 +26,10 @@ from sidebrain_back.schemas.knowledge_assessment_schema import (
     KnowledgeAssessmentResult,
     level_for_score,
 )
-
-if TYPE_CHECKING:
-    from sidebrain_back.services.knowledge_assessment_generator import (
-        KnowledgeAssessmentGenerator,
-    )
+from sidebrain_back.services.ai_memory_service import AIMemoryService
+from sidebrain_back.services.knowledge_assessment_generator import (
+    KnowledgeAssessmentGenerator,
+)
 
 
 class KnowledgeAssessmentService:
@@ -92,17 +88,15 @@ class KnowledgeAssessmentService:
 
     @staticmethod
     def context_fingerprint(payload: AssessmentCreateRequest) -> str:
-        canonical = json.dumps(
-            {
+        fingerprint, _ = AIMemoryService.fingerprint(
+            content_type="assessment",
+            canonical_context={
                 "objective": payload.objective,
                 "skip": payload.skip,
                 "subject": payload.subject,
             },
-            ensure_ascii=False,
-            separators=(",", ":"),
-            sort_keys=True,
         )
-        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        return fingerprint
 
     async def create_knowledge_assessment(
         self,
@@ -301,6 +295,7 @@ class KnowledgeAssessmentService:
         if locked is None:
             raise ValueError("Avaliação pendente não encontrada.")
         await repository.mark_generated(locked, payload)
+        locked.source = "ai"
         await db.commit()
         return locked.kas_status
 
