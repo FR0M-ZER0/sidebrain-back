@@ -53,6 +53,22 @@ uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
 
+## Autenticação e perfil
+
+Configure `JWT_SECRET_KEY` no `.env`. Cadastre uma conta em
+`POST /api/v1/auth/register` ou entre em `POST /api/v1/auth/login`; ambas as
+operações retornam `accessToken`. Envie esse valor nos recursos protegidos:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+O token expira em 60 minutos. O perfil autenticado fica em
+`GET|PUT|DELETE /api/v1/users/me`, e a senha é alterada por
+`PUT /api/v1/users/me/password`. UUID puro não é uma credencial válida. Consulte
+[a orientação de migração](./docs/auth_migration.md) antes de atualizar um
+ambiente com consumidores existentes ou hashes legados.
+
 ## Monitoramento das tasks
 
 Rode o comando abaixo para abrir a interface do flower e monitorar o andamento das tasks:

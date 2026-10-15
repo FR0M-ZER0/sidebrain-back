@@ -191,6 +191,21 @@ publicando `lesson_files`. Consulte o
 
 Novas versões (`v2`, `v3`, ...) devem ser adicionadas como novos módulos em `routers/`, preservando versões anteriores enquanto necessário para compatibilidade.
 
+## Autenticação
+
+`core/auth.py` extrai a credencial Bearer e `core/security.py` cuida de Argon2id
+e JWT, sem importar models, repositories ou services. O provider HTTP
+`get_current_user`, em `routers/v1/auth_router.py`, delega a validação ao
+`AuthService`. O service decodifica o token e consulta o `UserRepository` para
+confirmar que a conta está ativa e que `usr_token_version` coincide com a claim
+`ver`.
+
+A troca de senha incrementa essa versão na mesma transação do novo hash e
+revoga tokens anteriores. O limitador em `core/rate_limit.py` usa Redis `/2`,
+scripts Lua atômicos e chaves com digest; recebe somente strings já extraídas
+pelo router e não conhece entidades de negócio. Cadastro, login e alterações de
+perfil seguem `router -> service -> repository -> model`.
+
 ### Avaliações de conhecimento
 
 Os endpoints em `routers/v1/knowledge_assessment_router.py` seguem o fluxo

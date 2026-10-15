@@ -3,5 +3,7 @@ __pycache__
 *.pyc
 .git
 .github
-.env
+.env*
+coverage/
+*.log*
 tests

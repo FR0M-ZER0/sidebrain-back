@@ -2,8 +2,9 @@
 
 Base da API: `/api/v1`.
 
-Todos os endpoints exigem Bearer válido. Na implementação atual, o token é o
-UUID do usuário resolvido por `get_current_user`. JSON público usa `snake_case`.
+Todos os endpoints exigem JWT Bearer válido, obtido por cadastro ou login. O
+titular é resolvido por `get_current_user`; UUID puro é recusado. JSON público
+usa `snake_case`.
 
 ## Representação
 
