@@ -24,9 +24,10 @@ local current_time = redis.call('TIME')
 local now_ms = current_time[1] * 1000 + math.floor(current_time[2] / 1000)
 local window_ms = tonumber(ARGV[1]) * 1000
 redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now_ms - window_ms)
-local member = tostring(now_ms) .. ':' .. tostring(current_time[2])
+local member = tostring(redis.call('INCR', KEYS[3]))
 redis.call('ZADD', KEYS[1], now_ms, member)
 redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
+redis.call('EXPIRE', KEYS[3], tonumber(ARGV[1]))
 local failures = redis.call('ZCARD', KEYS[1])
 if failures >= tonumber(ARGV[2]) then
     redis.call('SET', KEYS[2], '1', 'EX', tonumber(ARGV[3]))
@@ -38,7 +39,7 @@ RECORD_SUCCESS_SCRIPT = """
 -- RECORD_SUCCESS
 local ttl = redis.call('TTL', KEYS[2])
 if ttl > 0 then return ttl end
-redis.call('DEL', KEYS[1])
+redis.call('DEL', KEYS[1], KEYS[3])
 return 0
 """
 
@@ -58,11 +59,10 @@ class AuthRateLimiter:
         self.client = client
 
     async def check(self, scope: str, subject: str, origin: str) -> None:
-        failures_key, lock_key = self._keys(scope, subject, origin)
+        keys = self._keys(scope, subject, origin)
         retry_after = await self._eval(
             CHECK_RATE_LIMIT_SCRIPT,
-            failures_key,
-            lock_key,
+            keys,
         )
         if retry_after > 0:
             raise RateLimitExceeded(retry_after)
@@ -73,11 +73,10 @@ class AuthRateLimiter:
         subject: str,
         origin: str,
     ) -> None:
-        failures_key, lock_key = self._keys(scope, subject, origin)
+        keys = self._keys(scope, subject, origin)
         retry_after = await self._eval(
             RECORD_FAILURE_SCRIPT,
-            failures_key,
-            lock_key,
+            keys,
             WINDOW_SECONDS,
             MAX_FAILURES,
             BLOCK_SECONDS,
@@ -91,18 +90,27 @@ class AuthRateLimiter:
         subject: str,
         origin: str,
     ) -> None:
-        failures_key, lock_key = self._keys(scope, subject, origin)
+        keys = self._keys(scope, subject, origin)
         retry_after = await self._eval(
             RECORD_SUCCESS_SCRIPT,
-            failures_key,
-            lock_key,
+            keys,
         )
         if retry_after > 0:
             raise RateLimitExceeded(retry_after)
 
-    async def _eval(self, script: str, *arguments: Any) -> int:
+    async def _eval(
+        self,
+        script: str,
+        keys: tuple[str, ...],
+        *arguments: Any,
+    ) -> int:
         try:
-            result = await self.client.eval(script, 2, *arguments)
+            result = await self.client.eval(
+                script,
+                len(keys),
+                *keys,
+                *arguments,
+            )
             return int(result)
         except RateLimitExceeded:
             raise
@@ -112,7 +120,7 @@ class AuthRateLimiter:
             ) from error
 
     @staticmethod
-    def _keys(scope: str, subject: str, origin: str) -> tuple[str, str]:
+    def _keys(scope: str, subject: str, origin: str) -> tuple[str, str, str]:
         normalized_subject = (
             subject.strip().lower() if scope == "login" else subject
         )
@@ -120,7 +128,11 @@ class AuthRateLimiter:
             f"{scope}\0{normalized_subject}\0{origin}".encode()
         ).hexdigest()
         prefix = f"sidebrain:auth:{scope}:{digest}"
-        return f"{prefix}:failures", f"{prefix}:lock"
+        return (
+            f"{prefix}:failures",
+            f"{prefix}:lock",
+            f"{prefix}:sequence",
+        )
 
 
 _redis_client: Redis | None = None

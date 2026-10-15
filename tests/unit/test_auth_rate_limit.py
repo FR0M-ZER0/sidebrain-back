@@ -15,11 +15,13 @@ class FakeRedis:
         self.failures = {}
         self.locks = {}
         self.keys = []
+        self.number_of_keys = []
         self.guard = asyncio.Lock()
 
-    async def eval(self, script, _number_of_keys, *args):
-        failures_key, lock_key = args[:2]
-        self.keys.extend([failures_key, lock_key])
+    async def eval(self, script, number_of_keys, *args):
+        failures_key, lock_key, sequence_key = args[:number_of_keys]
+        self.number_of_keys.append(number_of_keys)
+        self.keys.extend([failures_key, lock_key, sequence_key])
         async with self.guard:
             if "CHECK_RATE_LIMIT" in script:
                 return max(0, self.locks.get(lock_key, 0) - self.now)
@@ -90,6 +92,9 @@ async def test_concurrent_failures_are_counted_atomically():
 
     with pytest.raises(RateLimitExceeded):
         await limiter.check("login", "person@example.com", "origin")
+
+    assert all(number_of_keys == 3 for number_of_keys in redis.number_of_keys)
+    assert any(key.endswith(":sequence") for key in redis.keys)
 
 
 @pytest.mark.anyio
