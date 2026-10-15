@@ -45,6 +45,7 @@ jobs:
       POSTGRES_DB: meu_banco_de_dados
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      JWT_SECRET_KEY: ci-only-secret-A9mQ4tZ7kP2xR8vL5sN1
       GROQ_API_KEY: mock_api_key_for_ci
       GROQ_MODEL: llama-3.3-70b-versatile
 

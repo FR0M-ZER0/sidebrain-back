@@ -38,6 +38,32 @@ def test_jwt_secret_configuration_rejects_weak_values(secret):
         type(Env)(JWT_SECRET_KEY=secret)
 
 
+def test_fixed_auth_configuration_parses_environment_strings():
+    settings = type(Env)(
+        REDIS_AUTH_DB="2",
+        ACCESS_TOKEN_EXPIRE_MINUTES="60",
+        JWT_SECRET_KEY=Env.JWT_SECRET_KEY,
+    )
+
+    assert settings.REDIS_AUTH_DB == 2
+    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("REDIS_AUTH_DB", "1"),
+        ("ACCESS_TOKEN_EXPIRE_MINUTES", "30"),
+    ],
+)
+def test_fixed_auth_configuration_rejects_other_values(field, value):
+    with pytest.raises(ValidationError):
+        type(Env)(
+            **{field: value},
+            JWT_SECRET_KEY=Env.JWT_SECRET_KEY,
+        )
+
+
 def test_access_token_has_required_claims_and_sixty_minute_lifetime():
     user_id = uuid4()
     token = create_access_token(user_id, 7)
