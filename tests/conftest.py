@@ -30,6 +30,8 @@ for _name, _value in _TEST_ENV.items():
 from main import app  # noqa: E402
 from sidebrain_back.core.database import Base, engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.badge_criteria_enum import BadgeCriteriaEnum
+from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
 from sidebrain_back.enums.knowledge_assessment_status_enum import (
     KnowledgeAssessmentStatusEnum,
 )
@@ -39,6 +41,8 @@ from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
 from sidebrain_back.models import (
     Answer,
+    Badge,
+    BadgeProgress,
     Feedback,
     KnowledgeAssessment,
     KnowledgeAssessmentAlternative,
@@ -46,6 +50,7 @@ from sidebrain_back.models import (
     KnowledgeAssessmentQuestion,
     Lesson,
     LessonFile,
+    Mission,
     Quiz,
     Step,
     Track,
@@ -81,6 +86,62 @@ def authenticated_user() -> User:
         usr_password_hash="test-hash",
         usr_is_deleted=False,
     )
+
+
+@pytest.fixture
+def badge_factory(db_session: AsyncSession):
+    async def create(
+        *,
+        name: str = "Primeira trilha",
+        description: str | None = "Conclua uma trilha.",
+        rarity: BadgeRarityEnum = BadgeRarityEnum.COMMON,
+        criteria: BadgeCriteriaEnum = BadgeCriteriaEnum.TRACKS_COMPLETED,
+        criteria_value: int = 1,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Badge:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        badge = Badge(
+            bdg_id=uuid4(),
+            bdg_name=name,
+            bdg_description=description,
+            bdg_rarity=rarity,
+            bdg_criteria=criteria,
+            bdg_criteria_value=criteria_value,
+            bdg_updated_at=now,
+            bdg_is_deleted=deleted,
+            bdg_deleted_at=now if deleted else None,
+        )
+        db_session.add(badge)
+        if flush:
+            await db_session.flush()
+        return badge
+
+    return create
+
+
+@pytest.fixture
+def badge_progress_factory(db_session: AsyncSession):
+    async def create(
+        badge: Badge,
+        user: User,
+        *,
+        status: str = "in_progress",
+        flush: bool = True,
+    ) -> BadgeProgress:
+        progress = BadgeProgress(
+            bpg_id=uuid4(),
+            bpg_user_id=user.usr_id,
+            bpg_badge_id=badge.bdg_id,
+            bpg_status=status,
+            bpg_updated_at=datetime.now(UTC).replace(tzinfo=None),
+        )
+        db_session.add(progress)
+        if flush:
+            await db_session.flush()
+        return progress
+
+    return create
 
 
 @pytest.fixture
@@ -283,6 +344,40 @@ def lesson_factory(db_session: AsyncSession):
         if flush:
             await db_session.flush()
         return lesson
+
+    return create
+
+
+@pytest.fixture
+def mission_factory(db_session: AsyncSession):
+    async def create(
+        step: Step,
+        *,
+        title: str = "Complete lessons",
+        difficulty: str = "medium",
+        xp_reward: int = 100,
+        criteria: str = "number_of_lessons_completed",
+        criteria_value: int = 3,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Mission:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        mission = Mission(
+            msn_id=uuid4(),
+            msn_step_id=step.stp_id,
+            msn_title=title,
+            msn_difficulty=difficulty,
+            msn_xp_reward=xp_reward,
+            msn_criteria=criteria,
+            msn_criteria_value=criteria_value,
+            msn_updated_at=now,
+            msn_is_deleted=deleted,
+            msn_deleted_at=now if deleted else None,
+        )
+        db_session.add(mission)
+        if flush:
+            await db_session.flush()
+        return mission
 
     return create
 
