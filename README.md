@@ -1,3 +1,24 @@
+
+## Badges
+
+O catálogo global de badges está disponível para qualquer usuário autenticado:
+
+- `POST /api/v1/badges` cria um badge e normaliza o nome.
+- `GET /api/v1/badges` lista badges ativos com paginação.
+- `GET /api/v1/badges/{badge_id}` consulta um badge e somente o progresso do
+  usuário autenticado.
+- `PATCH /api/v1/badges/{badge_id}` atualiza campos editáveis parcialmente.
+- `DELETE /api/v1/badges/{badge_id}` realiza exclusão lógica e preserva o
+  histórico de progresso.
+
+Valide a feature com:
+
+```bash
+uv run pytest tests/unit/test_badge_schema.py tests/unit/test_badge_service.py tests/integration/test_badge_lifecycle.py tests/contract/test_badge_contract.py
+uv run ruff check .
+```
+
+Consulte o [contrato completo](./specs/SDB-87-badge-management/contracts/badges.md).
 # API do Sidebrain
 
 ## 🚀 Tecnologias
