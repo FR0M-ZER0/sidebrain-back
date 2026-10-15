@@ -27,6 +27,7 @@ from sidebrain_back.models import (
     KnowledgeAssessmentQuestion,
     Lesson,
     LessonFile,
+    Mission,
     Quiz,
     Step,
     Track,
@@ -263,6 +264,40 @@ def lesson_factory(db_session: AsyncSession):
         if flush:
             await db_session.flush()
         return lesson
+
+    return create
+
+
+@pytest.fixture
+def mission_factory(db_session: AsyncSession):
+    async def create(
+        step: Step,
+        *,
+        title: str = "Complete lessons",
+        difficulty: str = "medium",
+        xp_reward: int = 100,
+        criteria: str = "number_of_lessons_completed",
+        criteria_value: int = 3,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Mission:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        mission = Mission(
+            msn_id=uuid4(),
+            msn_step_id=step.stp_id,
+            msn_title=title,
+            msn_difficulty=difficulty,
+            msn_xp_reward=xp_reward,
+            msn_criteria=criteria,
+            msn_criteria_value=criteria_value,
+            msn_updated_at=now,
+            msn_is_deleted=deleted,
+            msn_deleted_at=now if deleted else None,
+        )
+        db_session.add(mission)
+        if flush:
+            await db_session.flush()
+        return mission
 
     return create
 
