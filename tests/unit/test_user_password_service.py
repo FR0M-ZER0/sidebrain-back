@@ -3,7 +3,10 @@ from uuid import uuid4
 
 import pytest
 
-from sidebrain_back.core.rate_limit import RateLimitUnavailable
+from sidebrain_back.core.rate_limit import (
+    RateLimitExceeded,
+    RateLimitUnavailable,
+)
 from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.user_schema import PasswordUpdateRequest
 from sidebrain_back.services.auth_errors import (
@@ -132,7 +135,7 @@ async def test_equal_new_password_is_validation_error_without_counting(
 
 
 @pytest.mark.anyio
-async def test_password_success_resets_failures_only_after_commit(monkeypatch):
+async def test_password_success_revalidates_limit_before_commit(monkeypatch):
     monkeypatch.setattr(
         "sidebrain_back.services.user_service.verify_password",
         AsyncMock(return_value=True),
@@ -158,11 +161,13 @@ async def test_password_success_resets_failures_only_after_commit(monkeypatch):
         "origin",
     )
 
-    assert events == ["update", "commit", "success"]
+    assert events == ["update", "success", "commit"]
 
 
 @pytest.mark.anyio
-async def test_failed_password_commit_preserves_failure_bucket(monkeypatch):
+async def test_failed_password_commit_rolls_back_after_limiter_revalidation(
+    monkeypatch,
+):
     monkeypatch.setattr(
         "sidebrain_back.services.user_service.verify_password",
         AsyncMock(return_value=True),
@@ -187,12 +192,12 @@ async def test_failed_password_commit_preserves_failure_bucket(monkeypatch):
             "origin",
         )
 
-    assert events == ["update", "commit"]
+    assert events == ["update", "success", "commit"]
     assert db.rollbacks == 1
 
 
 @pytest.mark.anyio
-async def test_password_change_stays_successful_if_bucket_cleanup_fails(
+async def test_password_change_rolls_back_if_limiter_is_unavailable(
     monkeypatch,
 ):
     monkeypatch.setattr(
@@ -210,14 +215,47 @@ async def test_password_change_stays_successful_if_bucket_cleanup_fails(
     )
     service = UserService(RepositoryDouble(user), db, limiter)
 
-    await service.update_password(
-        user,
-        PasswordUpdateRequest(
-            currentPassword="senha-antiga",
-            newPassword="senha-nova",
-        ),
-        "origin",
-    )
+    with pytest.raises(RateLimitUnavailable):
+        await service.update_password(
+            user,
+            PasswordUpdateRequest(
+                currentPassword="senha-antiga",
+                newPassword="senha-nova",
+            ),
+            "origin",
+        )
 
-    assert db.commits == 1
+    assert db.commits == 0
+    assert db.rollbacks == 1
     assert any(call[0] == "success" for call in limiter.calls)
+
+
+@pytest.mark.anyio
+async def test_password_change_rolls_back_if_concurrent_failures_arm_lock(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.verify_password",
+        AsyncMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.hash_password",
+        AsyncMock(return_value="hash-novo"),
+    )
+    user = _user()
+    db = DbDouble()
+    limiter = LimiterDouble(success_error=RateLimitExceeded(900))
+    service = UserService(RepositoryDouble(user), db, limiter)
+
+    with pytest.raises(RateLimitExceeded):
+        await service.update_password(
+            user,
+            PasswordUpdateRequest(
+                currentPassword="senha-antiga",
+                newPassword="senha-nova",
+            ),
+            "origin",
+        )
+
+    assert db.commits == 0
+    assert db.rollbacks == 1

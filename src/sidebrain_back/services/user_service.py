@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import Depends
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,8 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sidebrain_back.core.database import get_db
 from sidebrain_back.core.rate_limit import (
     AuthRateLimiter,
-    RateLimitExceeded,
-    RateLimitUnavailable,
     get_auth_rate_limiter,
 )
 from sidebrain_back.core.security import hash_password, verify_password
@@ -29,8 +25,6 @@ from sidebrain_back.services.auth_errors import (
     ResourceNotFoundError,
 )
 from sidebrain_back.services.auth_service import _is_email_unique_violation
-
-logger = logging.getLogger(__name__)
 
 
 class UserService:
@@ -120,6 +114,7 @@ class UserService:
 
             password_hash = await hash_password(payload.new_password)
             await self.repository.update_password(user, password_hash)
+            await limiter.record_success(*key)
             await self.db.commit()
         except (
             AuthenticationError,
@@ -131,14 +126,6 @@ class UserService:
         except Exception:
             await self.db.rollback()
             raise
-
-        try:
-            await limiter.record_success(*key)
-        except (RateLimitExceeded, RateLimitUnavailable):
-            logger.warning(
-                "Não foi possível limpar o limitador após a troca de senha; "
-                "o contador foi mantido por segurança."
-            )
 
     async def delete_user(self, authenticated_user: User) -> None:
         try:
