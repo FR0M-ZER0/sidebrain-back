@@ -1,7 +1,12 @@
 from importlib.metadata import version
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_MIN_JWT_SECRET_BYTES = 32
+_MIN_JWT_SECRET_UNIQUE_CHARACTERS = 12
+_JWT_PLACEHOLDER_PREFIXES = ("replace", "substitua", "troque")
 
 
 class _Env(BaseSettings):
@@ -28,6 +33,25 @@ class _Env(BaseSettings):
 
     GROQ_API_KEY: str
     GROQ_MODEL: str
+
+    @field_validator("JWT_SECRET_KEY")
+    @classmethod
+    def validate_jwt_secret_key(cls, value: str) -> str:
+        normalized = value.strip()
+        is_placeholder = normalized.lower().startswith(
+            _JWT_PLACEHOLDER_PREFIXES
+        )
+        if (
+            normalized != value
+            or len(value.encode("utf-8")) < _MIN_JWT_SECRET_BYTES
+            or len(set(value)) < _MIN_JWT_SECRET_UNIQUE_CHARACTERS
+            or is_placeholder
+        ):
+            raise ValueError(
+                "JWT_SECRET_KEY deve ter ao menos 32 bytes, diversidade "
+                "de caracteres e não pode ser um placeholder."
+            )
+        return value
 
 
 Env = _Env()

@@ -36,6 +36,20 @@ def test_update_profile_rejects_empty_and_private_fields(test_app):
         ).status_code
         == 422
     )
+    assert (
+        client.put(
+            "/api/v1/users/me",
+            json={"name": None, "email": "novo@example.com"},
+        ).status_code
+        == 422
+    )
+    assert (
+        client.put(
+            "/api/v1/users/me",
+            json={"name": "Maria", "email": None},
+        ).status_code
+        == 422
+    )
 
 
 def test_update_profile_maps_reserved_email_to_conflict(test_app):

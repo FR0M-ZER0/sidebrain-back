@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from sidebrain_back.core.rate_limit import RateLimitUnavailable
 from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.user_schema import PasswordUpdateRequest
 from sidebrain_back.services.auth_errors import (
@@ -13,11 +14,17 @@ from sidebrain_back.services.user_service import UserService
 
 
 class DbDouble:
-    def __init__(self):
+    def __init__(self, events=None, commit_error=None):
         self.commits = 0
         self.rollbacks = 0
+        self.events = events
+        self.commit_error = commit_error
 
     async def commit(self):
+        if self.events is not None:
+            self.events.append("commit")
+        if self.commit_error is not None:
+            raise self.commit_error
         self.commits += 1
 
     async def rollback(self):
@@ -25,22 +32,27 @@ class DbDouble:
 
 
 class RepositoryDouble:
-    def __init__(self, user):
+    def __init__(self, user, events=None):
         self.user = user
         self.updated = None
+        self.events = events
 
     async def get_for_update(self, _user_id):
         return self.user
 
     async def update_password(self, user, password_hash):
+        if self.events is not None:
+            self.events.append("update")
         self.updated = password_hash
         user.usr_password_hash = password_hash
         user.usr_token_version += 1
 
 
 class LimiterDouble:
-    def __init__(self):
+    def __init__(self, events=None, success_error=None):
         self.calls = []
+        self.events = events
+        self.success_error = success_error
 
     async def check(self, *key):
         self.calls.append(("check", key))
@@ -50,6 +62,10 @@ class LimiterDouble:
 
     async def record_success(self, *key):
         self.calls.append(("success", key))
+        if self.events is not None:
+            self.events.append("success")
+        if self.success_error is not None:
+            raise self.success_error
 
 
 def _user():
@@ -113,3 +129,95 @@ async def test_equal_new_password_is_validation_error_without_counting(
         )
 
     assert not any(call[0] == "failure" for call in limiter.calls)
+
+
+@pytest.mark.anyio
+async def test_password_success_resets_failures_only_after_commit(monkeypatch):
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.verify_password",
+        AsyncMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.hash_password",
+        AsyncMock(return_value="hash-novo"),
+    )
+    events = []
+    user = _user()
+    service = UserService(
+        RepositoryDouble(user, events),
+        DbDouble(events),
+        LimiterDouble(events),
+    )
+
+    await service.update_password(
+        user,
+        PasswordUpdateRequest(
+            currentPassword="senha-antiga",
+            newPassword="senha-nova",
+        ),
+        "origin",
+    )
+
+    assert events == ["update", "commit", "success"]
+
+
+@pytest.mark.anyio
+async def test_failed_password_commit_preserves_failure_bucket(monkeypatch):
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.verify_password",
+        AsyncMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.hash_password",
+        AsyncMock(return_value="hash-novo"),
+    )
+    events = []
+    user = _user()
+    db = DbDouble(events, commit_error=RuntimeError("commit failed"))
+    limiter = LimiterDouble(events)
+    service = UserService(RepositoryDouble(user, events), db, limiter)
+
+    with pytest.raises(RuntimeError, match="commit failed"):
+        await service.update_password(
+            user,
+            PasswordUpdateRequest(
+                currentPassword="senha-antiga",
+                newPassword="senha-nova",
+            ),
+            "origin",
+        )
+
+    assert events == ["update", "commit"]
+    assert db.rollbacks == 1
+
+
+@pytest.mark.anyio
+async def test_password_change_stays_successful_if_bucket_cleanup_fails(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.verify_password",
+        AsyncMock(return_value=True),
+    )
+    monkeypatch.setattr(
+        "sidebrain_back.services.user_service.hash_password",
+        AsyncMock(return_value="hash-novo"),
+    )
+    user = _user()
+    db = DbDouble()
+    limiter = LimiterDouble(
+        success_error=RateLimitUnavailable("redis unavailable")
+    )
+    service = UserService(RepositoryDouble(user), db, limiter)
+
+    await service.update_password(
+        user,
+        PasswordUpdateRequest(
+            currentPassword="senha-antiga",
+            newPassword="senha-nova",
+        ),
+        "origin",
+    )
+
+    assert db.commits == 1
+    assert any(call[0] == "success" for call in limiter.calls)

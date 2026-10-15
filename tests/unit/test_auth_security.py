@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from pydantic import ValidationError
 
 from sidebrain_back.core.constants import Env
 from sidebrain_back.core.security import (
@@ -21,6 +22,20 @@ async def test_hash_password_uses_argon2id_and_verifies_password():
     assert password_hash.startswith("$argon2id$")
     assert await verify_password("senha-segura", password_hash)
     assert not await verify_password("senha-incorreta", password_hash)
+
+
+@pytest.mark.parametrize(
+    "secret",
+    [
+        "segredo-curto",
+        "a" * 32,
+        "SUBSTITUA_COM_UM_SEGREDO_ALEATORIO",
+        " segredo-com-diversidade-suficiente-123! ",
+    ],
+)
+def test_jwt_secret_configuration_rejects_weak_values(secret):
+    with pytest.raises(ValidationError):
+        type(Env)(JWT_SECRET_KEY=secret)
 
 
 def test_access_token_has_required_claims_and_sixty_minute_lifetime():

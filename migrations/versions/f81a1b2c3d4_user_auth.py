@@ -13,6 +13,45 @@ depends_on = None
 INDEX_NAME = "uq_user_usr_email_normalized"
 
 
+def _token_version_column_exists(connection) -> bool:
+    return bool(
+        connection.execute(
+            sa.text(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = current_schema()
+                      AND table_name = 'user'
+                      AND column_name = 'usr_token_version'
+                )
+                """
+            )
+        ).scalar_one()
+    )
+
+
+def _normalized_email_index_validity(connection) -> bool | None:
+    return connection.execute(
+        sa.text(
+            """
+            SELECT index_state.indisvalid
+            FROM pg_index AS index_state
+            JOIN pg_class AS index_relation
+              ON index_relation.oid = index_state.indexrelid
+            JOIN pg_class AS table_relation
+              ON table_relation.oid = index_state.indrelid
+            JOIN pg_namespace AS table_namespace
+              ON table_namespace.oid = table_relation.relnamespace
+            WHERE table_namespace.nspname = current_schema()
+              AND table_relation.relname = 'user'
+              AND index_relation.relname = :index_name
+            """
+        ),
+        {"index_name": INDEX_NAME},
+    ).scalar_one_or_none()
+
+
 def upgrade() -> None:
     connection = op.get_bind()
     duplicates = connection.execute(
@@ -33,24 +72,28 @@ def upgrade() -> None:
             "reconcilie os titulares antes de aplicar a migração."
         )
 
-    op.add_column(
-        "user",
-        sa.Column(
-            "usr_token_version",
-            sa.Integer(),
-            nullable=False,
-            server_default=sa.text("0"),
-        ),
-    )
-
-    # Se uma escrita concorrente invalidar a criação, execute
-    # DROP INDEX CONCURRENTLY IF EXISTS uq_user_usr_email_normalized,
-    # reconcilie a colisão e reaplique esta revisão.
-    with op.get_context().autocommit_block():
-        op.execute(
-            f'CREATE UNIQUE INDEX CONCURRENTLY "{INDEX_NAME}" '
-            'ON "user" (lower(btrim(usr_email)))'
+    if not _token_version_column_exists(connection):
+        op.add_column(
+            "user",
+            sa.Column(
+                "usr_token_version",
+                sa.Integer(),
+                nullable=False,
+                server_default=sa.text("0"),
+            ),
         )
+
+    index_validity = _normalized_email_index_validity(connection)
+    with op.get_context().autocommit_block():
+        if index_validity is False:
+            op.execute(
+                f'DROP INDEX CONCURRENTLY IF EXISTS "{INDEX_NAME}"'
+            )
+        if index_validity is not True:
+            op.execute(
+                f'CREATE UNIQUE INDEX CONCURRENTLY "{INDEX_NAME}" '
+                'ON "user" (lower(btrim(usr_email)))'
+            )
 
 
 def downgrade() -> None:

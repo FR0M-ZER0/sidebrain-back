@@ -49,7 +49,11 @@ class UserUpdateRequest(BaseModel):
 
     @model_validator(mode="after")
     def require_change(self) -> "UserUpdateRequest":
-        if self.name is None and self.email is None:
+        has_explicit_null = any(
+            getattr(self, field_name) is None
+            for field_name in self.model_fields_set
+        )
+        if not self.model_fields_set or has_explicit_null:
             raise ValueError("Informe nome e/ou e-mail.")
         return self
 

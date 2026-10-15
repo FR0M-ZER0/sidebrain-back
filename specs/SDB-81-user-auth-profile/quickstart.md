@@ -1,6 +1,8 @@
 # Quickstart de validação: SDB-81
 
-Este guia valida a implementação futura do [plano](plan.md) e do [contrato HTTP](contracts/auth-profile.md). Os endpoints ainda não são criados por esta etapa de planejamento.
+Este guia valida os endpoints implementados conforme o [plano](plan.md) e o
+[contrato HTTP](contracts/auth-profile.md), cobrindo configuração, migração,
+autenticação e gerenciamento do próprio perfil.
 
 ## Pré-requisitos e implantação
 

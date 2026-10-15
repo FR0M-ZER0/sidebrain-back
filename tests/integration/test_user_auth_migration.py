@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 MIGRATION_PATH = (
@@ -49,3 +50,66 @@ def test_migration_preserves_user_rows_and_relationships():
     assert 'delete from "user"' not in source
     assert 'drop table "user"' not in source
     assert "cascade" not in source
+
+
+def test_migration_repairs_partial_state_before_retry(monkeypatch):
+    migration = _load_migration()
+
+    class ResultDouble:
+        def __init__(self, *, rows=None, scalar=None):
+            self.rows = rows
+            self.scalar = scalar
+
+        def fetchall(self):
+            return self.rows
+
+        def scalar_one(self):
+            return self.scalar
+
+        def scalar_one_or_none(self):
+            return self.scalar
+
+    class ConnectionDouble:
+        def __init__(self):
+            self.results = iter(
+                (
+                    ResultDouble(rows=[]),
+                    ResultDouble(scalar=True),
+                    ResultDouble(scalar=False),
+                )
+            )
+
+        def execute(self, *_args, **_kwargs):
+            return next(self.results)
+
+    @contextmanager
+    def autocommit_block():
+        yield
+
+    added_columns = []
+    statements = []
+    monkeypatch.setattr(migration.op, "get_bind", ConnectionDouble)
+    monkeypatch.setattr(
+        migration.op,
+        "add_column",
+        lambda *args: added_columns.append(args),
+    )
+    monkeypatch.setattr(migration.op, "execute", statements.append)
+    monkeypatch.setattr(
+        migration.op,
+        "get_context",
+        lambda: type(
+            "ContextDouble",
+            (),
+            {"autocommit_block": staticmethod(autocommit_block)},
+        )(),
+    )
+
+    migration.upgrade()
+
+    assert added_columns == []
+    assert statements == [
+        f'DROP INDEX CONCURRENTLY IF EXISTS "{migration.INDEX_NAME}"',
+        f'CREATE UNIQUE INDEX CONCURRENTLY "{migration.INDEX_NAME}" '
+        'ON "user" (lower(btrim(usr_email)))',
+    ]

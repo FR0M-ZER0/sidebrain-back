@@ -54,7 +54,13 @@ def test_login_normalizes_email_and_forbids_extra_fields():
 
 
 def test_profile_update_requires_at_least_one_non_null_field():
-    for payload in ({}, {"name": None}, {"email": None}):
+    for payload in (
+        {},
+        {"name": None},
+        {"email": None},
+        {"name": None, "email": "novo@example.com"},
+        {"name": "Maria", "email": None},
+    ):
         with pytest.raises(ValidationError):
             UserUpdateRequest(**payload)
 
