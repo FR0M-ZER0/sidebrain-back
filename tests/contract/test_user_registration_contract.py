@@ -69,3 +69,20 @@ def test_register_maps_reserved_email_and_rejects_extra_fields(client):
     assert conflict.headers["content-type"].startswith(
         "application/problem+json"
     )
+
+
+@pytest.mark.parametrize("name", [123, {"given": "Maria"}])
+def test_register_rejects_non_string_name_with_422(client, name):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "name": name,
+            "email": "maria@example.com",
+            "password": "12345678",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith(
+        "application/problem+json"
+    )

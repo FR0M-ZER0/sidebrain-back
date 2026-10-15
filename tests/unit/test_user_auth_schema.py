@@ -28,6 +28,8 @@ def test_registration_normalizes_name_and_email():
     [
         {"name": " ", "email": "a@example.com", "password": "12345678"},
         {"name": "A", "email": "inválido", "password": "12345678"},
+        {"name": 123, "email": "a@example.com", "password": "12345678"},
+        {"name": {}, "email": "a@example.com", "password": "12345678"},
         {"name": "A", "email": "a@example.com", "password": "curta"},
         {
             "name": "A",

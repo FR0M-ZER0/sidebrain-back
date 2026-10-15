@@ -15,12 +15,12 @@ Name = Annotated[str, Field(min_length=1, max_length=255)]
 Password = Annotated[str, Field(min_length=8)]
 
 
-def _normalize_name(value: str | None) -> str | None:
-    return value.strip() if value is not None else None
+def _normalize_name(value: object) -> object:
+    return value.strip() if isinstance(value, str) else value
 
 
-def _normalize_email(value: str | None) -> str | None:
-    return value.strip().lower() if value is not None else None
+def _normalize_email(value: object) -> object:
+    return value.strip().lower() if isinstance(value, str) else value
 
 
 class UserRegisterRequest(BaseModel):
