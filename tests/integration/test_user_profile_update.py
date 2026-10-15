@@ -10,12 +10,16 @@ from sidebrain_back.services.user_service import UserService
 @pytest.mark.anyio
 async def test_profile_update_changes_only_public_profile_fields(db_session):
     owner = User(
-        usr_name="Maria", usr_email="maria@example.com",
-        usr_password_hash="hash", usr_is_deleted=False,
+        usr_name="Maria",
+        usr_email="maria@example.com",
+        usr_password_hash="hash",
+        usr_is_deleted=False,
     )
     other = User(
-        usr_name="Outra", usr_email="used@example.com",
-        usr_password_hash="hash", usr_is_deleted=True,
+        usr_name="Outra",
+        usr_email="used@example.com",
+        usr_password_hash="hash",
+        usr_is_deleted=True,
     )
     db_session.add_all([owner, other])
     await db_session.flush()

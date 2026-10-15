@@ -65,9 +65,7 @@ async def test_consumer_completes_public_auth_journey(
         assert set(login_body) == {"accessToken", "tokenType", "user"}
         assert login_body["user"] == registration_body["user"]
 
-        headers = {
-            "Authorization": f"Bearer {login_body['accessToken']}"
-        }
+        headers = {"Authorization": f"Bearer {login_body['accessToken']}"}
         profile = await client.get("/api/v1/users/me", headers=headers)
         assert profile.status_code == 200
         assert profile.json() == registration_body["user"]

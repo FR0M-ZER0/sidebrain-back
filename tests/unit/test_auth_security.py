@@ -51,39 +51,42 @@ def test_access_token_has_required_claims_and_sixty_minute_lifetime():
     assert claims.token_version == 7
 
 
-@pytest.mark.parametrize("token_factory", [
-    lambda: str(uuid4()),
-    lambda: create_access_token(uuid4(), 0) + "alterado",
-    lambda: jwt.encode(
-        {
-            "sub": str(uuid4()),
-            "iat": datetime.now(UTC) - timedelta(hours=2),
-            "exp": datetime.now(UTC) - timedelta(hours=1),
-            "ver": 0,
-        },
-        Env.JWT_SECRET_KEY,
-        algorithm="HS256",
-    ),
-    lambda: jwt.encode(
-        {
-            "sub": str(uuid4()),
-            "iat": datetime.now(UTC),
-            "exp": datetime.now(UTC) + timedelta(hours=1),
-        },
-        Env.JWT_SECRET_KEY,
-        algorithm="HS256",
-    ),
-    lambda: jwt.encode(
-        {
-            "sub": str(uuid4()),
-            "iat": datetime.now(UTC),
-            "exp": datetime.now(UTC) + timedelta(hours=1),
-            "ver": True,
-        },
-        Env.JWT_SECRET_KEY,
-        algorithm="HS256",
-    ),
-])
+@pytest.mark.parametrize(
+    "token_factory",
+    [
+        lambda: str(uuid4()),
+        lambda: create_access_token(uuid4(), 0) + "alterado",
+        lambda: jwt.encode(
+            {
+                "sub": str(uuid4()),
+                "iat": datetime.now(UTC) - timedelta(hours=2),
+                "exp": datetime.now(UTC) - timedelta(hours=1),
+                "ver": 0,
+            },
+            Env.JWT_SECRET_KEY,
+            algorithm="HS256",
+        ),
+        lambda: jwt.encode(
+            {
+                "sub": str(uuid4()),
+                "iat": datetime.now(UTC),
+                "exp": datetime.now(UTC) + timedelta(hours=1),
+            },
+            Env.JWT_SECRET_KEY,
+            algorithm="HS256",
+        ),
+        lambda: jwt.encode(
+            {
+                "sub": str(uuid4()),
+                "iat": datetime.now(UTC),
+                "exp": datetime.now(UTC) + timedelta(hours=1),
+                "ver": True,
+            },
+            Env.JWT_SECRET_KEY,
+            algorithm="HS256",
+        ),
+    ],
+)
 def test_decode_rejects_invalid_or_incomplete_credentials(token_factory):
     with pytest.raises(TokenValidationError):
         decode_access_token(token_factory())

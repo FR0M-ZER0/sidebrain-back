@@ -44,9 +44,7 @@ async def verify_dummy_password(password: str) -> None:
 
 def create_access_token(user_id: UUID, token_version: int) -> str:
     issued_at = datetime.now(UTC)
-    expires_at = issued_at + timedelta(
-        minutes=Env.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expires_at = issued_at + timedelta(minutes=Env.ACCESS_TOKEN_EXPIRE_MINUTES)
     return jwt.encode(
         {
             "sub": str(user_id),

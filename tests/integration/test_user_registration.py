@@ -12,9 +12,14 @@ from sidebrain_back.services.auth_service import AuthService
 
 
 class LimiterDouble:
-    async def check(self, *_args): pass
-    async def record_failure(self, *_args): pass
-    async def record_success(self, *_args): pass
+    async def check(self, *_args):
+        pass
+
+    async def record_failure(self, *_args):
+        pass
+
+    async def record_success(self, *_args):
+        pass
 
 
 @pytest.mark.anyio

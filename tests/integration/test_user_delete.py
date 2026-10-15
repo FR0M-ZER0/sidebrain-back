@@ -12,8 +12,10 @@ from sidebrain_back.services.user_service import UserService
 @pytest.mark.anyio
 async def test_delete_is_soft_and_prevents_authentication(db_session):
     user = User(
-        usr_name="Maria", usr_email="maria@example.com",
-        usr_password_hash="hash", usr_is_deleted=False,
+        usr_name="Maria",
+        usr_email="maria@example.com",
+        usr_password_hash="hash",
+        usr_is_deleted=False,
     )
     db_session.add(user)
     await db_session.flush()

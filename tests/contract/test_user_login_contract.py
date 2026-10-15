@@ -23,9 +23,7 @@ class LoginServiceDouble:
             raise RateLimitUnavailable
         return AuthResponse(
             accessToken="header.payload.signature",
-            user=UserResponse(
-                id=uuid4(), name="Maria", email=payload.email
-            ),
+            user=UserResponse(id=uuid4(), name="Maria", email=payload.email),
         )
 
 

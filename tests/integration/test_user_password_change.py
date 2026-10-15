@@ -14,9 +14,14 @@ from sidebrain_back.services.user_service import UserService
 
 
 class LimiterDouble:
-    async def check(self, *_args): pass
-    async def record_failure(self, *_args): pass
-    async def record_success(self, *_args): pass
+    async def check(self, *_args):
+        pass
+
+    async def record_failure(self, *_args):
+        pass
+
+    async def record_success(self, *_args):
+        pass
 
 
 @pytest.mark.anyio
@@ -24,7 +29,8 @@ async def test_password_change_increments_version_and_revokes_old_token(
     db_session,
 ):
     user = User(
-        usr_name="Maria", usr_email="maria@example.com",
+        usr_name="Maria",
+        usr_email="maria@example.com",
         usr_password_hash=await hash_password("senha-antiga"),
         usr_is_deleted=False,
     )
@@ -56,9 +62,7 @@ async def test_password_change_increments_version_and_revokes_old_token(
             "origin",
         )
     response = await auth_service.login_user(
-        UserLoginRequest(
-            email="maria@example.com", password="senha-nova"
-        ),
+        UserLoginRequest(email="maria@example.com", password="senha-nova"),
         "origin",
     )
     assert response.user.id == user.usr_id

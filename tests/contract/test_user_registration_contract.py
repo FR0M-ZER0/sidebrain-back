@@ -25,9 +25,7 @@ class RegistrationServiceDouble:
 
 @pytest.fixture
 def client(test_app):
-    test_app.dependency_overrides[get_auth_service] = (
-        RegistrationServiceDouble
-    )
+    test_app.dependency_overrides[get_auth_service] = RegistrationServiceDouble
     return TestClient(test_app)
 
 

@@ -9,10 +9,17 @@ from sidebrain_back.services.auth_service import AuthService
 
 
 class LimiterDouble:
-    def __init__(self): self.failures = 0
-    async def check(self, *_args): pass
-    async def record_failure(self, *_args): self.failures += 1
-    async def record_success(self, *_args): self.failures = 0
+    def __init__(self):
+        self.failures = 0
+
+    async def check(self, *_args):
+        pass
+
+    async def record_failure(self, *_args):
+        self.failures += 1
+
+    async def record_success(self, *_args):
+        self.failures = 0
 
 
 @pytest.mark.anyio
@@ -36,9 +43,7 @@ async def test_login_accepts_normalized_email_and_resets_failures(db_session):
         )
     assert limiter.failures == 1
     response = await service.login_user(
-        UserLoginRequest(
-            email=" MARIA@example.com ", password="senha-123"
-        ),
+        UserLoginRequest(email=" MARIA@example.com ", password="senha-123"),
         "origin",
     )
     assert response.user.id == user.usr_id
