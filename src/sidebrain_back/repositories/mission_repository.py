@@ -57,9 +57,7 @@ class MissionRepository:
         await self.db.flush()
         return mission
 
-    async def get(
-        self, user_id: UUID, mission_id: UUID
-    ) -> Mission | None:
+    async def get(self, user_id: UUID, mission_id: UUID) -> Mission | None:
         result = await self.db.execute(
             select(Mission)
             .join(Step, Step.stp_id == Mission.msn_step_id)

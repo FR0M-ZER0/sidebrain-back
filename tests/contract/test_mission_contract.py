@@ -46,9 +46,7 @@ class MissionServiceDouble:
             criteriaValue=payload.criteria_value,
         )
 
-    async def list_missions_by_step_id(
-        self, _user, _step_id, page, page_size
-    ):
+    async def list_missions_by_step_id(self, _user, _step_id, page, page_size):
         self._raise_if_missing()
         return PaginatedResponse.build(
             [self._mission()], page, page_size, total_items=1
