@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi import FastAPI
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from main import app
@@ -72,6 +73,9 @@ def async_session() -> AsyncSession:
 async def db_session() -> AsyncIterator[AsyncSession]:
     try:
         async with engine.begin() as connection:
+            await connection.execute(
+                text("CREATE EXTENSION IF NOT EXISTS vector")
+            )
             await connection.run_sync(Base.metadata.create_all)
 
         async with engine.connect() as connection:

@@ -32,6 +32,14 @@ from sidebrain_back.models.login_model import Login
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.mission_progress_model import MissionProgress
 from sidebrain_back.models.quiz_model import Quiz
+from sidebrain_back.models.rag_chunk_attribution_model import (
+    RagChunkAttributionModel,
+)
+from sidebrain_back.models.rag_chunk_embedding_model import (
+    RagChunkEmbeddingModel,
+)
+from sidebrain_back.models.rag_chunk_model import RagChunkModel
+from sidebrain_back.models.rag_document_model import RagDocumentModel
 from sidebrain_back.models.step_model import Step
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.models.user_model import User
