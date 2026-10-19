@@ -168,9 +168,7 @@ class RagUrlConnector:
                     )
             last_request = self._last_request_at.get(origin)
             if last_request is not None:
-                wait = (
-                    delay - (time.monotonic() - last_request)
-                )
+                wait = delay - (time.monotonic() - last_request)
                 if wait > 0:
                     await asyncio.sleep(wait)
             self._last_request_at[origin] = time.monotonic()

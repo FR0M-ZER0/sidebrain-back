@@ -91,9 +91,7 @@ class RagEmbeddingService:
             )
         results: dict[str, RagEmbeddingResult] = {}
         pending: list[tuple[RagEmbeddingInput, int]] = []
-        cached_copies: list[
-            tuple[RagEmbeddingInput, object, int]
-        ] = []
+        cached_copies: list[tuple[RagEmbeddingInput, object, int]] = []
         cache_count = 0
         skipped_count = 0
 
@@ -132,9 +130,7 @@ class RagEmbeddingService:
                 )
             )
             if cached is not None:
-                cached_copies.append(
-                    (chunk, cached, int(cached.input_tokens))
-                )
+                cached_copies.append((chunk, cached, int(cached.input_tokens)))
                 results[chunk.chunk_id] = RagEmbeddingResult(
                     chunk_id=chunk.chunk_id,
                     vector=list(cached.embedding),

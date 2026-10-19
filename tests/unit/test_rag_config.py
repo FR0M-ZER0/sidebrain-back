@@ -21,12 +21,13 @@ def test_default_rag_config_has_scoped_initial_sources():
     assert sources["python-library"].language == "python"
     assert "/3/library/**" in sources["python-library"].include_paths
     assert sources["mdn-javascript"].language == "javascript"
-    assert "/en-US/docs/Web/JavaScript/**" in sources[
-        "mdn-javascript"
-    ].include_paths
-    mdn_code_license = sources["mdn-javascript"].content_licenses[
-        "code_example"
-    ].license
+    assert (
+        "/en-US/docs/Web/JavaScript/**"
+        in sources["mdn-javascript"].include_paths
+    )
+    mdn_code_license = (
+        sources["mdn-javascript"].content_licenses["code_example"].license
+    )
     assert mdn_code_license == "unknown"
 
 

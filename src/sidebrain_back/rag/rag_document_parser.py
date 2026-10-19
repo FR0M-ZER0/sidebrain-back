@@ -159,14 +159,18 @@ class RagDocumentParser:
             if isinstance(node, nodes.section):
                 return ""
             return "\n".join(
-                rendered for child in getattr(node, "children", [])
+                rendered
+                for child in getattr(node, "children", [])
                 if (rendered := render(child))
             )
 
         def walk_section(node: nodes.section, parents: list[str]) -> None:
             heading = next(
-                (child.astext().strip() for child in node.children
-                 if isinstance(child, nodes.title)),
+                (
+                    child.astext().strip()
+                    for child in node.children
+                    if isinstance(child, nodes.title)
+                ),
                 "",
             )
             path = (

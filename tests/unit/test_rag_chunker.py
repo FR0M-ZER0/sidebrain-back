@@ -70,9 +70,11 @@ def test_chunker_prefixes_document_and_section_and_keeps_sections_separate():
 
 
 def test_oversized_code_block_is_not_split_and_keeps_its_introduction():
-    code = "```python\n" + "\n".join(
-        f"print({number})" for number in range(50)
-    ) + "\n```"
+    code = (
+        "```python\n"
+        + "\n".join(f"print({number})" for number in range(50))
+        + "\n```"
+    )
     chunker = RagChunker(
         tokenizer=WhitespaceTokenizer(),
         target_tokens=12,
@@ -158,9 +160,12 @@ def test_approximate_dedup_groups_text_but_not_changed_code():
     assert approximate_duplicate_groups(
         [near_first, near_second], max_hamming_distance=64
     )
-    assert approximate_duplicate_groups(
-        [near_first, near_second], max_hamming_distance=0
-    ) == []
+    assert (
+        approximate_duplicate_groups(
+            [near_first, near_second], max_hamming_distance=0
+        )
+        == []
+    )
 
     code_first = chunker.chunk_document(
         title="Python Tutorial",
@@ -180,6 +185,9 @@ def test_approximate_dedup_groups_text_but_not_changed_code():
         ],
         attribution=_attribution("source-d"),
     )[0]
-    assert approximate_duplicate_groups(
-        [code_first, code_second], max_hamming_distance=64
-    ) == []
+    assert (
+        approximate_duplicate_groups(
+            [code_first, code_second], max_hamming_distance=64
+        )
+        == []
+    )

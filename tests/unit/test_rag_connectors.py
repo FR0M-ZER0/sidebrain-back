@@ -135,9 +135,7 @@ def test_local_connector_includes_markdown_and_rst_with_path_filters(
     (tmp_path / "reference.rst").write_text("Reference", encoding="utf-8")
     (tmp_path / "ignore.html").write_text("<h1>Ignore</h1>", encoding="utf-8")
     (tmp_path / "private").mkdir()
-    (tmp_path / "private" / "secret.md").write_text(
-        "secret", encoding="utf-8"
-    )
+    (tmp_path / "private" / "secret.md").write_text("secret", encoding="utf-8")
 
     paths = RagLocalConnector.list_documents(
         tmp_path,

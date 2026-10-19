@@ -68,9 +68,7 @@ class RagOpenAIEmbeddingProvider:
         if self.client is not None:
             return self.client
         api_key = (
-            self.api_key
-            if self.api_key is not None
-            else Env.OPENAI_API_KEY
+            self.api_key if self.api_key is not None else Env.OPENAI_API_KEY
         )
         if not api_key or not api_key.strip():
             raise RagEmbeddingConfigurationError(

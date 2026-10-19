@@ -106,23 +106,35 @@ class RagIndexingService:
             )
             try:
                 if source.type is RagSourceType.URL:
-                    documents, discovered, complete, failures = (
-                        await self._collect_url_source(source, connector)
-                    )
+                    (
+                        documents,
+                        discovered,
+                        complete,
+                        failures,
+                    ) = await self._collect_url_source(source, connector)
                 else:
-                    documents, discovered, complete, failures = (
-                        await self._collect_sitemap_source(source, connector)
-                    )
+                    (
+                        documents,
+                        discovered,
+                        complete,
+                        failures,
+                    ) = await self._collect_sitemap_source(source, connector)
             finally:
                 await connector.close()
         elif source.type is RagSourceType.GIT:
-            documents, discovered, complete, failures = (
-                await self._collect_git_source(source)
-            )
+            (
+                documents,
+                discovered,
+                complete,
+                failures,
+            ) = await self._collect_git_source(source)
         else:
-            documents, discovered, complete, failures = (
-                await self._collect_local_source(source)
-            )
+            (
+                documents,
+                discovered,
+                complete,
+                failures,
+            ) = await self._collect_local_source(source)
 
         report = await self.index_documents(
             source,
@@ -188,8 +200,8 @@ class RagIndexingService:
         target.duration_seconds += source.duration_seconds
         if source.estimated_cost is not None:
             target.estimated_cost = (
-                (target.estimated_cost or 0.0) + source.estimated_cost
-            )
+                target.estimated_cost or 0.0
+            ) + source.estimated_cost
 
     async def _collect_url_source(
         self, source: RagSourceConfig, connector: RagUrlConnector
@@ -294,9 +306,7 @@ class RagIndexingService:
                 locations = self.sitemap_connector.parse(sitemap_page.content)
             except Exception as error:
                 manifest_complete = False
-                failures.append(
-                    f"{current_sitemap}: {type(error).__name__}"
-                )
+                failures.append(f"{current_sitemap}: {type(error).__name__}")
                 continue
 
             if is_index:
@@ -388,9 +398,7 @@ class RagIndexingService:
                             f"{source_url}: {type(error).__name__}"
                         )
         except Exception as error:
-            return [], [], False, [
-                f"{source.name}: {type(error).__name__}"
-            ]
+            return [], [], False, [f"{source.name}: {type(error).__name__}"]
         return documents, discovered, True, failures
 
     async def _collect_local_source(
@@ -812,8 +820,8 @@ class RagIndexingService:
         _results, usage = await self.embedding_service.embed_chunks(chunks)
         if usage.estimated_cost is not None:
             report.estimated_cost = (
-                (report.estimated_cost or 0.0) + usage.estimated_cost
-            )
+                report.estimated_cost or 0.0
+            ) + usage.estimated_cost
 
     @staticmethod
     def _base_attribution(

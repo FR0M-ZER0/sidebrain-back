@@ -44,9 +44,9 @@ def test_rag_migration_declares_persistence_and_search_indexes():
 
     assert "Vector(1536)" in source
     assert "vector_cosine_ops" in source
-    assert "postgresql_using=\"hnsw\"" in source
+    assert 'postgresql_using="hnsw"' in source
     assert "TSVECTOR" in source
-    assert "postgresql_using=\"gin\"" in source
+    assert 'postgresql_using="gin"' in source
     assert '"language"' in source
     assert '"level"' in source
     assert '"content_type"' in source

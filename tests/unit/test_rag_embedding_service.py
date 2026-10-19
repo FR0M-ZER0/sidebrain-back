@@ -53,8 +53,7 @@ class FakeProvider:
             error = self.failures.pop(0)
             raise error
         vectors = [
-            [float(index)] * self.dimensions
-            for index, _ in enumerate(texts)
+            [float(index)] * self.dimensions for index, _ in enumerate(texts)
         ]
         input_tokens = self.input_tokens or sum(
             len(text.split()) for text in texts

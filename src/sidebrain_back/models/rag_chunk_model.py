@@ -37,9 +37,7 @@ class RagChunkModel(Base):
     duplicate_group_id: Mapped[str | None] = mapped_column(
         String(64), nullable=True, index=True
     )
-    search_vector: Mapped[str | None] = mapped_column(
-        TSVECTOR, nullable=True
-    )
+    search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -94,8 +94,7 @@ def _matches_target(result: Any, target: dict[str, str]) -> bool:
     candidates = [result, *getattr(result, "attributions", [])]
     for candidate in candidates:
         if all(
-            _value(candidate, key) == value
-            for key, value in target.items()
+            _value(candidate, key) == value for key, value in target.items()
         ):
             return True
     return False
@@ -205,8 +204,7 @@ class FixtureRagRetriever:
             if (language is None or reference.language == language)
             and (level is None or reference.level == level)
             and (
-                content_type is None
-                or reference.content_type == content_type
+                content_type is None or reference.content_type == content_type
             )
         ]
         query_tokens = self._tokens(query)

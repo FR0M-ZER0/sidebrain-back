@@ -64,12 +64,13 @@ class RagRetrievalService:
                 "vector column"
             )
 
-        query_vectors, _input_tokens = await (
-            self.embedding_provider.embed_texts(
-                [query],
-                model=self.embedding_config.model,
-                dimensions=self.embedding_config.dimensions,
-            )
+        (
+            query_vectors,
+            _input_tokens,
+        ) = await self.embedding_provider.embed_texts(
+            [query],
+            model=self.embedding_config.model,
+            dimensions=self.embedding_config.dimensions,
         )
         if (
             len(query_vectors) != 1
