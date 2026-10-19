@@ -2,6 +2,8 @@ from importlib.metadata import version
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+RAG_VECTOR_DIMENSIONS = 1536
+
 
 class _Env(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
@@ -22,6 +24,10 @@ class _Env(BaseSettings):
 
     GROQ_API_KEY: str
     GROQ_MODEL: str
+
+    OPENAI_API_KEY: str | None = None
+    RAG_ROUTER_CONFIDENCE_THRESHOLD: float = 0.80
+    RAG_SOURCES_CONFIG: str = "config/rag_sources.yml"
 
 
 Env = _Env()

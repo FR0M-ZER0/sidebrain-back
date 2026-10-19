@@ -26,6 +26,7 @@ Consulte o [contrato completo](./specs/SDB-87-badge-management/contracts/badges.
 - **FastAPI**: Framework web moderno e de alta performance para construção de APIs
 - **Pydantic**: Validação de dados e serialização via modelos tipados
 - **SQLAlchemy**: ORM para comunicação com o banco de dados
+- **pgvector**: Extensão do PostgreSQL para armazenamento e busca de vetores
 - **uv**: Gerenciador de pacotes e ambientes Python, rápido e moderno
 - **Uvicorn**: Servidor ASGI para execução da aplicação FastAPI
 - **Alembic**: Ferramenta de migração de banco de dados para SQLAlchemy
@@ -57,17 +58,22 @@ cp .env.example .env
 docker compose up -d
 ```
 
-5. Rode as migrações:
+5. Habilite a extensão `vector` no banco da aplicação (uma vez por banco):
+```bash
+docker compose exec postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS vector;"'
+```
+
+6. Rode as migrações:
 ```bash
 uv run alembic upgrade head
 ```
 
-6. Rode a API em ambiente dev usando:
+7. Rode a API em ambiente dev usando:
 ```bash
 uv run dev
 ```
 
-7. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
+8. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
 ```bash
 uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
@@ -109,6 +115,21 @@ uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 
 O gabarito, IDs do provider e detalhes de falha nunca aparecem na API. IDs
 inexistentes e avaliações de outra pessoa retornam o mesmo `404`.
+
+## Prompts para agentes
+
+Para usar o [prompt de criação de pull request](./docs/prompts/create-pr.md),
+é necessário ter o **GitHub CLI (`gh`) instalado** e autenticado com uma conta
+que tenha acesso ao repositório.
+
+Siga as [instruções oficiais de instalação](https://cli.github.com/) e, em
+seguida, verifique a instalação e faça a autenticação:
+
+```bash
+gh --version
+gh auth login
+gh auth status
+```
 
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)

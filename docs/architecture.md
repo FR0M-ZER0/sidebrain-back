@@ -224,3 +224,19 @@ avaliação e ao assunto. Quando uma geração de trilha usa uma avaliação con
 (ou ignorada), `GenerationRequest.assessment_id` preserva a referência à avaliação;
 o vínculo é opcional e usa `ON DELETE SET NULL`. O snapshot de nível e respostas
 enviado à geração continua armazenado na própria solicitação.
+
+### Pipeline RAG
+
+A pipeline RAG mantém documentos, chunks, embeddings e atribuições no
+PostgreSQL/pgvector. `rag/` contém configuração, conectores, parsers, tokenização
+e chunking; `RagIndexingService` coordena a ingestão, e os repositories isolam
+persistência e busca vetorial/full-text. `RagRetrievalService` combina os
+resultados por RRF e preserva a proveniência para atribuição.
+
+`RagGenerationContextService` combina `RagRoutingService` com a recuperação. A
+geração inicial e incremental recebem referências apenas para objetivos de
+Python ou JavaScript acima do limiar configurado. Contexto ausente, falha de
+roteamento ou falha de retrieval não bloqueia a geração. A configuração de
+fontes/licenças fica em `config/rag_sources.yml`; `OPENAI_API_KEY` é necessária
+para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O guia de
+[operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
