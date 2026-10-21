@@ -21,6 +21,10 @@ from sidebrain_back.schemas.generation_schema import (
 )
 from sidebrain_back.services.generation_errors import GenerationError
 from sidebrain_back.services.generation_service import GenerationService
+from sidebrain_back.services.rag_generation_context_service import (
+    RagGenerationContextService,
+    build_rag_generation_context_service,
+)
 
 logger = logging.getLogger(__name__)
 TRANSIENT_ERRORS = (APIConnectionError, APITimeoutError, RateLimitError)
@@ -101,14 +105,60 @@ async def _process_generation(payload: GenerationInput, task) -> dict:
         return result.model_dump(mode="json")
 
 
-async def _run_generation(payload: GenerationInput) -> dict:
+async def _run_generation(
+    payload: GenerationInput,
+    rag_context_service: RagGenerationContextService | None = None,
+) -> dict:
     async with async_session() as db:
+        repository = GenerationRepository(db)
         service = GenerationService(
-            GenerationRepository(db),
+            repository,
             db,
             GenerationRequestRepository(db),
         )
-        result = await service.generate(payload)
+        references = []
+        existing = await repository.get_by_request_id(payload.request_id)
+        if existing is None and db.in_transaction():
+            await db.rollback()
+        context_service = rag_context_service
+        owns_context_service = False
+        if existing is None and context_service is None:
+            context_service = build_rag_generation_context_service()
+            owns_context_service = context_service is not None
+        if existing is None and context_service is not None:
+            try:
+                references = await context_service.get_references(
+                    goal=payload.goal,
+                    topic=payload.topic,
+                    level=(
+                        payload.knowledge_level.value
+                        if payload.knowledge_level
+                        else None
+                    ),
+                )
+            except Exception as error:
+                logger.warning(
+                    "RAG context unavailable for initial generation",
+                    extra={
+                        "request_id": str(payload.request_id),
+                        "error_category": type(error).__name__,
+                    },
+                )
+            finally:
+                if owns_context_service:
+                    try:
+                        await context_service.aclose()
+                    except Exception as error:
+                        logger.warning(
+                            "RAG context service cleanup failed",
+                            extra={
+                                "error_category": type(error).__name__,
+                            },
+                        )
+        result = await service.generate(
+            payload,
+            reference_context=references or None,
+        )
         return result.model_dump(mode="json")
 
 

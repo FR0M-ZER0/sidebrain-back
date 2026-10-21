@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _MIN_JWT_SECRET_BYTES = 32
 _MIN_JWT_SECRET_UNIQUE_CHARACTERS = 12
 _JWT_PLACEHOLDER_PREFIXES = ("replace", "substitua", "troque")
+RAG_VECTOR_DIMENSIONS = 1536
 
 
 class _Env(BaseSettings):
@@ -54,6 +55,10 @@ class _Env(BaseSettings):
                 "de caracteres e não pode ser um placeholder."
             )
         return value
+
+    OPENAI_API_KEY: str | None = None
+    RAG_ROUTER_CONFIDENCE_THRESHOLD: float = 0.80
+    RAG_SOURCES_CONFIG: str = "config/rag_sources.yml"
 
 
 Env = _Env()
