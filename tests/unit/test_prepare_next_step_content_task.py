@@ -38,16 +38,12 @@ def test_generated_content_accepts_domain_fields_only():
     "payload",
     [
         {
-            "lessons": [
-                {"title": "Só uma", "text": "Conteúdo", "quizzes": []}
-            ]
+            "lessons": [{"title": "Só uma", "text": "Conteúdo", "quizzes": []}]
             * 3,
             "missions": [],
         },
         {
-            "lessons": [
-                {"title": "Lição", "text": "Conteúdo", "quizzes": []}
-            ]
+            "lessons": [{"title": "Lição", "text": "Conteúdo", "quizzes": []}]
             * 3,
             "missions": [
                 {
@@ -86,7 +82,7 @@ def test_generated_content_rejects_persistence_control_fields():
                         "text": "Conteúdo",
                         "quizzes": [],
                         "lsn_id": "forbidden",
-                    }
+                    },
                 ],
                 "missions": [
                     {

@@ -22,10 +22,7 @@ class MissionGenerationService:
             step_word = "etapa" if criteria_value == 1 else "etapas"
             title = f"Conclua {criteria_value} {step_word} da trilha"
             scope_title = track_title
-        elif (
-            criteria
-            is MissionCriteriaEnum.GET_ALL_ANSWER_RIGHT_IN_A_LESSON
-        ):
+        elif criteria is MissionCriteriaEnum.GET_ALL_ANSWER_RIGHT_IN_A_LESSON:
             title = "Acerte todas as respostas de uma lição"
             scope_title = step_title
         elif criteria is MissionCriteriaEnum.COMPLETE_A_STEP:

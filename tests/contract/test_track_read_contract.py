@@ -99,6 +99,9 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
     assert mission.id == mission_id
     assert mission.title == "Pratique"
     assert mission.xp_reward == 10
-    assert response.model_dump(mode="json")["steps"][0]["missions"][0][
-        "criteria_value"
-    ] == 1
+    assert (
+        response.model_dump(mode="json")["steps"][0]["missions"][0][
+            "criteria_value"
+        ]
+        == 1
+    )

@@ -206,9 +206,7 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
             request_lookup.append(step_id)
             return generation_request, StepLevelEnum.PRO
 
-    monkeypatch.setattr(
-        step_task_module, "async_session", lambda: db_session
-    )
+    monkeypatch.setattr(step_task_module, "async_session", lambda: db_session)
     monkeypatch.setattr(
         step_task_module,
         "GenerationRequestRepository",
