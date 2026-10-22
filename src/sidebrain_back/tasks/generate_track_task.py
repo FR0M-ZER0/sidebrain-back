@@ -9,6 +9,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.database import async_session
+from sidebrain_back.repositories.badge_progress_repository import (
+    BadgeProgressRepository,
+)
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
@@ -19,6 +22,7 @@ from sidebrain_back.schemas.generation_schema import (
     GenerationFailure,
     GenerationInput,
 )
+from sidebrain_back.services.badge_progress_service import BadgeProgressService
 from sidebrain_back.services.generation_errors import (
     GenerationError,
     GenerationValidationError,
@@ -124,6 +128,7 @@ async def _run_generation(
             repository,
             db,
             GenerationRequestRepository(db),
+            BadgeProgressService(BadgeProgressRepository(db), db),
         )
         references = []
         existing = await repository.get_by_request_id(payload.request_id)

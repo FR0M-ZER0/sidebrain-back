@@ -21,6 +21,10 @@ from sidebrain_back.schemas.quiz_schema import (
     QuizResponse,
     QuizUpdateRequest,
 )
+from sidebrain_back.services.badge_progress_service import (
+    BadgeProgressService,
+    get_badge_progress_service,
+)
 from sidebrain_back.services.mission_progress_service import (
     MissionProgressService,
     get_mission_progress_service,
@@ -44,12 +48,14 @@ class QuizService:
         evaluator: QuizEvaluationService | None = None,
         track_service: TrackService | None = None,
         mission_progress_service: MissionProgressService | None = None,
+        badge_progress_service: BadgeProgressService | None = None,
     ):
         self.repository = repository
         self.db = db
         self.evaluator = evaluator or QuizEvaluationService()
         self.track_service = track_service
         self.mission_progress_service = mission_progress_service
+        self.badge_progress_service = badge_progress_service
 
     async def _require_lesson(
         self,
@@ -167,6 +173,11 @@ class QuizService:
                 await progress_service.update_missions_by_track_id(
                     user_id, track_id
                 )
+            badge_progress = self.badge_progress_service
+            if badge_progress is not None:
+                await badge_progress.register_activity_and_update_badges(
+                    user_id
+                )
             response = AnswerResponse.model_validate(answer)
             await self.db.commit()
             if step_id is not None and self.track_service is not None:
@@ -246,10 +257,14 @@ def get_quiz_service(
     mission_progress_service: MissionProgressService = Depends(  # noqa: B008
         get_mission_progress_service
     ),
+    badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
+        get_badge_progress_service
+    ),
 ) -> QuizService:
     return QuizService(
         repository,
         db,
         track_service=track_service,
         mission_progress_service=mission_progress_service,
+        badge_progress_service=badge_progress_service,
     )

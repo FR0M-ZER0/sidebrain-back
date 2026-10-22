@@ -18,6 +18,7 @@ from sidebrain_back.schemas.generation_schema import (
     GenerationSuccess,
 )
 from sidebrain_back.schemas.rag_schema import RagReferenceSchema
+from sidebrain_back.services.badge_progress_service import BadgeProgressService
 from sidebrain_back.services.generation_errors import (
     GenerationPersistenceError,
     GenerationValidationError,
@@ -35,10 +36,12 @@ class GenerationService:
         repository: GenerationRepository,
         db: AsyncSession,
         request_repository: GenerationRequestRepository | None = None,
+        badge_progress_service: BadgeProgressService | None = None,
     ):
         self.repository = repository
         self.db = db
         self.request_repository = request_repository
+        self.badge_progress_service = badge_progress_service
 
     @staticmethod
     def build_prompt(
@@ -197,6 +200,11 @@ class GenerationService:
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
                 )
+                badge_progress = self.badge_progress_service
+                if badge_progress is not None:
+                    await badge_progress.register_activity_and_update_badges(
+                        payload.user_id
+                    )
                 if self.request_repository:
                     await self.request_repository.mark_succeeded(
                         payload.request_id, track.trk_id
