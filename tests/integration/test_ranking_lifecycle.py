@@ -153,15 +153,9 @@ async def test_deterministic_tie_breaking(
     id_small = UUID("00000000-0000-0000-0000-000000000001")
     id_large = UUID("00000000-0000-0000-0000-000000000002")
 
-    user_a = await user_factory(
-        user_id=id_large, name="User A", created_at=t1
-    )
-    user_b = await user_factory(
-        user_id=uuid4(), name="User B", created_at=t2
-    )
-    user_c = await user_factory(
-        user_id=id_small, name="User C", created_at=t1
-    )
+    user_a = await user_factory(user_id=id_large, name="User A", created_at=t1)
+    user_b = await user_factory(user_id=uuid4(), name="User B", created_at=t2)
+    user_c = await user_factory(user_id=id_small, name="User C", created_at=t1)
 
     for u in (user_a, user_b, user_c):
         await mission_progress_factory(
