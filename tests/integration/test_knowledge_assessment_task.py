@@ -333,6 +333,7 @@ def test_v2_invalid_generation_is_definitive_and_sanitized():
 
 
 @pytest.mark.anyio
+@pytest.mark.usefixtures("database_schema")
 async def test_v2_skip_never_constructs_provider_and_is_idempotent():
     user_id = uuid4()
     assessment_id = uuid4()

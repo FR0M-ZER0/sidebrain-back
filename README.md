@@ -80,6 +80,48 @@ uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
 
+## Testes
+
+Os testes de integração usam um PostgreSQL exclusivo com a extensão `vector`.
+Configure as variáveis `TEST_POSTGRES_*` no `.env`, conforme `.env.example`.
+A porta padrão desse banco é `5434` e deve estar livre no host.
+
+```bash
+docker compose --profile test up -d --wait postgres_test
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+O `conftest.py` usa essas configurações para conectar ao banco de testes,
+aplica as migrations e isola os dados da fixture `db_session` por rollback.
+As variáveis `POSTGRES_*` continuam configurando o banco da aplicação.
+
+Para executar apenas os testes unitários e de contrato:
+
+```bash
+uv run pytest tests/unit tests/contract
+```
+
+Os cinco testes de aceitação HTTP exigem uma API em execução e a variável
+`AUTH_CONSUMER_BASE_URL`; sem ela, são ignorados automaticamente.
+
+## Autenticação e perfil
+
+Configure `JWT_SECRET_KEY` no `.env`. Cadastre uma conta em
+`POST /api/v1/auth/register` ou entre em `POST /api/v1/auth/login`; ambas as
+operações retornam `accessToken`. Envie esse valor nos recursos protegidos:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+O token expira em 60 minutos. O perfil autenticado fica em
+`GET|PUT|DELETE /api/v1/users/me`, e a senha é alterada por
+`PUT /api/v1/users/me/password`. UUID puro não é uma credencial válida. Consulte
+[a orientação de migração](./docs/auth_migration.md) antes de atualizar um
+ambiente com consumidores existentes ou hashes legados.
+
 ## Monitoramento das tasks
 
 Rode o comando abaixo para abrir a interface do flower e monitorar o andamento das tasks:
