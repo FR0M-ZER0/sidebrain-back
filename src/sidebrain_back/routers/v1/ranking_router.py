@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
+from sidebrain_back.routers.v1.auth_router import get_current_user
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.ranking_schema import (
     RankingEntryResponse,
