@@ -287,6 +287,15 @@ fontes/licenças fica em `config/rag_sources.yml`; `OPENAI_API_KEY` é necessár
 para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O guia de
 [operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
 
+### Listagem global de badges
+
+`GET /api/v1/badges` pagina as definições globais e filtra o progresso pelo
+usuário autenticado. `BadgeRepository.list` aplica raridade, critério, status e
+busca textual no SQL; badges sem progresso para o chamador equivalem a `idle`.
+O outer join é restrito ao usuário da requisição, e `selectinload` carrega o
+progresso publicado sem N+1. A ordenação é estável por última atividade e UUID.
+O GET é somente leitura: não cria nem recalcula progressos. Consulte o
+[contrato de badges](../specs/SDB-87-badge-management/contracts/badges.md).
 
 ### Gerenciamento de ranking de usuários
 

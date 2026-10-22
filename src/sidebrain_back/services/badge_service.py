@@ -13,6 +13,7 @@ from sidebrain_back.repositories.badge_repository import (
 )
 from sidebrain_back.schemas.badge_schema import (
     BadgeCreate,
+    BadgeListParams,
     BadgeResponse,
     BadgeUpdate,
 )
@@ -66,15 +67,18 @@ class BadgeService:
             ) from error
 
     async def list_badges(
-        self, user: User, page: int, page_size: int
+        self, user: User, params: BadgeListParams
     ) -> PaginatedResponse[BadgeResponse]:
         badges, total = await self.repository.list(
-            user.usr_id, (page - 1) * page_size, page_size
+            user.usr_id,
+            (params.page - 1) * params.page_size,
+            params.page_size,
+            **params.model_dump(exclude={"page", "page_size"}),
         )
         return PaginatedResponse.build(
             [self._response(badge) for badge in badges],
-            page,
-            page_size,
+            params.page,
+            params.page_size,
             total,
         )
 
