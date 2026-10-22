@@ -8,6 +8,7 @@ from sidebrain_back.core.errors import ProblemDetailError
 from sidebrain_back.enums.mission_progress_status_enum import (
     MissionProgressStatusEnum,
 )
+from sidebrain_back.models.track_model import Track
 from sidebrain_back.repositories.ranking_repository import RankingRepository
 from sidebrain_back.services.ranking_service import RankingService
 
@@ -38,9 +39,19 @@ async def test_ranking_lifecycle_and_eligibility(
         hierarchy.step, title="Mission Deleted", xp_reward=500, deleted=True
     )
 
-    other_hierarchy = await learning_hierarchy_factory(track_deleted=True)
+    # Trilha removida logicamente do próprio user_1, sem criar outro usuário
+    deleted_track = Track(
+        trk_id=uuid4(),
+        trk_user_id=user_1.usr_id,
+        trk_title="Deleted Track",
+        trk_is_deleted=True,
+        trk_deleted_at=datetime.now(UTC).replace(tzinfo=None),
+    )
+    db_session.add(deleted_track)
+    await db_session.flush()
+    step_under_deleted_track = await step_factory(deleted_track)
     mission_under_deleted_track = await mission_factory(
-        other_hierarchy.step,
+        step_under_deleted_track,
         title="Mission Under Deleted Track",
         xp_reward=50,
         deleted=False,
