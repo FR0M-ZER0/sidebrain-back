@@ -24,6 +24,12 @@ class _Env(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
 
+    TEST_POSTGRES_HOST: str | None = None
+    TEST_POSTGRES_PORT: int | None = None
+    TEST_POSTGRES_USER: str | None = None
+    TEST_POSTGRES_PASSWORD: str | None = None
+    TEST_POSTGRES_DB: str | None = None
+
     REDIS_HOST: str
     REDIS_PORT: int
     REDIS_AUTH_DB: Annotated[Literal[2], BeforeValidator(int)] = 2

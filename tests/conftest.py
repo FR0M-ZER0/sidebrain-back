@@ -1,5 +1,7 @@
 # ruff: noqa: E402
 import os
+import subprocess
+import sys
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -7,18 +9,35 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi import FastAPI
-from sqlalchemy import text
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+class _TestPostgresSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="TEST_POSTGRES_",
+        extra="ignore",
+    )
+
+    HOST: str = "127.0.0.1"
+    PORT: int = 5434
+    USER: str = "sidebrain_test"
+    PASSWORD: str = "sidebrain_test"
+    DB: str = "sidebrain_test"
+
+
+_test_postgres = _TestPostgresSettings()
 
 _TEST_ENV = {
     "HOST": "127.0.0.1",
     "PORT": "8080",
     "MODE": "test",
-    "POSTGRES_HOST": "127.0.0.1",
-    "POSTGRES_PORT": "5432",
-    "POSTGRES_USER": "sidebrain_test",
-    "POSTGRES_PASSWORD": "sidebrain_test",
-    "POSTGRES_DB": "sidebrain_test",
+    "POSTGRES_HOST": _test_postgres.HOST,
+    "POSTGRES_PORT": str(_test_postgres.PORT),
+    "POSTGRES_USER": _test_postgres.USER,
+    "POSTGRES_PASSWORD": _test_postgres.PASSWORD,
+    "POSTGRES_DB": _test_postgres.DB,
     "REDIS_HOST": "127.0.0.1",
     "REDIS_PORT": "6379",
     "GROQ_API_KEY": "test-only-key",
@@ -26,10 +45,10 @@ _TEST_ENV = {
     "JWT_SECRET_KEY": "test-only-secret-key-at-least-32-bytes",
 }
 for _name, _value in _TEST_ENV.items():
-    os.environ.setdefault(_name, _value)
+    os.environ[_name] = _value
 
 from main import app  # noqa: E402
-from sidebrain_back.core.database import Base, engine, get_db
+from sidebrain_back.core.database import engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.enums.badge_criteria_enum import BadgeCriteriaEnum
 from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
@@ -150,15 +169,18 @@ def async_session() -> AsyncSession:
     return AsyncSession()
 
 
-@pytest.fixture
-async def db_session() -> AsyncIterator[AsyncSession]:
-    try:
-        async with engine.begin() as connection:
-            await connection.execute(
-                text("CREATE EXTENSION IF NOT EXISTS vector")
-            )
-            await connection.run_sync(Base.metadata.create_all)
+@pytest.fixture(scope="session")
+def database_schema() -> None:
+    # Alembic configura logging global; isole-o do processo do pytest.
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        check=True,
+    )
 
+
+@pytest.fixture
+async def db_session(database_schema) -> AsyncIterator[AsyncSession]:
+    try:
         async with engine.connect() as connection:
             transaction = await connection.begin()
             session = AsyncSession(

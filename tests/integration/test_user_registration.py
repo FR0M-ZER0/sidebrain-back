@@ -70,6 +70,7 @@ async def test_deleted_account_keeps_email_reserved(db_session):
 
 
 @pytest.mark.anyio
+@pytest.mark.usefixtures("database_schema")
 async def test_concurrent_registration_keeps_one_normalized_email():
     email = "concurrent-registration@example.com"
 
