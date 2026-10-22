@@ -19,6 +19,9 @@ from sidebrain_back.enums.knowledge_assessment_status_enum import (
 )
 from sidebrain_back.enums.lesson_file_type_enum import LessonFileTypeEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
+from sidebrain_back.enums.mission_progress_status_enum import (
+    MissionProgressStatusEnum,
+)
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
 from sidebrain_back.models import (
@@ -33,6 +36,7 @@ from sidebrain_back.models import (
     Lesson,
     LessonFile,
     Mission,
+    MissionProgress,
     Quiz,
     Step,
     Track,
@@ -606,6 +610,70 @@ def knowledge_assessment_hierarchy_factory(
             correct_alternatives=correct_alternatives,
             incorrect_alternatives=incorrect_alternatives,
         )
+
+    return create
+
+
+@pytest.fixture
+def user_factory(db_session: AsyncSession):
+    async def create(
+        *,
+        user_id: UUID | None = None,
+        email: str | None = None,
+        name: str = "Test User",
+        password_hash: str = "test-hash",
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        deleted: bool = False,
+        deleted_at: datetime | None = None,
+        flush: bool = True,
+    ) -> User:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        user = User(
+            usr_id=user_id or uuid4(),
+            usr_email=email or f"{uuid4()}@example.com",
+            usr_name=name,
+            usr_password_hash=password_hash,
+            usr_created_at=created_at or now,
+            usr_updated_at=updated_at or now,
+            usr_is_deleted=deleted,
+            usr_deleted_at=deleted_at or (now if deleted else None),
+        )
+        db_session.add(user)
+        if flush:
+            await db_session.flush()
+        return user
+
+    return create
+
+
+@pytest.fixture
+def mission_progress_factory(db_session: AsyncSession):
+    async def create(
+        user: User,
+        mission: Mission,
+        *,
+        progress_id: UUID | None = None,
+        status: MissionProgressStatusEnum = MissionProgressStatusEnum.DONE,
+        score: int | None = None,
+        finished_in: datetime | None = None,
+        updated_at: datetime | None = None,
+        flush: bool = True,
+    ) -> MissionProgress:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        progress = MissionProgress(
+            mpg_id=progress_id or uuid4(),
+            mpg_user_id=user.usr_id,
+            mpg_mission_id=mission.msn_id,
+            mpg_status=status,
+            mpg_score=score,
+            mpg_finished_in=finished_in,
+            mpg_updated_at=updated_at or now,
+        )
+        db_session.add(progress)
+        if flush:
+            await db_session.flush()
+        return progress
 
     return create
 

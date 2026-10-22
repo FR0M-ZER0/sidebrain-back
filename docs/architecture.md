@@ -240,3 +240,27 @@ roteamento ou falha de retrieval não bloqueia a geração. A configuração de
 fontes/licenças fica em `config/rag_sources.yml`; `OPENAI_API_KEY` é necessária
 para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O guia de
 [operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
+
+
+### Gerenciamento de ranking de usuários
+
+Os endpoints em `routers/v1/ranking_router.py` seguem o fluxo
+`router -> service -> repository -> model` e operam exclusivamente em modo de
+leitura (`GET /api/v1/rankings` e `GET /api/v1/rankings/me`).
+
+`RankingRepository` calcula o XP e as missões concluídas de forma derivada via
+agregação SQL sobre `User` (`usr_is_deleted = false`), `MissionProgress`
+(`mpg_status = 'done'`) e `Mission` (`msn_is_deleted = false`), preservando
+o XP mesmo se `Step` ou `Track` pai tiver exclusão lógica. A ordenação é
+determinística (`xp DESC, usr_created_at ASC, usr_id ASC`), garantindo posições
+globais sequenciais `1-based` sem repetição de número em empates.
+
+A listagem paginada usa duas consultas SQL (contagem total de usuários ativos e
+página agregada com offset/limit), enquanto a consulta de posição individual em
+`/me` utiliza uma CTE com `ROW_NUMBER() OVER (...)` filtrada pelo usuário em
+uma única query SQL, eliminando qualquer problema de N+1. Schemas públicos em
+`schemas/ranking_schema.py` (`RankingEntryResponse`) convertem atributos em
+`camelCase` (`position`, `userId`, `name`, `xp`, `missionsCompleted`) e ocultam
+totalmente e-mail, senha e prefixos físicos. Inexistência ou exclusão lógica do
+usuário em `/me` retorna `404` em Problem Details. Consulte o
+[contrato HTTP](../specs/SDB-90-user-ranking-management/contracts/ranking-api.md).
