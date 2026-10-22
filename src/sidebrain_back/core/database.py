@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from sidebrain_back.core.constants import Env
 
@@ -14,7 +15,11 @@ DATABASE_URL = (
     f"/{Env.POSTGRES_DB}"
 )
 
-engine = create_async_engine(DATABASE_URL, echo=Env.MODE == "dev")
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=Env.MODE == "dev",
+    poolclass=NullPool,
+)
 
 async_session = async_sessionmaker(
     engine, expire_on_commit=False, class_=AsyncSession

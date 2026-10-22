@@ -1,6 +1,8 @@
 from celery import Celery
+from celery.signals import worker_process_init
 
 from sidebrain_back.core.constants import Env
+from sidebrain_back.core.database import engine
 
 celery_app = Celery(
     "worker",
@@ -20,3 +22,8 @@ celery_app.conf.update(
     enable_utc=True,
     imports=("sidebrain_back.tasks.generate_track_task",),
 )
+
+
+@worker_process_init.connect
+def on_worker_init(**kwargs):
+    engine.sync_engine.dispose()
