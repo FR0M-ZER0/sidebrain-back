@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
+from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.schemas.rag_schema import (
     RagClassificationSchema,
     RagReferenceSchema,
@@ -100,14 +101,17 @@ def _step_with_track():
 
 
 class FakeDbSession:
+    def __init__(self):
+        self.added = []
+
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, *_args):
         return None
 
-    def add(self, _value):
-        return None
+    def add(self, value):
+        self.added.append(value)
 
     async def flush(self):
         return None
@@ -137,8 +141,23 @@ class FakeStepGenerator:
     def generate(self, context):
         self.contexts.append(context)
         return {
-            "lessons": [{"title": "Async", "text": "Conteúdo", "quizzes": []}],
-            "missions": [],
+            "lessons": [
+                {
+                    "title": f"Async {position}",
+                    "text": "Conteúdo",
+                    "quizzes": [],
+                }
+                for position in range(1, 4)
+            ],
+            "missions": [
+                {
+                    "title": "Pratique async",
+                    "difficulty": "medium",
+                    "xp_reward": 20,
+                    "criteria": "complete_a_step",
+                    "criteria_value": 1,
+                }
+            ],
         }
 
 
@@ -172,6 +191,7 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
     monkeypatch,
 ):
     step = _step_with_track()
+    db_session = FakeDbSession()
     generation_request = SimpleNamespace(
         goal="Aprender async/await em JavaScript",
         topic="JavaScript",
@@ -187,7 +207,7 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
             return generation_request, StepLevelEnum.PRO
 
     monkeypatch.setattr(
-        step_task_module, "async_session", lambda: FakeDbSession()
+        step_task_module, "async_session", lambda: db_session
     )
     monkeypatch.setattr(
         step_task_module,
@@ -222,6 +242,13 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
     assert generator.contexts[0]["reference_context"][0]["source_url"] == (
         rag_context.reference.source_url
     )
+    assert any(
+        "projetos ou entregáveis" in constraint
+        for constraint in generator.contexts[0]["constraints"]
+    )
+    missions = [item for item in db_session.added if isinstance(item, Mission)]
+    assert len(missions) == 1
+    assert missions[0].msn_title == "Conclua a etapa: Async"
 
 
 def test_manual_step_does_not_invoke_rag_context_service(monkeypatch):

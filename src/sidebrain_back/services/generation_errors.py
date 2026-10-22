@@ -10,8 +10,9 @@ class GenerationError(Exception):
 
 
 class GenerationValidationError(GenerationError):
-    def __init__(self):
+    def __init__(self, validation_issues: list[str] | None = None):
         super().__init__("generation_validation_failed")
+        self.validation_issues = validation_issues or []
 
 
 class GenerationInputError(GenerationError):

@@ -24,6 +24,9 @@ from sidebrain_back.repositories.generation_request_repository import (
     GenerationRequestRepository,
 )
 from sidebrain_back.repositories.track_repository import TrackRepository
+from sidebrain_back.services.mission_generation_service import (
+    MissionGenerationService,
+)
 from sidebrain_back.services.rag_generation_context_service import (
     RagGenerationContextService,
     build_rag_generation_context_service,
@@ -41,7 +44,7 @@ class GeneratedQuiz(BaseModel):
 class GeneratedLesson(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=255)
     text: str = Field(min_length=1)
     quizzes: list[GeneratedQuiz] = Field(default_factory=list)
 
@@ -53,14 +56,14 @@ class GeneratedMission(BaseModel):
     difficulty: MissionDifficultyEnum
     xp_reward: int = Field(ge=0)
     criteria: MissionCriteriaEnum
-    criteria_value: int = Field(ge=0)
+    criteria_value: int = Field(gt=0)
 
 
 class GeneratedContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    lessons: list[GeneratedLesson] = Field(min_length=1)
-    missions: list[GeneratedMission] = Field(default_factory=list)
+    lessons: list[GeneratedLesson] = Field(min_length=3)
+    missions: list[GeneratedMission] = Field(min_length=1)
 
 
 class StepContentGenerator:
@@ -146,6 +149,22 @@ def _build_context(step) -> dict[str, Any]:
         },
         "previous_steps": previous_steps,
         "constraints": [
+            "Gerar no mínimo 3 lições, cada uma com title, text e quizzes.",
+            "Gerar pelo menos uma missão com title, difficulty, xp_reward, "
+            "criteria e criteria_value, conforme o schema do banco.",
+            "difficulty deve ser easy, medium, hard ou very_hard.",
+            "criteria deve ser number_of_lessons_completed, "
+            "get_all_answer_right_in_a_lesson, complete_a_step, "
+            "complete_a_track, number_of_steps_completed ou "
+            "get_all_answers_right.",
+            "xp_reward deve ser inteiro maior ou igual a zero e "
+            "criteria_value deve ser inteiro maior que zero.",
+            "O título da missão deve descrever exatamente o critério "
+            "mensurável e seu valor; não proponha projetos ou entregáveis "
+            "que a API não consiga verificar.",
+            "Quando o critério envolver uma etapa ou uma trilha, inclua o "
+            "nome "
+            "correspondente no título da missão.",
             "Não criar IDs, timestamps ou flags de exclusão.",
             "Não criar Answer, Feedback, LessonFile ou MissionProgress.",
         ],
@@ -242,7 +261,14 @@ async def _prepare_step_content(
                     Mission(
                         msn_id=uuid4(),
                         msn_step_id=step.stp_id,
-                        msn_title=generated_mission.title,
+                        msn_title=(
+                            MissionGenerationService.build_measurable_title(
+                                generated_mission.criteria,
+                                generated_mission.criteria_value,
+                                step_title=step.stp_title,
+                                track_title=step.track.trk_title,
+                            )
+                        ),
                         msn_difficulty=generated_mission.difficulty,
                         msn_xp_reward=generated_mission.xp_reward,
                         msn_criteria=generated_mission.criteria,

@@ -13,16 +13,25 @@ def test_initial_content_is_limited_to_first_step():
                 "title": "Base",
                 "lessons": [
                     {
-                        "position": 1,
-                        "title": "Variáveis",
+                        "position": position,
+                        "title": f"Lição {position}",
                         "text": "Conteúdo",
-                        "quiz": {"question": "Pergunta"},
+                        "quiz": {"question": f"Pergunta {position}"},
                     }
+                    for position in range(1, 4)
                 ],
+                "mission": {
+                    "title": "Pratique",
+                    "difficulty": "easy",
+                    "xp_reward": 10,
+                    "criteria": "number_of_lessons_completed",
+                    "criteria_value": 3,
+                },
             },
             {"position": 2, "level": "intermediate", "title": "Prática"},
         ],
     )
 
-    assert len(generated.steps[0].lessons) == 1
+    assert len(generated.steps[0].lessons) == 3
+    assert generated.steps[0].mission.title == "Pratique"
     assert generated.steps[1].lessons == []

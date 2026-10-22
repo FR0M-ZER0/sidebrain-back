@@ -32,5 +32,10 @@ def test_generation_prompt_contains_context_and_future_content_boundary():
         "etapas posteriores devem conter apenas posição, nível e título"
     )
     assert future_instruction in prompt
+    assert "no mínimo 3 lessons" in prompt
+    assert "uma mission não nula" in prompt
+    assert "criteria_value (inteiro > 0)" in prompt
+    assert "evento mensurável definido" in prompt
+    assert "Não proponha projetos ou entregáveis" in prompt
     assert str(payload.request_id) not in prompt
     assert str(payload.user_id) not in prompt

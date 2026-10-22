@@ -19,7 +19,10 @@ from sidebrain_back.schemas.generation_schema import (
     GenerationFailure,
     GenerationInput,
 )
-from sidebrain_back.services.generation_errors import GenerationError
+from sidebrain_back.services.generation_errors import (
+    GenerationError,
+    GenerationValidationError,
+)
 from sidebrain_back.services.generation_service import GenerationService
 from sidebrain_back.services.rag_generation_context_service import (
     RagGenerationContextService,
@@ -75,13 +78,19 @@ async def _process_generation(payload: GenerationInput, task) -> dict:
             await _mark_failed(payload.request_id, result.error_code)
             return result.model_dump(mode="json")
     except GenerationError as error:
+        log_context: dict[str, object] = {
+            "request_id": str(payload.request_id),
+            "task_id": task.request.id,
+            "error_category": error.code,
+        }
+        message = "track generation failed"
+        if isinstance(error, GenerationValidationError):
+            log_context["validation_issues"] = error.validation_issues
+            if error.validation_issues:
+                message += ": " + "; ".join(error.validation_issues)
         logger.warning(
-            "track generation failed",
-            extra={
-                "request_id": str(payload.request_id),
-                "task_id": task.request.id,
-                "error_category": error.code,
-            },
+            message,
+            extra=log_context,
         )
         result = GenerationFailure(
             request_id=payload.request_id, error_code=error.code
