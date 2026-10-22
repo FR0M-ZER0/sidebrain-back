@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -6,16 +7,46 @@ from sidebrain_back.models.user_model import User
 from sidebrain_back.routers.v1.auth_router import get_current_user
 from sidebrain_back.schemas.mission_schema import (
     MissionCreate,
+    MissionListParams,
     MissionResponse,
+    MissionTrackGroupResponse,
     MissionUpdate,
 )
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
+from sidebrain_back.services.mission_progress_service import (
+    MissionProgressService,
+    get_mission_progress_service,
+)
 from sidebrain_back.services.mission_service import (
     MissionService,
     get_mission_service,
 )
 
 router = APIRouter(prefix="/v1", tags=["Missions"])
+
+
+@router.get(
+    "/missions", response_model=PaginatedResponse[MissionTrackGroupResponse]
+)
+async def list_all_missions(
+    params: Annotated[MissionListParams, Query()],
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: MissionService = Depends(get_mission_service),  # noqa: B008
+) -> PaginatedResponse[MissionTrackGroupResponse]:
+    return await service.list_missions(user, params)
+
+
+@router.post(
+    "/steps/{step_id}/missions/recalculate-progress",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def recalculate_mission_progress(
+    step_id: UUID,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: MissionProgressService = Depends(get_mission_progress_service),  # noqa: B008
+) -> Response:
+    await service.recalculate_missions_by_step_id(user.usr_id, step_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

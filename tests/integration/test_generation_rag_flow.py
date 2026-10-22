@@ -520,7 +520,7 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
     assert len(lessons) == 3
     assert len(quizzes) == 1
     assert len(missions) == 1
-    assert missions[0].msn_title == "Implemente uma Promise"
+    assert missions[0].msn_title == "Conclua 3 lições da etapa: Async"
 
 
 @pytest.mark.anyio

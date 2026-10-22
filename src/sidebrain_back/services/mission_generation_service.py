@@ -33,7 +33,7 @@ class MissionGenerationService:
             scope_title = track_title
         elif criteria is MissionCriteriaEnum.GET_ALL_ANSWERS_RIGHT:
             title = "Acerte todas as respostas dos quizzes"
-            scope_title = track_title or step_title
+            scope_title = step_title
         else:
             raise ValueError(f"Critério de missão não suportado: {criteria}")
         if scope_title:

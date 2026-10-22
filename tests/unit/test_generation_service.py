@@ -85,7 +85,7 @@ def _mission() -> dict:
         (
             "get_all_answers_right",
             1,
-            "Acerte todas as respostas dos quizzes: Python",
+            "Acerte todas as respostas dos quizzes: Fundamentos de JavaScript",
         ),
     ],
 )

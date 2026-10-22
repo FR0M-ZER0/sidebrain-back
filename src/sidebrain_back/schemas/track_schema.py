@@ -147,7 +147,10 @@ class MissionProgressResponse(PublicModel):
         serialization_alias="finished_in",
     )
     score: int | None = Field(
-        default=None, alias="mpg_score", serialization_alias="score"
+        default=None,
+        alias="mpg_score",
+        serialization_alias="score",
+        description="Percentual de progresso (0–100), calculado no servidor.",
     )
     updated_at: datetime = Field(
         alias="mpg_updated_at", serialization_alias="updated_at"
