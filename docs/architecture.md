@@ -163,9 +163,11 @@ carregamento das Answers e também preserva a composição
 `Lesson -> Quiz[] -> Answer[]` nas respostas de Track sem N+1.
 
 Os schemas públicos convertem os nomes físicos `qui_*` e `ans_*` em `id`,
-`lesson_id`, `question`, `answers`, `user_id`, `text` e `rate`. O DELETE é
-lógico e terminal: preserva as linhas de Quiz e Answer e não aciona cascata
-física. Consulte o
+`lesson_id`, `question`, `answers`, `user_id`, `text`, `rate` e `reason`. A
+avaliação de cada resposta persiste uma justificativa breve junto ao rate; o
+campo pertence a Answer e não ao Feedback textual da Lesson. O DELETE é lógico
+e terminal: preserva as linhas de Quiz e Answer e não aciona cascata física.
+Consulte o
 [contrato HTTP](../specs/SDB-51-quiz-management/contracts/quizzes.md) para os
 cinco endpoints e seus códigos de resposta.
 

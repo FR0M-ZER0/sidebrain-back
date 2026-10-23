@@ -137,6 +137,7 @@ def test_response_maps_child_hierarchy_without_physical_names():
         ans_user_id=user_id,
         ans_text="A storage location",
         ans_rate=AnswerRateEnum.PERFECT,
+        ans_reason="A resposta identificou corretamente o conceito.",
         ans_created_at=now,
         ans_updated_at=now,
     )
@@ -179,6 +180,10 @@ def test_response_maps_child_hierarchy_without_physical_names():
     assert dumped["files"][0]["file_type"] == "image"
     assert dumped["feedbacks"][0]["user_id"] == str(user_id)
     assert dumped["quizzes"][0]["answers"][0]["rate"] == "perfect"
+    assert (
+        dumped["quizzes"][0]["answers"][0]["reason"]
+        == "A resposta identificou corretamente o conceito."
+    )
     assert not any(
         key.startswith(("lsn_", "fbk_", "lsf_", "qui_", "ans_"))
         for key in dumped

@@ -299,6 +299,7 @@ def answer_factory(db_session: AsyncSession):
         answer_id: UUID | None = None,
         text: str = "A named reference to a value",
         rate: AnswerRateEnum = AnswerRateEnum.PERFECT,
+        reason: str | None = None,
         created_at: datetime | None = None,
         flush: bool = True,
     ) -> Answer:
@@ -309,6 +310,7 @@ def answer_factory(db_session: AsyncSession):
             ans_user_id=user.usr_id,
             ans_text=text,
             ans_rate=rate,
+            ans_reason=reason,
             ans_created_at=now,
             ans_updated_at=now,
         )

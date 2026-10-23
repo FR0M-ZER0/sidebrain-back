@@ -150,7 +150,7 @@ class QuizService:
             quiz = await self._require_quiz(user_id, quiz_id)
             question = quiz.qui_question
             await self.db.rollback()
-            rate = self.evaluator.evaluate(question, payload.text)
+            evaluation = self.evaluator.evaluate(question, payload.text)
             track_id = None
             progress_service = self.mission_progress_service
             if progress_service is not None:
@@ -161,7 +161,8 @@ class QuizService:
                 quiz_id,
                 user_id,
                 payload.text,
-                rate,
+                evaluation.rate,
+                evaluation.reason,
             )
             step_id = (
                 await self.repository.complete_lesson_if_quizzes_answered(

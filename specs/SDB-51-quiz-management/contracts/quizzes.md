@@ -84,9 +84,22 @@ Request:
 ```
 
 O backend avalia a resposta em relação à pergunta usando a IA e persiste o
-resultado `rate` (`good`, `perfect`, `wrong` ou `almost_got_it`). Response `201`:
-`AnswerResponse` com o resultado da avaliação. Quiz inexistente, excluído ou
-inacessível retorna `404`.
+resultado `rate` (`good`, `perfect`, `wrong` ou `almost_got_it`) e uma
+justificativa concisa em `reason`. Response `201`: `AnswerResponse` com `id`,
+`user_id`, `text`, `rate` e `reason`. A justificativa também aparece nas
+respostas de leitura do Quiz, Track, Step e Lesson. Answers antigas, criadas
+antes da justificativa ser persistida, podem retornar `reason: null`. Quiz
+inexistente, excluído ou inacessível retorna `404`.
+
+```json
+{
+  "id": "uuid",
+  "user_id": "uuid",
+  "text": "Uma resposta aberta",
+  "rate": "almost_got_it",
+  "reason": "Você identificou a ideia central, mas faltou explicar..."
+}
+```
 
 ## Atualizar quiz
 

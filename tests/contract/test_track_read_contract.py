@@ -74,6 +74,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
                                         ans_user_id=user_id,
                                         ans_text="Answer",
                                         ans_rate=AnswerRateEnum.GOOD,
+                                        ans_reason="A resposta está correta.",
                                         ans_created_at=now,
                                         ans_updated_at=now,
                                     )
@@ -95,6 +96,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
     assert quiz.updated_at == now
     assert answer.user_id == user_id
     assert answer.rate is AnswerRateEnum.GOOD
+    assert answer.reason == "A resposta está correta."
     assert (answer.created_at, answer.updated_at) == (now, now)
     assert mission.id == mission_id
     assert mission.title == "Pratique"
