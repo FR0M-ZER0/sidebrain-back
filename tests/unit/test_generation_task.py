@@ -1,4 +1,5 @@
 import importlib
+from types import SimpleNamespace
 from uuid import uuid4
 
 from groq import GroqError
@@ -9,6 +10,33 @@ from sidebrain_back.tasks.generate_track_task import generate_track_task
 generation_task_module = importlib.import_module(
     "sidebrain_back.tasks.generate_track_task"
 )
+
+
+def test_generation_task_disposes_async_engine_after_execution(monkeypatch):
+    disposed = []
+
+    async def process_generation(_payload, _task):
+        return {"status": "succeeded"}
+
+    async def dispose():
+        disposed.append(True)
+
+    monkeypatch.setattr(
+        generation_task_module, "_process_generation", process_generation
+    )
+    monkeypatch.setattr(
+        generation_task_module, "engine", SimpleNamespace(dispose=dispose)
+    )
+
+    result = generate_track_task.run(
+        request_id=str(uuid4()),
+        user_id=str(uuid4()),
+        goal="Aprender Python",
+        topic="Python",
+    )
+
+    assert result == {"status": "succeeded"}
+    assert disposed == [True]
 
 
 def test_generation_task_rejects_invalid_input_without_calling_ai(monkeypatch):
