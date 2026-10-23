@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import (
@@ -10,7 +10,9 @@ from pydantic import (
     model_validator,
 )
 
+from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.schemas.generation_schema import LearningContext
+from sidebrain_back.schemas.pagination_schema import PaginationParams
 from sidebrain_back.schemas.quiz_schema import (
     AnswerResponse as DirectAnswerResponse,
 )
@@ -55,6 +57,27 @@ class TrackCreate(LearningContext):
         if self.title is None and (not self.goal or not self.topic):
             raise ValueError("goal e topic são obrigatórios.")
         return self
+
+
+class TrackListParams(PaginationParams):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, extra="forbid"
+    )
+
+    q: str | None = Field(default=None, min_length=1, max_length=255)
+    level: StepLevelEnum | None = None
+    has_missions: bool | None = None
+    sort: Literal["recent", "oldest"] = "recent"
+
+    @field_validator("q")
+    @classmethod
+    def normalize_search(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("A busca não pode ser vazia.")
+        return value
 
 
 class TrackUpdate(BaseModel):

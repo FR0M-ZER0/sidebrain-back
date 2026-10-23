@@ -31,6 +31,7 @@ from sidebrain_back.schemas.generation_schema import (
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.track_schema import (
     TrackCreate,
+    TrackListParams,
     TrackResponse,
     TrackUpdate,
 )
@@ -270,15 +271,18 @@ class TrackService:
             ) from error
 
     async def list_tracks(
-        self, user: User, page: int, page_size: int
+        self, user: User, params: TrackListParams
     ) -> PaginatedResponse[TrackResponse]:
         tracks, total = await self.repository.list(
-            user.usr_id, (page - 1) * page_size, page_size
+            user.usr_id,
+            (params.page - 1) * params.page_size,
+            params.page_size,
+            **params.model_dump(exclude={"page", "page_size"}),
         )
         return PaginatedResponse.build(
             [TrackResponse.model_validate(track) for track in tracks],
-            page,
-            page_size,
+            params.page,
+            params.page_size,
             total,
         )
 

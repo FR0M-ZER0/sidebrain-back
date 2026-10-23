@@ -132,6 +132,8 @@ Os endpoints versionados de trilhas ficam em `routers/v1/track_router.py` e
 delegam para `TrackService`, que usa `TrackRepository` com `AsyncSession`.
 Listagens e detalhes filtram ownership e exclusão lógica, carregando a árvore
 com `selectinload`; respostas públicas são definidas em `schemas/track_schema.py`.
+`GET /api/v1/tracks` pagina trilhas e aceita filtros por título/descrição,
+nível das etapas e presença de missões sem perder a hierarquia no resultado.
 
 Quando o progresso de um Step alcança 80% das Lessons ativas, `TrackService`
 calcula o próximo Step elegível e enfileira
