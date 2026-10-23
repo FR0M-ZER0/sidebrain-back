@@ -28,7 +28,10 @@ from sidebrain_back.repositories.quiz_repository import QuizRepository
 from sidebrain_back.repositories.ranking_repository import RankingRepository
 from sidebrain_back.repositories.track_repository import TrackRepository
 from sidebrain_back.routers.v1.auth_router import get_current_user
-from sidebrain_back.schemas.quiz_schema import QuizAnswerCreateRequest
+from sidebrain_back.schemas.quiz_schema import (
+    QuizAnswerCreateRequest,
+    QuizEvaluationResult,
+)
 from sidebrain_back.schemas.track_schema import TrackResponse
 from sidebrain_back.services.mission_progress_service import (
     MissionProgressService,
@@ -49,7 +52,10 @@ def quiz_service(db):
         QuizRepository(db),
         db,
         evaluator=SimpleNamespace(
-            evaluate=lambda _q, answer: AnswerRateEnum(answer)
+            evaluate=lambda _q, answer: QuizEvaluationResult(
+                rate=AnswerRateEnum(answer),
+                reason="A resposta recebeu a classificação esperada.",
+            )
         ),
         mission_progress_service=progress_service(db),
     )
@@ -105,7 +111,12 @@ async def test_http_answer_updates_progress_and_recalculation_is_idempotent(
         usr_id=user_id
     )
     monkeypatch.setattr(
-        QuizEvaluationService, "evaluate", lambda *_args: AnswerRateEnum.GOOD
+        QuizEvaluationService,
+        "evaluate",
+        lambda *_args: QuizEvaluationResult(
+            rate=AnswerRateEnum.GOOD,
+            reason="A resposta está correta.",
+        ),
     )
     monkeypatch.setattr(
         TrackService, "enqueue_next_step_preparation", no_enqueue

@@ -154,11 +154,13 @@ async def test_submit_answer_persists_evaluation_reason(
 ):
     hierarchy = await learning_hierarchy_factory()
     quiz = await quiz_factory(hierarchy.lesson)
+    expected_question = quiz.qui_question
+    await db_session.commit()
     reason = "A resposta explica corretamente o conceito pedido."
 
     class Evaluator:
         def evaluate(self, question, answer):
-            assert question == quiz.qui_question
+            assert question == expected_question
             assert answer == "A named reference to a value"
             return QuizEvaluationResult(
                 rate=AnswerRateEnum.PERFECT,

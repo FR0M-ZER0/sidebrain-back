@@ -27,7 +27,10 @@ from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
     GenerationInput,
 )
-from sidebrain_back.schemas.quiz_schema import QuizAnswerCreateRequest
+from sidebrain_back.schemas.quiz_schema import (
+    QuizAnswerCreateRequest,
+    QuizEvaluationResult,
+)
 from sidebrain_back.schemas.track_schema import TrackCreate
 from sidebrain_back.services.badge_progress_service import BadgeProgressService
 from sidebrain_back.services.generation_service import GenerationService
@@ -43,7 +46,10 @@ def _quiz_service(db):
         QuizRepository(db),
         db,
         evaluator=SimpleNamespace(
-            evaluate=lambda _question, answer: AnswerRateEnum(answer)
+            evaluate=lambda _question, answer: QuizEvaluationResult(
+                rate=AnswerRateEnum(answer),
+                reason="A resposta recebeu a classificação esperada.",
+            )
         ),
         mission_progress_service=MissionProgressService(
             MissionProgressRepository(db), db
