@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -11,6 +12,10 @@ from pydantic import (
 
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
+from sidebrain_back.enums.mission_progress_status_enum import (
+    MissionProgressStatusEnum,
+)
+from sidebrain_back.schemas.pagination_schema import PaginationParams
 from sidebrain_back.schemas.track_schema import PublicModel
 
 
@@ -74,7 +79,11 @@ class MissionProgressPublicResponse(PublicModel):
     finished_in: datetime | None = Field(
         default=None, validation_alias="mpg_finished_in"
     )
-    score: int | None = Field(default=None, validation_alias="mpg_score")
+    score: int | None = Field(
+        default=None,
+        validation_alias="mpg_score",
+        description="Percentual de progresso (0–100), calculado no servidor.",
+    )
     updated_at: datetime = Field(validation_alias="mpg_updated_at")
 
 
@@ -119,3 +128,40 @@ class MissionResponse(PublicModel):
         ),
         serialization_alias="missionProgresses",
     )
+
+
+class MissionListParams(PaginationParams):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, extra="forbid"
+    )
+
+    status: MissionProgressStatusEnum | None = None
+    track_id: UUID | None = None
+    difficulty: MissionDifficultyEnum | None = None
+    criteria: MissionCriteriaEnum | None = None
+    q: str | None = Field(default=None, min_length=1, max_length=255)
+    sort: Literal["recent", "oldest"] = "recent"
+
+    @field_validator("q")
+    @classmethod
+    def normalize_search(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("A busca não pode ser vazia.")
+        return value
+
+
+class MissionListItemResponse(MissionResponse):
+    step_title: str = Field(alias="stepTitle")
+    status: MissionProgressStatusEnum
+    score: int = Field(description="Percentual de progresso; zero se ausente.")
+    last_activity_at: datetime = Field(alias="lastActivityAt")
+
+
+class MissionTrackGroupResponse(PublicModel):
+    track_id: UUID = Field(alias="trackId")
+    track_title: str = Field(alias="trackTitle")
+    track_icon: str | None = Field(default=None, alias="trackIcon")
+    missions: list[MissionListItemResponse] = Field(default_factory=list)

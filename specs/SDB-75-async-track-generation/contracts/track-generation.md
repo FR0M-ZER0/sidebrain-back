@@ -31,6 +31,11 @@ Base: `/api/v1`
 
 A resposta não contém Track e não espera o provedor externo. Repetição com o mesmo usuário, `request_id` e fingerprint retorna o mesmo identificador sem publicar uma segunda task.
 
+Na geração concluída, a primeira etapa contém pelo menos três lições, cada uma
+com quiz, e uma missão. As etapas seguintes são criadas apenas com seus dados
+estruturais e recebem lições, quizzes e ao menos uma missão quando forem
+preparadas pelo fluxo incremental.
+
 ## GET `/tracks/generations/{request_id}`
 
 Consulta o estado persistido da solicitação para clientes que utilizam polling.
@@ -150,6 +155,11 @@ ou:
 ```
 
 O resultado interno não altera a resposta HTTP inicial; a solicitação persistida é a fonte de estado de negócio.
+
+Para consultar o conteúdo persistido, use `GET /tracks/{track_id}`. O objeto de
+Track inclui `steps`; cada etapa inclui `lessons` (com `quizzes`) e `missions`.
+As missões usam os campos públicos `id`, `title`, `difficulty`, `xp_reward`,
+`criteria`, `criteria_value`, `updated_at` e `mission_progresses`.
 
 ## Execução
 

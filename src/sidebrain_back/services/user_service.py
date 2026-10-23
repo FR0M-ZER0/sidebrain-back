@@ -9,13 +9,17 @@ from sidebrain_back.core.rate_limit import (
 )
 from sidebrain_back.core.security import hash_password, verify_password
 from sidebrain_back.models.user_model import User
+from sidebrain_back.repositories.ranking_repository import (
+    RankingRepository,
+    get_ranking_repository,
+)
 from sidebrain_back.repositories.user_repository import (
     UserRepository,
     get_user_repository,
 )
 from sidebrain_back.schemas.user_schema import (
     PasswordUpdateRequest,
-    UserResponse,
+    UserMeResponse,
     UserUpdateRequest,
 )
 from sidebrain_back.services.auth_errors import (
@@ -33,22 +37,39 @@ class UserService:
         repository: UserRepository,
         db: AsyncSession,
         rate_limiter: AuthRateLimiter | None = None,
+        ranking_repository: RankingRepository | None = None,
     ) -> None:
         self.repository = repository
         self.db = db
         self.rate_limiter = rate_limiter
+        self.ranking_repository = ranking_repository or RankingRepository(db)
 
-    async def get_user(self, authenticated_user: User) -> UserResponse:
+    async def get_user(self, authenticated_user: User) -> UserMeResponse:
         user = await self.repository.get(authenticated_user.usr_id)
         if user is None:
             raise ResourceNotFoundError("Usuário não encontrado.")
-        return UserResponse.model_validate(user)
+        return await self._build_user_me_response(user)
+
+    async def _build_user_me_response(self, user: User) -> UserMeResponse:
+        ranking = await self.ranking_repository.get_user_xp_summary(
+            user.usr_id
+        )
+        if ranking is None:
+            raise ResourceNotFoundError("Usuário não encontrado.")
+        return UserMeResponse(
+            id=user.usr_id,
+            name=user.usr_name,
+            email=user.usr_email,
+            created_at=user.usr_created_at,
+            xp=ranking.xp,
+            missions_completed=ranking.missions_completed,
+        )
 
     async def update_user(
         self,
         authenticated_user: User,
         payload: UserUpdateRequest,
-    ) -> UserResponse:
+    ) -> UserMeResponse:
         try:
             user = await self.repository.get_for_update(
                 authenticated_user.usr_id
@@ -66,7 +87,7 @@ class UserService:
                 raise ConflictError("O e-mail informado já está em uso.")
 
             await self.repository.update(user, payload.name, email)
-            response = UserResponse.model_validate(user)
+            response = await self._build_user_me_response(user)
             await self.db.commit()
             return response
         except (ConflictError, ResourceNotFoundError):
@@ -153,5 +174,8 @@ def get_user_service(
     repository: UserRepository = Depends(get_user_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
     rate_limiter: AuthRateLimiter = Depends(get_auth_rate_limiter),  # noqa: B008
+    ranking_repository: RankingRepository = Depends(  # noqa: B008
+        get_ranking_repository
+    ),
 ) -> UserService:
-    return UserService(repository, db, rate_limiter)
+    return UserService(repository, db, rate_limiter, ranking_repository)

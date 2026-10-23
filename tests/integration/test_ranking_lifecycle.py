@@ -92,6 +92,9 @@ async def test_ranking_lifecycle_and_eligibility(
 
     repo = RankingRepository(db_session)
     service = RankingService(repo)
+    xp_summary = await repo.get_user_xp_summary(user_1.usr_id)
+    assert xp_summary.xp == 300
+    assert xp_summary.missions_completed == 2
 
     # Test list page 1
     page_1 = await service.list_rankings(page=1, page_size=2)

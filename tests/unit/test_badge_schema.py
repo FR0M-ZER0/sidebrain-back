@@ -1,7 +1,11 @@
 import pytest
 from pydantic import ValidationError
 
-from sidebrain_back.schemas.badge_schema import BadgeCreate, BadgeUpdate
+from sidebrain_back.schemas.badge_schema import (
+    BadgeCreate,
+    BadgeListParams,
+    BadgeUpdate,
+)
 
 
 def test_badge_create_strips_name_and_accepts_public_enums():
@@ -71,3 +75,36 @@ def test_badge_update_preserves_explicit_null_description():
     update = BadgeUpdate(description=None)
 
     assert update.model_dump(exclude_unset=True) == {"description": None}
+
+
+def test_badge_list_params_validate_filters_and_normalize_search():
+    params = BadgeListParams(
+        status="in_progress",
+        rarity="rare",
+        criteria="lessons_completed",
+        q="  Python  ",
+        sort="oldest",
+        page=2,
+        page_size=5,
+    )
+
+    assert params.q == "Python"
+    assert params.status.value == "in_progress"
+    assert params.sort == "oldest"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"status": "unknown"},
+        {"rarity": "unknown"},
+        {"criteria": "unknown"},
+        {"sort": "random"},
+        {"q": "   "},
+        {"q": "x" * 256},
+        {"owner_id": "not-a-filter"},
+    ],
+)
+def test_badge_list_params_reject_invalid_and_unknown_filters(payload):
+    with pytest.raises(ValidationError):
+        BadgeListParams.model_validate(payload)

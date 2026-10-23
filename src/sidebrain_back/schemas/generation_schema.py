@@ -89,7 +89,7 @@ class GeneratedMission(BaseModel):
     model_config = ConfigDict(extra="forbid")
     title: str = Field(min_length=1, max_length=255)
     difficulty: MissionDifficultyEnum
-    xp_reward: int = Field(gt=0)
+    xp_reward: int = Field(ge=0)
     criteria: MissionCriteriaEnum
     criteria_value: int = Field(gt=0)
 
@@ -132,6 +132,13 @@ class GeneratedTrack(BaseModel):
                 raise ValueError("etapas futuras não podem ter conteúdo")
             if lesson_positions != list(range(1, len(lesson_positions) + 1)):
                 raise ValueError("lições devem ter posições contíguas")
+            if step.position == 1:
+                if len(step.lessons) < 3:
+                    raise ValueError(
+                        "a primeira etapa deve ter pelo menos três lições"
+                    )
+                if step.mission is None:
+                    raise ValueError("a primeira etapa deve ter uma missão")
         return self
 
 

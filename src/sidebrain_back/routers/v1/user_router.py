@@ -12,7 +12,7 @@ from sidebrain_back.routers.v1.auth_router import (
 )
 from sidebrain_back.schemas.user_schema import (
     PasswordUpdateRequest,
-    UserResponse,
+    UserMeResponse,
     UserUpdateRequest,
 )
 from sidebrain_back.services.auth_errors import (
@@ -26,23 +26,23 @@ from sidebrain_back.services.user_service import UserService, get_user_service
 router = APIRouter(prefix="/v1/users", tags=["Users"])
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserMeResponse)
 async def get_user(
     user: User = Depends(get_current_user),  # noqa: B008
     service: UserService = Depends(get_user_service),  # noqa: B008
-) -> UserResponse:
+) -> UserMeResponse:
     try:
         return await service.get_user(user)
     except ResourceNotFoundError as error:
         raise _not_found() from error
 
 
-@router.put("/me", response_model=UserResponse)
+@router.put("/me", response_model=UserMeResponse)
 async def update_user(
     payload: UserUpdateRequest,
     user: User = Depends(get_current_user),  # noqa: B008
     service: UserService = Depends(get_user_service),  # noqa: B008
-) -> UserResponse:
+) -> UserMeResponse:
     try:
         return await service.update_user(user, payload)
     except ResourceNotFoundError as error:

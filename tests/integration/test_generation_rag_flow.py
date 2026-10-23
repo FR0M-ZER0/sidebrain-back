@@ -12,6 +12,7 @@ from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
 from sidebrain_back.models.lesson_model import Lesson
+from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.step_model import Step
 from sidebrain_back.models.track_model import Track
@@ -110,12 +111,23 @@ class FakeStepGenerator:
         return {
             "lessons": [
                 {
-                    "title": "Promises",
+                    "title": f"Promises {position}",
                     "text": "Conteúdo de teste",
-                    "quizzes": [{"question": "O que é uma Promise?"}],
+                    "quizzes": [
+                        {"question": f"O que é uma Promise? ({position})"}
+                    ],
+                }
+                for position in range(1, 4)
+            ],
+            "missions": [
+                {
+                    "title": "Implemente uma Promise",
+                    "difficulty": "medium",
+                    "xp_reward": 50,
+                    "criteria": "number_of_lessons_completed",
+                    "criteria_value": 3,
                 }
             ],
-            "missions": [],
         }
 
 
@@ -168,13 +180,22 @@ def _generated_track() -> GeneratedTrack:
                     "title": "Primeiros passos",
                     "lessons": [
                         {
-                            "position": 1,
-                            "title": "Listas",
+                            "position": position,
+                            "title": f"Listas {position}",
                             "text": "Conteúdo válido",
-                            "quiz": {"question": "O que é uma lista?"},
+                            "quiz": {
+                                "question": f"O que é uma lista? ({position})"
+                            },
                         }
+                        for position in range(1, 4)
                     ],
-                    "mission": None,
+                    "mission": {
+                        "title": "Pratique listas",
+                        "difficulty": "easy",
+                        "xp_reward": 25,
+                        "criteria": "number_of_lessons_completed",
+                        "criteria_value": 3,
+                    },
                 }
             ],
         }
@@ -489,8 +510,17 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
             )
         ).all()
     )
-    assert len(lessons) == 1
+    missions = list(
+        (
+            await db_session.scalars(
+                select(Mission).where(Mission.msn_step_id == step_id)
+            )
+        ).all()
+    )
+    assert len(lessons) == 3
     assert len(quizzes) == 1
+    assert len(missions) == 1
+    assert missions[0].msn_title == "Conclua 3 lições da etapa: Async"
 
 
 @pytest.mark.anyio

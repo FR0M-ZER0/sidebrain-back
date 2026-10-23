@@ -2,12 +2,15 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
 from sidebrain_back.enums.badge_criteria_enum import BadgeCriteriaEnum
+from sidebrain_back.enums.badge_progress_status_enum import (
+    BadgeProgressStatusEnum,
+)
 from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
 from sidebrain_back.models.badge_model import Badge
 from sidebrain_back.models.badge_progress_model import BadgeProgress
@@ -60,18 +63,71 @@ class BadgeRepository:
         )
 
     async def list(
-        self, user_id: UUID, offset: int, limit: int
+        self,
+        user_id: UUID,
+        offset: int,
+        limit: int,
+        *,
+        status: BadgeProgressStatusEnum | None = None,
+        rarity: BadgeRarityEnum | None = None,
+        criteria: BadgeCriteriaEnum | None = None,
+        q: str | None = None,
+        sort: str = "recent",
     ) -> tuple[list[Badge], int]:
-        filters = (Badge.bdg_is_deleted.is_(False),)
+        progress_status = func.coalesce(
+            BadgeProgress.bpg_status, BadgeProgressStatusEnum.IDLE
+        )
+        activity = func.greatest(
+            Badge.bdg_updated_at,
+            func.coalesce(BadgeProgress.bpg_updated_at, Badge.bdg_updated_at),
+        )
+        filters = [Badge.bdg_is_deleted.is_(False)]
+        if status is not None:
+            filters.append(progress_status == status)
+        if rarity is not None:
+            filters.append(Badge.bdg_rarity == rarity)
+        if criteria is not None:
+            filters.append(Badge.bdg_criteria == criteria)
+        if q is not None:
+            escaped = (
+                q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
+            pattern = f"%{escaped}%"
+            filters.append(
+                or_(
+                    Badge.bdg_name.ilike(pattern, escape="\\"),
+                    Badge.bdg_description.ilike(pattern, escape="\\"),
+                )
+            )
+        base = (
+            select(Badge)
+            .outerjoin(
+                BadgeProgress,
+                (BadgeProgress.bpg_badge_id == Badge.bdg_id)
+                & (BadgeProgress.bpg_user_id == user_id),
+            )
+            .where(*filters)
+        )
         total = await self.db.scalar(
-            select(func.count()).select_from(Badge).where(*filters)
+            select(func.count()).select_from(base.subquery())
+        )
+        ordering = (
+            (activity.asc(), Badge.bdg_id.asc())
+            if sort == "oldest"
+            else (activity.desc(), Badge.bdg_id.desc())
         )
         result = await self.db.execute(
-            self._query_with_progress(user_id)
-            .where(*filters)
-            .order_by(Badge.bdg_updated_at.desc(), Badge.bdg_id.desc())
+            base.options(
+                selectinload(
+                    Badge.badge_progresses.and_(
+                        BadgeProgress.bpg_user_id == user_id
+                    )
+                )
+            )
+            .order_by(*ordering)
             .offset(offset)
             .limit(limit)
+            .execution_options(populate_existing=True)
         )
         return list(result.scalars().all()), int(total or 0)
 

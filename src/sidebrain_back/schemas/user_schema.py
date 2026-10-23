@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -79,4 +80,17 @@ class UserResponse(BaseModel):
     email: EmailStr = Field(
         validation_alias=AliasChoices("email", "usr_email"),
         serialization_alias="email",
+    )
+
+
+class UserMeResponse(UserResponse):
+    created_at: datetime = Field(
+        alias="createdAt",
+        serialization_alias="createdAt",
+    )
+    xp: int = Field(ge=0)
+    missions_completed: int = Field(
+        ge=0,
+        alias="missionsCompleted",
+        serialization_alias="missionsCompleted",
     )

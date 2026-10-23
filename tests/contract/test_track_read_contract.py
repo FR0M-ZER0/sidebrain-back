@@ -26,6 +26,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
     now = datetime.now(UTC).replace(tzinfo=None)
     lesson_id = uuid4()
     user_id = uuid4()
+    mission_id = uuid4()
     track = SimpleNamespace(
         trk_id=uuid4(),
         trk_title="Python",
@@ -39,7 +40,18 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
                 stp_title="Fundamentals",
                 stp_status="idle",
                 stp_updated_at=now,
-                missions=[],
+                missions=[
+                    SimpleNamespace(
+                        msn_id=mission_id,
+                        msn_title="Pratique",
+                        msn_difficulty="easy",
+                        msn_xp_reward=10,
+                        msn_criteria="complete_a_step",
+                        msn_criteria_value=1,
+                        msn_updated_at=now,
+                        mission_progresses=[],
+                    )
+                ],
                 lessons=[
                     SimpleNamespace(
                         lsn_id=lesson_id,
@@ -62,6 +74,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
                                         ans_user_id=user_id,
                                         ans_text="Answer",
                                         ans_rate=AnswerRateEnum.GOOD,
+                                        ans_reason="A resposta está correta.",
                                         ans_created_at=now,
                                         ans_updated_at=now,
                                     )
@@ -77,9 +90,20 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
     response = TrackResponse.model_validate(track)
     quiz = response.steps[0].lessons[0].quizzes[0]
     answer = quiz.answers[0]
+    mission = response.steps[0].missions[0]
 
     assert quiz.lesson_id == lesson_id
     assert quiz.updated_at == now
     assert answer.user_id == user_id
     assert answer.rate is AnswerRateEnum.GOOD
+    assert answer.reason == "A resposta está correta."
     assert (answer.created_at, answer.updated_at) == (now, now)
+    assert mission.id == mission_id
+    assert mission.title == "Pratique"
+    assert mission.xp_reward == 10
+    assert (
+        response.model_dump(mode="json")["steps"][0]["missions"][0][
+            "criteria_value"
+        ]
+        == 1
+    )

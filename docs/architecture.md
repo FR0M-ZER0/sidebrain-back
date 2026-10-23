@@ -132,6 +132,8 @@ Os endpoints versionados de trilhas ficam em `routers/v1/track_router.py` e
 delegam para `TrackService`, que usa `TrackRepository` com `AsyncSession`.
 Listagens e detalhes filtram ownership e exclusão lógica, carregando a árvore
 com `selectinload`; respostas públicas são definidas em `schemas/track_schema.py`.
+`GET /api/v1/tracks` pagina trilhas e aceita filtros por título/descrição,
+nível das etapas e presença de missões sem perder a hierarquia no resultado.
 
 Quando o progresso de um Step alcança 80% das Lessons ativas, `TrackService`
 calcula o próximo Step elegível e enfileira
@@ -161,11 +163,44 @@ carregamento das Answers e também preserva a composição
 `Lesson -> Quiz[] -> Answer[]` nas respostas de Track sem N+1.
 
 Os schemas públicos convertem os nomes físicos `qui_*` e `ans_*` em `id`,
-`lesson_id`, `question`, `answers`, `user_id`, `text` e `rate`. O DELETE é
-lógico e terminal: preserva as linhas de Quiz e Answer e não aciona cascata
-física. Consulte o
+`lesson_id`, `question`, `answers`, `user_id`, `text`, `rate` e `reason`. A
+avaliação de cada resposta persiste uma justificativa breve junto ao rate; o
+campo pertence a Answer e não ao Feedback textual da Lesson. O DELETE é lógico
+e terminal: preserva as linhas de Quiz e Answer e não aciona cascata física.
+Consulte o
 [contrato HTTP](../specs/SDB-51-quiz-management/contracts/quizzes.md) para os
 cinco endpoints e seus códigos de resposta.
+
+### Progresso de missões
+
+`GET /api/v1/missions` usa `MissionService.list_missions` e
+`MissionRepository.list` para listar missões de todas as etapas do usuário,
+com filtros de status, trilha, dificuldade, critério e título. O repository
+aplica ownership, pais ativos, filtros e paginação no SQL, com um outer join
+de progresso restrito ao usuário. Ausência de progresso equivale a `idle/0`.
+A ordenação usa a última atualização da missão/progresso e o UUID como
+desempate. São três consultas para uma página não vazia: contagem, página e
+carregamento dos progressos via `selectinload`. O service agrupa a página por
+trilha; os totais e o tamanho da página contam missões. O GET é somente leitura.
+
+`MissionProgressService` avalia os seis critérios a partir das respostas do
+usuário. `MissionProgressRepository` agrega quizzes distintos por lição,
+filtra ownership e exclusão lógica e carrega as missões com seus progressos.
+Lições e acertos ficam restritos à etapa da missão; critérios de trilha e
+contagem de etapas usam somente sua trilha. Conteúdo vazio não conta como
+concluído. Status de lição editado manualmente não substitui as respostas.
+
+Após a avaliação externa do quiz, `QuizService` obtém um lock da trilha e salva
+resposta, conclusão da lição e progresso das missões na mesma transação. O lock
+serializa respostas simultâneas antes das contagens, evitando atualizações
+perdidas e duplicação do par usuário/missão. A chamada ao provedor fica fora
+do lock. `mpg_score` guarda o percentual (0–100); `done` é terminal, com a data
+de conclusão preservada. O ranking continua derivando XP de `MissionProgress`.
+
+O provider `get_mission_progress_service` é injetado em `QuizService` e na rota
+`POST /api/v1/steps/{step_id}/missions/recalculate-progress`, que sincroniza
+respostas antigas sem aceitar progresso fornecido pelo cliente. Consulte o
+[contrato de missões](../specs/SDB-86-mission-crud/contracts/mission-api.md).
 
 ### Gerenciamento de lições
 
@@ -256,6 +291,15 @@ fontes/licenças fica em `config/rag_sources.yml`; `OPENAI_API_KEY` é necessár
 para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O guia de
 [operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
 
+### Listagem global de badges
+
+`GET /api/v1/badges` pagina as definições globais e filtra o progresso pelo
+usuário autenticado. `BadgeRepository.list` aplica raridade, critério, status e
+busca textual no SQL; badges sem progresso para o chamador equivalem a `idle`.
+O outer join é restrito ao usuário da requisição, e `selectinload` carrega o
+progresso publicado sem N+1. A ordenação é estável por última atividade e UUID.
+O GET é somente leitura: não cria nem recalcula progressos. Consulte o
+[contrato de badges](../specs/SDB-87-badge-management/contracts/badges.md).
 
 ### Gerenciamento de ranking de usuários
 

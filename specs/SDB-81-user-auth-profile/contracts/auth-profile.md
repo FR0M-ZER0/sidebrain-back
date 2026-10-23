@@ -11,6 +11,7 @@ Base: `/api/v1`. JSON de sucesso usa os nomes abaixo, sem prefixos físicos `usr
 | `UserUpdateRequest` | `name` e/ou `email` | Ao menos um campo; não aceita `null`; mesmas regras de nome/e-mail do cadastro. |
 | `PasswordUpdateRequest` | `currentPassword`, `newPassword` | Ambos obrigatórios; nova senha com ao menos 8 caracteres e diferente da atual. |
 | `UserResponse` | `id`, `name`, `email` | `id` UUID; somente dados públicos. |
+| `UserMeResponse` | `id`, `name`, `email`, `createdAt`, `xp`, `missionsCompleted` | Perfil autenticado, data original de criação e resumo de gamificação; XP e missões concluídas são agregados das missões com progresso `done`. |
 | `AuthResponse` | `accessToken`, `tokenType`, `user` | `tokenType` sempre `Bearer`; `user` é `UserResponse`. |
 
 Todos os requests rejeitam campos não previstos com `422`, inclusive `id`, `password_hash`, `usr_*`, timestamps e estado de exclusão. Respostas jamais incluem senha, hash, versão do token ou flags internas.
@@ -57,10 +58,10 @@ Enviar `Authorization: Bearer <accessToken>`. O token tem validade de 60 minutos
 
 ## GET `/users/me`
 
-Protegido. Sem body. Resposta `200`:
+Protegido. Sem body. Resposta `200` (`UserMeResponse`):
 
 ```json
-{"id":"00000000-0000-4000-8000-000000000001","name":"Maria Silva","email":"maria@exemplo.com"}
+{"id":"00000000-0000-4000-8000-000000000001","name":"Maria Silva","email":"maria@exemplo.com","createdAt":"2026-10-22T12:00:00","xp":300,"missionsCompleted":2}
 ```
 
 - `401`: Bearer ausente/inválido ou conta já excluída na autenticação.
@@ -68,7 +69,7 @@ Protegido. Sem body. Resposta `200`:
 
 ## PUT `/users/me`
 
-Protegido. Enviar `{"name":"Maria S. Souza"}`, `{"email":"maria.souza@exemplo.com"}` ou ambos. Resposta `200`: `UserResponse` com valores persistidos.
+Protegido. Enviar `{"name":"Maria S. Souza"}`, `{"email":"maria.souza@exemplo.com"}` ou ambos. Resposta `200`: `UserMeResponse` com valores persistidos e o mesmo resumo atual de XP e missões concluídas retornado por `GET /users/me`.
 
 - `401`/`404`: mesma distinção da consulta de perfil.
 - `409`: novo e-mail pertence a outra conta, inclusive excluída. O mesmo e-mail da própria conta não conflita.

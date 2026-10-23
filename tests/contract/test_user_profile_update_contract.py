@@ -1,6 +1,8 @@
+from datetime import UTC, datetime
+
 from fastapi.testclient import TestClient
 
-from sidebrain_back.schemas.user_schema import UserResponse
+from sidebrain_back.schemas.user_schema import UserMeResponse
 from sidebrain_back.services.auth_errors import ConflictError
 from sidebrain_back.services.user_service import get_user_service
 
@@ -14,7 +16,12 @@ class UserUpdateServiceDouble:
             "name": payload.name or user.usr_name,
             "email": payload.email or user.usr_email,
         }
-        return UserResponse(**values)
+        return UserMeResponse(
+            **values,
+            created_at=datetime(2026, 10, 23, tzinfo=UTC),
+            xp=0,
+            missions_completed=0,
+        )
 
 
 def test_update_profile_accepts_public_fields(test_app):
@@ -24,6 +31,9 @@ def test_update_profile_accepts_public_fields(test_app):
     )
     assert response.status_code == 200
     assert response.json()["name"] == "Maria Atualizada"
+    assert response.json()["createdAt"] == "2026-10-23T00:00:00Z"
+    assert response.json()["xp"] == 0
+    assert response.json()["missionsCompleted"] == 0
 
 
 def test_update_profile_rejects_empty_and_private_fields(test_app):

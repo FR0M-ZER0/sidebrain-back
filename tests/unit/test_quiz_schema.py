@@ -61,6 +61,9 @@ def test_answer_response_uses_public_fields_and_typed_rate():
         ans_user_id=uuid4(),
         ans_text="A named reference to a value",
         ans_rate=AnswerRateEnum.PERFECT,
+        ans_reason=(
+            "A resposta está completa e descreve corretamente o conceito."
+        ),
     )
 
     response = AnswerResponse.model_validate(answer)
@@ -71,6 +74,7 @@ def test_answer_response_uses_public_fields_and_typed_rate():
         "user_id": answer.ans_user_id,
         "text": answer.ans_text,
         "rate": AnswerRateEnum.PERFECT,
+        "reason": answer.ans_reason,
     }
 
 
@@ -82,8 +86,22 @@ def test_answer_response_rejects_unknown_rate():
                 "ans_user_id": uuid4(),
                 "ans_text": "Invalid",
                 "ans_rate": "invalid",
+                "ans_reason": "Reason",
             }
         )
+
+
+def test_legacy_answer_response_without_reason_returns_null():
+    answer = SimpleNamespace(
+        ans_id=uuid4(),
+        ans_user_id=uuid4(),
+        ans_text="An older answer",
+        ans_rate=AnswerRateEnum.GOOD,
+    )
+
+    response = AnswerResponse.model_validate(answer)
+
+    assert response.reason is None
 
 
 def test_quiz_answer_request_accepts_only_student_text():

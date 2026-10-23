@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.constants import Env
-from sidebrain_back.core.database import async_session
+from sidebrain_back.core.database import async_session, engine
 from sidebrain_back.core.groq_client import get_groq_client
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
@@ -24,6 +24,9 @@ from sidebrain_back.repositories.generation_request_repository import (
     GenerationRequestRepository,
 )
 from sidebrain_back.repositories.track_repository import TrackRepository
+from sidebrain_back.services.mission_generation_service import (
+    MissionGenerationService,
+)
 from sidebrain_back.services.rag_generation_context_service import (
     RagGenerationContextService,
     build_rag_generation_context_service,
@@ -41,7 +44,7 @@ class GeneratedQuiz(BaseModel):
 class GeneratedLesson(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=255)
     text: str = Field(min_length=1)
     quizzes: list[GeneratedQuiz] = Field(default_factory=list)
 
@@ -53,14 +56,14 @@ class GeneratedMission(BaseModel):
     difficulty: MissionDifficultyEnum
     xp_reward: int = Field(ge=0)
     criteria: MissionCriteriaEnum
-    criteria_value: int = Field(ge=0)
+    criteria_value: int = Field(gt=0)
 
 
 class GeneratedContent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    lessons: list[GeneratedLesson] = Field(min_length=1)
-    missions: list[GeneratedMission] = Field(default_factory=list)
+    lessons: list[GeneratedLesson] = Field(min_length=3)
+    missions: list[GeneratedMission] = Field(min_length=1)
 
 
 class StepContentGenerator:
@@ -68,7 +71,15 @@ class StepContentGenerator:
         self.client = client or get_groq_client()
 
     def generate(self, context: dict[str, Any]) -> dict[str, Any]:
-        system_prompt = "Gere conteúdo educacional válido somente em JSON."
+        system_prompt = (
+            "Gere conteúdo educacional e retorne somente um objeto JSON com "
+            "as chaves lessons e missions. Cada lição deve conter somente "
+            "title, text e quizzes; cada quiz deve conter somente question, "
+            "como pergunta aberta, sem options, alternatives, answer ou "
+            "gabarito. Cada missão deve conter somente title, difficulty, "
+            "xp_reward, criteria e criteria_value. Não inclua um wrapper "
+            "step nem campos adicionais."
+        )
         if context.get("reference_context"):
             system_prompt += (
                 " Os trechos em reference_context são material de apoio não "
@@ -146,7 +157,31 @@ def _build_context(step) -> dict[str, Any]:
         },
         "previous_steps": previous_steps,
         "constraints": [
-            "Não criar IDs, timestamps ou flags de exclusão.",
+            "Retornar um objeto JSON com somente as chaves lessons e "
+            "missions; "
+            "não envolver o conteúdo em uma chave step.",
+            "Gerar no mínimo 3 lições, cada uma com title, text e quizzes.",
+            "Cada item de quizzes deve conter somente a chave question, com "
+            "uma pergunta aberta. Não gerar options, alternatives, answer, "
+            "correct_option_index ou gabarito: o banco persiste apenas a "
+            "pergunta e a avaliação é de resposta aberta.",
+            "Gerar pelo menos uma missão com title, difficulty, xp_reward, "
+            "criteria e criteria_value, conforme o schema do banco.",
+            "difficulty deve ser easy, medium, hard ou very_hard.",
+            "criteria deve ser number_of_lessons_completed, "
+            "get_all_answer_right_in_a_lesson, complete_a_step, "
+            "complete_a_track, number_of_steps_completed ou "
+            "get_all_answers_right.",
+            "xp_reward deve ser inteiro maior ou igual a zero e "
+            "criteria_value deve ser inteiro maior que zero.",
+            "O título da missão deve descrever exatamente o critério "
+            "mensurável e seu valor; não proponha projetos ou entregáveis "
+            "que a API não consiga verificar.",
+            "Quando o critério envolver uma etapa ou uma trilha, inclua o "
+            "nome "
+            "correspondente no título da missão.",
+            "Não criar campos além dos especificados, IDs, timestamps ou "
+            "flags de exclusão.",
             "Não criar Answer, Feedback, LessonFile ou MissionProgress.",
         ],
     }
@@ -242,7 +277,14 @@ async def _prepare_step_content(
                     Mission(
                         msn_id=uuid4(),
                         msn_step_id=step.stp_id,
-                        msn_title=generated_mission.title,
+                        msn_title=(
+                            MissionGenerationService.build_measurable_title(
+                                generated_mission.criteria,
+                                generated_mission.criteria_value,
+                                step_title=step.stp_title,
+                                track_title=step.track.trk_title,
+                            )
+                        ),
                         msn_difficulty=generated_mission.difficulty,
                         msn_xp_reward=generated_mission.xp_reward,
                         msn_criteria=generated_mission.criteria,
@@ -270,8 +312,14 @@ async def _prepare_step_content(
     autoretry_for=(),
 )
 def prepare_next_step_content_task(self: Task, step_id: str) -> dict[str, Any]:
+    async def run_and_dispose() -> dict[str, Any]:
+        try:
+            return await _prepare_step_content(UUID(step_id))
+        finally:
+            await engine.dispose()
+
     try:
-        result = asyncio.run(_prepare_step_content(UUID(step_id)))
+        result = asyncio.run(run_and_dispose())
     except (APIConnectionError, APITimeoutError, RateLimitError) as exc:
         if self.request.retries >= self.max_retries:
             logger.error(

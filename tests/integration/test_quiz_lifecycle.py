@@ -13,7 +13,9 @@ from sidebrain_back.models.user_model import User
 from sidebrain_back.repositories.quiz_repository import QuizRepository
 from sidebrain_back.repositories.track_repository import TrackRepository
 from sidebrain_back.schemas.quiz_schema import (
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
+    QuizEvaluationResult,
     QuizUpdateRequest,
 )
 from sidebrain_back.services.quiz_service import QuizService
@@ -142,6 +144,46 @@ async def test_lesson_is_completed_after_user_answers_every_quiz(
 
     assert completed_step_id == hierarchy.step.stp_id
     assert hierarchy.lesson.lsn_status is LessonStatusEnum.DONE
+
+
+@pytest.mark.anyio
+async def test_submit_answer_persists_evaluation_reason(
+    db_session,
+    learning_hierarchy_factory,
+    quiz_factory,
+):
+    hierarchy = await learning_hierarchy_factory()
+    quiz = await quiz_factory(hierarchy.lesson)
+    expected_question = quiz.qui_question
+    await db_session.commit()
+    reason = "A resposta explica corretamente o conceito pedido."
+
+    class Evaluator:
+        def evaluate(self, question, answer):
+            assert question == expected_question
+            assert answer == "A named reference to a value"
+            return QuizEvaluationResult(
+                rate=AnswerRateEnum.PERFECT,
+                reason=reason,
+            )
+
+    service = QuizService(
+        QuizRepository(db_session),
+        db_session,
+        evaluator=Evaluator(),
+    )
+
+    response = await service.submit_quiz_answer(
+        hierarchy.user,
+        quiz.qui_id,
+        QuizAnswerCreateRequest(text="A named reference to a value"),
+    )
+    stored = await db_session.get(Answer, response.id)
+
+    assert stored is not None
+    assert stored.ans_rate is AnswerRateEnum.PERFECT
+    assert stored.ans_reason == reason
+    assert response.reason == reason
 
 
 @pytest.mark.anyio

@@ -15,7 +15,10 @@ from sidebrain_back.repositories.mission_repository import (
 )
 from sidebrain_back.schemas.mission_schema import (
     MissionCreate,
+    MissionListItemResponse,
+    MissionListParams,
     MissionResponse,
+    MissionTrackGroupResponse,
     MissionUpdate,
 )
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
@@ -25,6 +28,37 @@ class MissionService:
     def __init__(self, repository: MissionRepository, db: AsyncSession):
         self.repository = repository
         self.db = db
+
+    async def list_missions(
+        self, user: User, params: MissionListParams
+    ) -> PaginatedResponse[MissionTrackGroupResponse]:
+        rows, total = await self.repository.list(
+            user.usr_id,
+            (params.page - 1) * params.page_size,
+            params.page_size,
+            **params.model_dump(exclude={"page", "page_size"}),
+        )
+        groups: dict[UUID, MissionTrackGroupResponse] = {}
+        for row in rows:
+            if row.track_id not in groups:
+                groups[row.track_id] = MissionTrackGroupResponse(
+                    track_id=row.track_id,
+                    track_title=row.track_title,
+                    track_icon=row.track_icon,
+                )
+            mission = MissionResponse.model_validate(row.mission)
+            groups[row.track_id].missions.append(
+                MissionListItemResponse(
+                    **mission.model_dump(),
+                    step_title=row.step_title,
+                    status=row.status,
+                    score=row.score,
+                    last_activity_at=row.last_activity_at,
+                )
+            )
+        return PaginatedResponse.build(
+            list(groups.values()), params.page, params.page_size, total
+        )
 
     async def _require_step(self, user_id: UUID, step_id: UUID) -> Step:
         step = await self.repository.get_accessible_step(user_id, step_id)

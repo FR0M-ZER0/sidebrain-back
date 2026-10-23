@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import (
@@ -14,6 +15,7 @@ from sidebrain_back.enums.badge_progress_status_enum import (
     BadgeProgressStatusEnum,
 )
 from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
+from sidebrain_back.schemas.pagination_schema import PaginationParams
 
 
 class BadgeInput(BaseModel):
@@ -80,3 +82,25 @@ class BadgeResponse(BaseModel):
         default_factory=list,
         validation_alias="badge_progresses",
     )
+
+
+class BadgeListParams(PaginationParams):
+    model_config = ConfigDict(
+        from_attributes=True, populate_by_name=True, extra="forbid"
+    )
+
+    status: BadgeProgressStatusEnum | None = None
+    rarity: BadgeRarityEnum | None = None
+    criteria: BadgeCriteriaEnum | None = None
+    q: str | None = Field(default=None, min_length=1, max_length=255)
+    sort: Literal["recent", "oldest"] = "recent"
+
+    @field_validator("q")
+    @classmethod
+    def normalize_search(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("A busca não pode ser vazia.")
+        return value

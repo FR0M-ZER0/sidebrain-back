@@ -39,6 +39,20 @@ class QuizAnswerCreateRequest(BaseModel):
         return value
 
 
+class QuizEvaluationResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rate: AnswerRateEnum
+    reason: str = Field(min_length=1, max_length=1000)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def strip_reason(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+
 class PublicResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
@@ -51,6 +65,7 @@ class AnswerResponse(PublicResponse):
     user_id: UUID = Field(validation_alias="ans_user_id")
     text: str = Field(validation_alias="ans_text")
     rate: AnswerRateEnum = Field(validation_alias="ans_rate")
+    reason: str | None = Field(default=None, validation_alias="ans_reason")
 
 
 class QuizResponse(PublicResponse):
