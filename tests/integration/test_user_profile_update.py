@@ -28,6 +28,9 @@ async def test_profile_update_changes_only_public_profile_fields(db_session):
         owner, UserUpdateRequest(name=" Maria Nova ")
     )
     assert result.name == "Maria Nova"
+    assert result.created_at == owner.usr_created_at
+    assert result.xp == 0
+    assert result.missions_completed == 0
     assert owner.usr_password_hash == "hash"
     with pytest.raises(ConflictError):
         await service.update_user(
