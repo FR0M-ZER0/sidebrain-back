@@ -1,4 +1,5 @@
 import json
+import re
 
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -33,6 +34,9 @@ from sidebrain_back.services.mission_generation_service import (
 
 class GenerationService:
     VALIDATION_ATTEMPTS = 2
+    TRACK_TITLE_PREFIX_PATTERN = re.compile(
+        r"^\s*trilha\s+de(?:\s*[:\-–—])?(?:\s+|$)", re.IGNORECASE
+    )
 
     def __init__(
         self,
@@ -69,6 +73,8 @@ class GenerationService:
             "objeto JSON, sem texto fora dele, com exatamente as "
             "chaves icon, title, description e steps. O campo icon deve "
             "conter apenas um emoji, sem texto ou espaço adicional. "
+            "Use o nome do assunto como title (por exemplo, 'Python'); não "
+            "comece o title com 'Trilha de' nem use esse rótulo genérico. "
             "Não retorne uma "
             "lista. Inclua todas as etapas na ordem da progressão, "
             "com position contíguas a partir de 1. Gere conteúdo "
@@ -159,6 +165,7 @@ class GenerationService:
 
             try:
                 generated = GeneratedTrack.model_validate_json(content)
+                generated.title = self.normalize_track_title(generated.title)
                 if reference_context:
                     for step in generated.steps:
                         for lesson in step.lessons:
@@ -182,6 +189,14 @@ class GenerationService:
     def _format_validation_issue(error: dict) -> str:
         location = ".".join(str(part) for part in error["loc"]) or "$"
         return f"{location} ({error['type']}): {error['msg']}"
+
+    @classmethod
+    def normalize_track_title(cls, title: str) -> str:
+        normalized = cls.TRACK_TITLE_PREFIX_PATTERN.sub("", title, count=1)
+        normalized = normalized.strip()
+        if not normalized:
+            raise ValueError("o título da trilha deve conter o assunto")
+        return normalized
 
     async def generate(
         self,

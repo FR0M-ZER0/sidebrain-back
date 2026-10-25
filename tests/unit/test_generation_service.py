@@ -193,6 +193,17 @@ def test_generation_validation_failure_is_bounded_and_reports_schema_issues(
     assert raised.value.validation_issues
 
 
+def test_generated_track_title_removes_redundant_prefix(monkeypatch):
+    generated_payload = _generated_track(lesson_count=3, mission=_mission())
+    generated_payload["title"] = "Trilha de Python"
+    completions = FakeCompletions([json.dumps(generated_payload)])
+    _patch_client(monkeypatch, completions)
+
+    generated = GenerationService(None, None).generate_with_ai(_payload())
+
+    assert generated.title == "Python"
+
+
 def test_generated_initial_lessons_include_cited_rag_source(monkeypatch):
     generated_payload = _generated_track(lesson_count=3, mission=_mission())
     for lesson in generated_payload["steps"][0]["lessons"]:
