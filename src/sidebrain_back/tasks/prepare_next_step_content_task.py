@@ -23,6 +23,7 @@ from sidebrain_back.core.groq_client import get_groq_client
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
+from sidebrain_back.enums.step_level_enum import STEP_LEVEL_RANK
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.quiz_model import Quiz
@@ -143,6 +144,14 @@ def _task_context(task: Task, event: str, error: Exception | None = None):
 
 
 def _build_context(step) -> dict[str, Any]:
+    current_step_rank = STEP_LEVEL_RANK[step.stp_level]
+    ordered_track_steps = sorted(
+        step.track.steps,
+        key=lambda candidate: (
+            STEP_LEVEL_RANK[candidate.stp_level],
+            candidate.stp_id.int,
+        ),
+    )
     previous_steps = [
         {
             "title": previous_step.stp_title,
@@ -158,16 +167,10 @@ def _build_context(step) -> dict[str, Any]:
                 )
             ],
         }
-        for previous_step in step.track.steps
+        for previous_step in ordered_track_steps
         if previous_step.stp_id != step.stp_id
         and previous_step.stp_is_deleted is False
-        and (
-            previous_step.stp_updated_at < step.stp_updated_at
-            or (
-                previous_step.stp_updated_at == step.stp_updated_at
-                and previous_step.stp_id.int < step.stp_id.int
-            )
-        )
+        and STEP_LEVEL_RANK[previous_step.stp_level] < current_step_rank
     ]
     return {
         "track": {

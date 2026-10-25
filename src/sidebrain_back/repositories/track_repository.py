@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
-from sidebrain_back.enums.step_level_enum import StepLevelEnum
+from sidebrain_back.enums.step_level_enum import STEP_LEVEL_RANK, StepLevelEnum
 from sidebrain_back.models.feedback_model import Feedback
 from sidebrain_back.models.lesson_file_model import LessonFile
 from sidebrain_back.models.lesson_model import Lesson
@@ -225,7 +225,14 @@ class TrackRepository:
             )
             .order_by(Step.stp_updated_at, Step.stp_id)
         )
-        ordered_steps = list(steps.all())
+        ordered_steps = sorted(
+            steps.all(),
+            key=lambda candidate: (
+                STEP_LEVEL_RANK[candidate.stp_level],
+                candidate.stp_updated_at,
+                candidate.stp_id.int,
+            ),
+        )
         try:
             current_index = next(
                 index
