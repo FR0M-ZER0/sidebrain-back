@@ -171,6 +171,17 @@ Consulte o
 [contrato HTTP](../specs/SDB-51-quiz-management/contracts/quizzes.md) para os
 cinco endpoints e seus códigos de resposta.
 
+Após cada resposta de quiz, `StepSummaryService` carrega os motivos (`reason`)
+das respostas do usuário para os quizzes ativos da etapa, ordenados por criação,
+e aplica o pipeline TF-IDF definido em
+`services/step_summary_generator_service.py`. O resultado é
+persistido em `Step.stp_summary` na mesma transação da resposta e publicado como
+`summary` nas respostas diretas e aninhadas da etapa. Motivos de outros usuários
+e de conteúdo excluído não entram no resumo. `GET
+/api/v1/tracks/{track_id}/steps/{step_id}/summary` consulta somente esse campo,
+com validação de ownership no repository. `POST` no mesmo caminho recalcula o
+resumo sob demanda e o persiste antes de retornar.
+
 ### Progresso de missões
 
 `GET /api/v1/missions` usa `MissionService.list_missions` e

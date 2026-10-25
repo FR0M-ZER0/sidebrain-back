@@ -282,7 +282,20 @@ async def test_submit_answer_saves_text_and_self_rating():
                 reason="A resposta está correta e completa.",
             )
 
-    service = QuizService(ReadRepository(quiz=quiz), session, FakeEvaluator())
+    class StepSummarySpy:
+        def __init__(self):
+            self.calls = []
+
+        async def refresh_summary_for_quiz(self, user_id, quiz_id):
+            self.calls.append((user_id, quiz_id))
+
+    step_summary = StepSummarySpy()
+    service = QuizService(
+        ReadRepository(quiz=quiz),
+        session,
+        FakeEvaluator(),
+        step_summary_service=step_summary,
+    )
     user = SingleReadUser()
 
     response = await service.submit_quiz_answer(
@@ -297,6 +310,7 @@ async def test_submit_answer_saves_text_and_self_rating():
     assert response.reason == "A resposta está correta e completa."
     assert session.committed is True
     assert user.read_count == 1
+    assert step_summary.calls == [(user.user_id, quiz.qui_id)]
 
 
 @pytest.mark.anyio

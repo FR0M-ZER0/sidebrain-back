@@ -19,6 +19,14 @@ def test_step_endpoints_require_authentication():
         ("post", "/api/v1/tracks/not-a-uuid/steps"),
         ("get", "/api/v1/tracks/not-a-uuid/steps"),
         ("get", "/api/v1/tracks/not-a-uuid/steps/not-a-uuid"),
+        (
+            "get",
+            "/api/v1/tracks/not-a-uuid/steps/not-a-uuid/summary",
+        ),
+        (
+            "post",
+            "/api/v1/tracks/not-a-uuid/steps/not-a-uuid/summary",
+        ),
         ("put", "/api/v1/tracks/not-a-uuid/steps/not-a-uuid"),
         ("delete", "/api/v1/tracks/not-a-uuid/steps/not-a-uuid"),
     ):
@@ -26,7 +34,7 @@ def test_step_endpoints_require_authentication():
             method.upper(),
             path,
             json={"level": "beginner", "title": "Intro"}
-            if method in {"post", "put"}
+            if path.endswith("/steps") or method == "put"
             else None,
         )
         assert response.status_code == 401
