@@ -247,12 +247,18 @@ async def test_step_summary_reasons_are_scoped_and_stably_ordered(
     )
     repository = StepSummaryRepository(db_session)
 
-    assert await repository.get_step_id_by_quiz_id(
-        hierarchy.user.usr_id, first_quiz.qui_id
-    ) == hierarchy.step.stp_id
-    assert await repository.get_step_id_by_quiz_id(
-        other_user.usr_id, first_quiz.qui_id
-    ) is None
+    assert (
+        await repository.get_step_id_by_quiz_id(
+            hierarchy.user.usr_id, first_quiz.qui_id
+        )
+        == hierarchy.step.stp_id
+    )
+    assert (
+        await repository.get_step_id_by_quiz_id(
+            other_user.usr_id, first_quiz.qui_id
+        )
+        is None
+    )
     assert await repository.list_reasons_by_step_id(
         hierarchy.user.usr_id, hierarchy.step.stp_id
     ) == ["Primeiro motivo.", "Segundo motivo."]

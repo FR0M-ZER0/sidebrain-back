@@ -100,9 +100,7 @@ def _nominalize_action(action: str) -> str:
 
 
 class StepSummaryTopicService:
-    def extract_topic(
-        self, text: str, analysis: ReasonAnalysis
-    ) -> str | None:
+    def extract_topic(self, text: str, analysis: ReasonAnalysis) -> str | None:
         target = _extract_target(text)
         if target:
             normalized_target = re.sub(
@@ -154,9 +152,7 @@ class StepSummaryTopicService:
             ):
                 return "a definição de funções em Python"
 
-        action_match = re.search(
-            r"\bpara\s+(.+?)\s+é\b", text, re.IGNORECASE
-        )
+        action_match = re.search(r"\bpara\s+(.+?)\s+é\b", text, re.IGNORECASE)
         if action_match:
             return _nominalize_action(action_match.group(1))
 
@@ -187,8 +183,13 @@ class StepSummaryTopicService:
             return f"os conceitos de {expected_content}"
 
         ignored_terms = {
-            "resultado", "resposta", "solicitado", "solicitada", "código",
-            "sob", "possui",
+            "resultado",
+            "resposta",
+            "solicitado",
+            "solicitada",
+            "código",
+            "sob",
+            "possui",
         }
         keywords = [
             term

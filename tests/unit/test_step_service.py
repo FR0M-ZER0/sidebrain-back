@@ -177,9 +177,9 @@ async def test_generate_step_summary_persists_and_returns_summary():
 @pytest.mark.anyio
 async def test_generate_step_summary_returns_404_for_unavailable_step():
     with pytest.raises(ProblemDetailError) as error:
-        await StepService(
-            Repository(), FakeSession()
-        ).generate_step_summary(make_user(), uuid4(), uuid4())
+        await StepService(Repository(), FakeSession()).generate_step_summary(
+            make_user(), uuid4(), uuid4()
+        )
 
     assert error.value.status_code == 404
 
