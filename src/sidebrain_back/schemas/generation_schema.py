@@ -14,11 +14,24 @@ from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 
+MIN_LESSON_TEXT_LENGTH = 420
+MAX_LESSON_TEXT_LENGTH = 1000
+
 
 def _required_text(value: str) -> str:
     value = value.strip()
     if not value:
         raise ValueError("texto obrigatório")
+    return value
+
+
+def validate_lesson_text(value: str) -> str:
+    value = _required_text(value)
+    if not MIN_LESSON_TEXT_LENGTH <= len(value) <= MAX_LESSON_TEXT_LENGTH:
+        raise ValueError(
+            "o texto da lição deve ter entre "
+            f"{MIN_LESSON_TEXT_LENGTH} e {MAX_LESSON_TEXT_LENGTH} caracteres"
+        )
     return value
 
 
@@ -79,10 +92,14 @@ class GeneratedLesson(BaseModel):
     model_config = ConfigDict(extra="forbid")
     position: int = Field(gt=0)
     title: str = Field(min_length=1, max_length=255)
-    text: str = Field(min_length=1)
+    text: str = Field(
+        min_length=MIN_LESSON_TEXT_LENGTH,
+        max_length=MAX_LESSON_TEXT_LENGTH,
+    )
     quiz: GeneratedQuiz
 
-    _validate_title = field_validator("title", "text")(_required_text)
+    _validate_title = field_validator("title")(_required_text)
+    _validate_text = field_validator("text")(validate_lesson_text)
 
 
 class GeneratedMission(BaseModel):

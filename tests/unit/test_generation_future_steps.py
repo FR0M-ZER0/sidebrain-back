@@ -19,7 +19,7 @@ def test_future_steps_reject_detailed_content():
                         {
                             "position": position,
                             "title": f"Lição {position}",
-                            "text": "Conteúdo",
+                            "text": "Conteúdo. " * 50,
                             "quiz": {"question": f"Pergunta {position}"},
                         }
                         for position in range(1, 4)

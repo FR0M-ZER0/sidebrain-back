@@ -236,7 +236,7 @@ async def test_ai_track_persistence_updates_track_creation_badges(
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quiz": {"question": f"Pergunta {position}"},
                     }
                     for position in range(1, 4)

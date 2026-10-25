@@ -10,6 +10,7 @@ from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
     GenerationInput,
 )
+from sidebrain_back.schemas.rag_schema import RagReferenceSchema
 from sidebrain_back.services.generation_errors import GenerationValidationError
 from sidebrain_back.services.generation_service import GenerationService
 from sidebrain_back.services.mission_generation_service import (
@@ -35,7 +36,7 @@ def _generated_track(lesson_count: int, mission: dict | None) -> dict:
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo da lição",
+                        "text": "Conteúdo da lição. " * 30,
                         "quiz": {"question": f"Pergunta {position}?"},
                     }
                     for position in range(1, lesson_count + 1)
@@ -190,3 +191,34 @@ def test_generation_validation_failure_is_bounded_and_reports_schema_issues(
 
     assert len(completions.calls) == GenerationService.VALIDATION_ATTEMPTS
     assert raised.value.validation_issues
+
+
+def test_generated_initial_lessons_include_cited_rag_source(monkeypatch):
+    generated_payload = _generated_track(lesson_count=3, mission=_mission())
+    for lesson in generated_payload["steps"][0]["lessons"]:
+        lesson["text"] = "[Fonte 1] " + "Conteúdo da lição. " * 50
+    completions = FakeCompletions([json.dumps(generated_payload)])
+    _patch_client(monkeypatch, completions)
+    reference = RagReferenceSchema(
+        chunk_id="a" * 64,
+        text="Python lists preserve insertion order.",
+        source_name="python-tutorial",
+        source_url="https://docs.example/tutorial/lists",
+        title="Lists",
+        section_path="Tutorial > Lists",
+        language="python",
+        level="beginner",
+        content_type="tutorial",
+        topics=["lists"],
+        license="PSF-2.0",
+        external_processing_allowed=True,
+    )
+
+    generated = GenerationService(None, None).generate_with_ai(
+        _payload(), [reference]
+    )
+
+    for lesson in generated.steps[0].lessons:
+        assert "[Fonte 1]" in lesson.text
+        assert "https://docs.example/tutorial/lists" in lesson.text
+        assert 420 <= len(lesson.text) <= 1000

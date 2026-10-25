@@ -11,7 +11,7 @@ def test_initial_lesson_requires_one_quiz_and_positive_position():
     lesson = GeneratedLesson(
         position=1,
         title="Lição",
-        text="Texto",
+        text="Texto. " * 61,
         quiz={"question": "Pergunta"},
     )
 

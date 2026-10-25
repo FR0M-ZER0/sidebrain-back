@@ -301,6 +301,10 @@ roteamento ou falha de retrieval não bloqueia a geração. A configuração de
 fontes/licenças fica em `config/rag_sources.yml`; `OPENAI_API_KEY` é necessária
 para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O guia de
 [operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
+Quando o RAG fornece referências, as lições incluem marcadores de citação no
+texto e a lista de títulos/URLs consultados. O texto persistido, incluindo essa
+lista, deve ter de 420 a 1.000 caracteres tanto na geração inicial quanto na
+incremental.
 
 ### Listagem global de badges
 

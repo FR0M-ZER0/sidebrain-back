@@ -15,7 +15,7 @@ def test_initial_content_is_limited_to_first_step():
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quiz": {"question": f"Pergunta {position}"},
                     }
                     for position in range(1, 4)

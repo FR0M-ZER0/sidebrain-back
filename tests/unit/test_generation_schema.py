@@ -1,7 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from sidebrain_back.schemas.generation_schema import GeneratedTrack
+from sidebrain_back.schemas.generation_schema import (
+    GeneratedLesson,
+    GeneratedTrack,
+)
 
 
 def _step(position: int, **extra):
@@ -22,7 +25,7 @@ def _initial_step(**overrides):
             {
                 "position": position,
                 "title": f"Lição {position}",
-                "text": "Conteúdo",
+                "text": "Conteúdo. " * 50,
                 "quiz": {"question": f"Pergunta {position}?"},
             }
             for position in range(1, 4)
@@ -61,7 +64,7 @@ def test_generated_track_requires_contiguous_positions_and_future_structure():
                         {
                             "position": 1,
                             "title": "Lição",
-                            "text": "Texto",
+                            "text": "Texto. " * 60,
                             "quiz": {"question": "Pergunta"},
                         }
                     ],
@@ -102,3 +105,26 @@ def test_generated_track_rejects_first_step_without_mission_or_three_lessons():
             description="Descrição",
             steps=[_initial_step(lessons=_initial_step()["lessons"][:2])],
         )
+
+
+@pytest.mark.parametrize("length", [419, 1001])
+def test_generated_lesson_enforces_text_length_bounds(length):
+    with pytest.raises(ValidationError):
+        GeneratedLesson(
+            position=1,
+            title="Lição",
+            text="x" * length,
+            quiz={"question": "Pergunta?"},
+        )
+
+
+@pytest.mark.parametrize("length", [420, 1000])
+def test_generated_lesson_accepts_text_length_boundaries(length):
+    lesson = GeneratedLesson(
+        position=1,
+        title="Lição",
+        text="x" * length,
+        quiz={"question": "Pergunta?"},
+    )
+
+    assert len(lesson.text) == length

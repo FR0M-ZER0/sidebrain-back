@@ -47,6 +47,9 @@ def test_initial_generation_prompt_adds_cited_untrusted_reference_block():
     assert "https://docs.python.org/3/library/asyncio.html" in prompt
     assert "asyncio > Runners" in prompt
     assert "asyncio.run() executes a coroutine." in prompt
+    assert '"reference_id": 1' in prompt
+    assert "[Fonte N]" in prompt
+    assert "bibliografia" in prompt
     assert "um único objeto JSON" in prompt
     assert "somente para a etapa de posição 1" in prompt
 

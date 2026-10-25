@@ -110,6 +110,9 @@ identifica Python ou JavaScript com confiança igual ou superior a
 recuperação. As referências são incluídas como material não confiável com URL e
 atribuição, sem alterar o schema da resposta gerada. A geração manual e a
 preparação de trilhas manuais não usam RAG.
+Quando uma lição usa esse contexto, o texto contém marcadores de citação e uma
+lista de títulos e URLs das fontes. O limite final de 420 a 1.000 caracteres
+inclui essa lista, tanto na geração inicial quanto na incremental.
 
 ## Testes
 

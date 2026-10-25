@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from sidebrain_back.tasks.prepare_next_step_content_task import (
     GeneratedContent,
+    GeneratedLesson,
     StepContentGenerator,
 )
 
@@ -64,7 +65,7 @@ def test_generated_content_accepts_domain_fields_only():
             "lessons": [
                 {
                     "title": f"Lição {position}",
-                    "text": "Conteúdo",
+                    "text": "Conteúdo. " * 50,
                     "quizzes": [{"question": f"Pergunta {position}?"}],
                 }
                 for position in range(1, 4)
@@ -84,6 +85,19 @@ def test_generated_content_accepts_domain_fields_only():
     assert len(content.lessons) == 3
     assert content.lessons[0].quizzes[0].question == "Pergunta 1?"
     assert content.missions[0].xp_reward == 0
+
+
+@pytest.mark.parametrize("length", [419, 1001])
+def test_incremental_lesson_enforces_text_length_bounds(length):
+    with pytest.raises(ValidationError):
+        GeneratedLesson(title="Lição", text="x" * length)
+
+
+@pytest.mark.parametrize("length", [420, 1000])
+def test_incremental_lesson_accepts_text_length_boundaries(length):
+    lesson = GeneratedLesson(title="Lição", text="x" * length)
+
+    assert len(lesson.text) == length
 
 
 def test_incremental_prompt_matches_persisted_open_answer_quiz_schema():
@@ -119,7 +133,7 @@ def test_generated_content_rejects_unpersisted_multiple_choice_fields():
         "lessons": [
             {
                 "title": f"Lição {position}",
-                "text": "Conteúdo",
+                "text": "Conteúdo. " * 50,
                 "quizzes": [
                     {
                         "question": "Qual é a resposta?",
@@ -149,12 +163,24 @@ def test_generated_content_rejects_unpersisted_multiple_choice_fields():
     "payload",
     [
         {
-            "lessons": [{"title": "Só uma", "text": "Conteúdo", "quizzes": []}]
+            "lessons": [
+                {
+                    "title": "Só uma",
+                    "text": "Conteúdo. " * 50,
+                    "quizzes": [],
+                }
+            ]
             * 3,
             "missions": [],
         },
         {
-            "lessons": [{"title": "Lição", "text": "Conteúdo", "quizzes": []}]
+            "lessons": [
+                {
+                    "title": "Lição",
+                    "text": "Conteúdo. " * 50,
+                    "quizzes": [],
+                }
+            ]
             * 3,
             "missions": [
                 {
@@ -180,17 +206,17 @@ def test_generated_content_rejects_persistence_control_fields():
                 "lessons": [
                     {
                         "title": "Variáveis",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quizzes": [],
                     },
                     {
                         "title": "Tipos",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quizzes": [],
                     },
                     {
                         "title": "Operadores",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quizzes": [],
                         "lsn_id": "forbidden",
                     },

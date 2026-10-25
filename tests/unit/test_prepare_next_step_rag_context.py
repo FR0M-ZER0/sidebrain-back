@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
+from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.schemas.rag_schema import (
     RagClassificationSchema,
@@ -144,7 +145,7 @@ class FakeStepGenerator:
             "lessons": [
                 {
                     "title": f"Async {position}",
-                    "text": "Conteúdo",
+                    "text": ("Conteúdo. " * 50) + " [Fonte 1]",
                     "quizzes": [],
                 }
                 for position in range(1, 4)
@@ -237,7 +238,7 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
             "level": "pro",
         }
     ]
-    assert generator.contexts[0]["reference_context"][0]["source_url"] == (
+    assert generator.contexts[0]["reference_context"][0]["url"] == (
         rag_context.reference.source_url
     )
     assert any(
@@ -247,6 +248,12 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
     missions = [item for item in db_session.added if isinstance(item, Mission)]
     assert len(missions) == 1
     assert missions[0].msn_title == "Conclua a etapa: Async"
+    lessons = [item for item in db_session.added if isinstance(item, Lesson)]
+    assert len(lessons) == 3
+    assert all(
+        rag_context.reference.source_url in item.lsn_text for item in lessons
+    )
+    assert all(420 <= len(item.lsn_text) <= 1000 for item in lessons)
 
 
 def test_manual_step_does_not_invoke_rag_context_service(monkeypatch):

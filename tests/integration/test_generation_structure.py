@@ -15,7 +15,7 @@ def test_generation_structure_keeps_ordered_levels():
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo",
+                        "text": "Conteúdo. " * 50,
                         "quiz": {"question": f"Pergunta {position}"},
                     }
                     for position in range(1, 4)

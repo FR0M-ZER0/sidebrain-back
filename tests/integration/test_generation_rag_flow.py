@@ -112,7 +112,14 @@ class FakeStepGenerator:
             "lessons": [
                 {
                     "title": f"Promises {position}",
-                    "text": "Conteúdo de teste",
+                    "text": (
+                        "Conteúdo de teste. " * 25
+                        + (
+                            " [Fonte 1]"
+                            if context.get("reference_context")
+                            else ""
+                        )
+                    ),
                     "quizzes": [
                         {"question": f"O que é uma Promise? ({position})"}
                     ],
@@ -182,7 +189,7 @@ def _generated_track() -> GeneratedTrack:
                         {
                             "position": position,
                             "title": f"Listas {position}",
-                            "text": "Conteúdo válido",
+                            "text": "Conteúdo válido. " * 30,
                             "quiz": {
                                 "question": f"O que é uma lista? ({position})"
                             },
@@ -310,6 +317,7 @@ async def test_initial_generation_uses_references_and_preserves_idempotency(
     GenerationSuccess.model_validate(result)
     assert len(prompts) == 1
     assert "https://docs.example/tutorial/lists" in prompts[0]
+    assert '"reference_id": 1' in prompts[0]
     assert len(retriever.calls) == 1
 
     repeated = await generation_task_module._run_generation(
@@ -492,7 +500,7 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
     )
 
     assert result["status"] == "generated"
-    assert contexts[0]["reference_context"][0]["source_url"] == (
+    assert contexts[0]["reference_context"][0]["url"] == (
         _reference("javascript").source_url
     )
     assert contexts[0]["step"]["level"] == "pro"
@@ -518,6 +526,11 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
         ).all()
     )
     assert len(lessons) == 3
+    assert all(
+        _reference("javascript").source_url in lesson.lsn_text
+        for lesson in lessons
+    )
+    assert all(420 <= len(lesson.lsn_text) <= 1000 for lesson in lessons)
     assert len(quizzes) == 1
     assert len(missions) == 1
     assert missions[0].msn_title == "Conclua 3 lições da etapa: Async"
