@@ -41,18 +41,19 @@ def test_jwt_secret_configuration_rejects_weak_values(secret):
 def test_fixed_auth_configuration_parses_environment_strings():
     settings = type(Env)(
         REDIS_AUTH_DB="2",
-        ACCESS_TOKEN_EXPIRE_MINUTES="60",
+        ACCESS_TOKEN_EXPIRE_MINUTES="10080",
         JWT_SECRET_KEY=Env.JWT_SECRET_KEY,
     )
 
     assert settings.REDIS_AUTH_DB == 2
-    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60
+    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 10080
 
 
 @pytest.mark.parametrize(
     ("field", "value"),
     [
         ("REDIS_AUTH_DB", "1"),
+        ("ACCESS_TOKEN_EXPIRE_MINUTES", "60"),
         ("ACCESS_TOKEN_EXPIRE_MINUTES", "30"),
     ],
 )
@@ -64,7 +65,7 @@ def test_fixed_auth_configuration_rejects_other_values(field, value):
         )
 
 
-def test_access_token_has_required_claims_and_sixty_minute_lifetime():
+def test_access_token_has_required_claims_and_seven_day_lifetime():
     user_id = uuid4()
     token = create_access_token(user_id, 7)
     raw = jwt.decode(token, Env.JWT_SECRET_KEY, algorithms=["HS256"])
@@ -72,7 +73,7 @@ def test_access_token_has_required_claims_and_sixty_minute_lifetime():
 
     assert raw["sub"] == str(user_id)
     assert raw["ver"] == 7
-    assert raw["exp"] - raw["iat"] == 60 * 60
+    assert raw["exp"] - raw["iat"] == 7 * 24 * 60 * 60
     assert claims.user_id == user_id
     assert claims.token_version == 7
 

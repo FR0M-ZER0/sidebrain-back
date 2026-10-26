@@ -37,8 +37,8 @@ class _Env(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: Literal["HS256"] = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: Annotated[
-        Literal[60], BeforeValidator(int)
-    ] = 60
+        Literal[10080], BeforeValidator(int)
+    ] = 10080
 
     GROQ_API_KEY: str
     GROQ_MODEL: str
