@@ -1,11 +1,15 @@
+import re
 from collections import Counter
 
 from sidebrain_back.services.step_summary_analysis_service import (
     StepSummaryAnalysisService,
-    format_human_list,
 )
 from sidebrain_back.services.step_summary_topic_service import (
     StepSummaryTopicService,
+)
+
+_CODE_TOPIC_PATTERN = re.compile(
+    r"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\(\))?"
 )
 
 
@@ -33,53 +37,42 @@ class StepSummaryGeneratorService:
         )
 
         difficulty_counts = Counter()
-        strengths = []
+        strength_counts = Counter()
+        labels = {}
         for text, analysis in zip(texts, analyses, strict=True):
             topic = self.topic_service.extract_topic(text, analysis)
+            if not topic:
+                continue
+            topic = " ".join(topic.split()).rstrip(".!?")
+            if not topic:
+                continue
+            key = topic.casefold()
+            label = (
+                topic
+                if _CODE_TOPIC_PATTERN.fullmatch(topic)
+                else topic[0].upper() + topic[1:]
+            )
+            labels.setdefault(key, label)
             if analysis["verdict"] == "correct":
-                if topic:
-                    strengths.append(topic)
-            elif analysis["verdict"] in {"incorrect", "incomplete"} and topic:
-                difficulty_counts[topic] += 1
+                strength_counts[key] += 1
+            elif analysis["verdict"] in {"incorrect", "incomplete"}:
+                difficulty_counts[key] += 1
 
-        parts = [opening]
-        if difficulty_counts:
-            difficulty_topics = [
-                topic for topic, _ in difficulty_counts.most_common()
-            ]
-            if len(difficulty_topics) == 1:
-                topic = difficulty_topics[0]
-                repetitions = difficulty_counts[topic]
-                repetition_detail = (
-                    f" ({repetitions} perguntas)" if repetitions > 1 else ""
+        sections = [opening]
+        for heading, counts in (
+            ("Para revisar", difficulty_counts),
+            ("Pontos fortes", strength_counts),
+        ):
+            lines = [f"{heading}:"]
+            for key, repetitions in counts.most_common():
+                detail = (
+                    f" ({repetitions} respostas)" if repetitions > 1 else ""
                 )
-                parts.append(
-                    f"O ponto para revisar é {topic}{repetition_detail}."
+                lines.append(f"- {labels[key]}{detail}")
+            if not counts:
+                lines.append(
+                    "- As justificativas não forneceram detalhes suficientes "
+                    "para listar pontos nesta seção."
                 )
-            else:
-                parts.append(
-                    "Os pontos para revisar são "
-                    f"{format_human_list(difficulty_topics)}."
-                )
-        else:
-            parts.append(
-                "Não foram identificados pontos específicos para revisar."
-            )
-
-        strengths = list(dict.fromkeys(strengths))
-        if strengths:
-            if len(strengths) == 1:
-                parts.append(
-                    f"Você demonstrou bom domínio sobre {strengths[0]}."
-                )
-            else:
-                parts.append(
-                    "Você demonstrou bom domínio em temas como "
-                    f"{format_human_list(strengths)}."
-                )
-        else:
-            parts.append(
-                "Ainda não foram identificados pontos fortes nesta etapa."
-            )
-
-        return " ".join(parts)
+            sections.append("\n".join(lines))
+        return "\n\n".join(sections)

@@ -182,6 +182,16 @@ e de conteúdo excluído não entram no resumo. `GET
 com validação de ownership no repository. `POST` no mesmo caminho recalcula o
 resumo sob demanda e o persiste antes de retornar.
 
+O resumo continua sendo uma string, com a contagem de acertos seguida das
+seções `Para revisar` e `Pontos fortes`, separadas por quebras de linha e bullets.
+Tópicos repetidos são agrupados por seção e indicam a quantidade de respostas.
+Identificadores de código (por exemplo, `console.log()`) são apresentados
+diretamente; quando não há um tópico explícito, as palavras-chave TF-IDF
+selecionam um termo central, priorizando a cláusula de erro ou lacuna nos pontos
+a revisar. Fragmentos genéricos são omitidos. A classificação, a limpeza e a
+contagem permanecem no pipeline de análise, sem chamada adicional a modelo
+generativo.
+
 ### Progresso de missões
 
 `GET /api/v1/missions` usa `MissionService.list_missions` e
