@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from sidebrain_back.core.constants import Env
-from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.core.openai_client import get_openai_client
 from sidebrain_back.schemas.knowledge_assessment_schema import (
     GeneratedAssessmentPayload,
 )
@@ -11,7 +11,7 @@ from sidebrain_back.schemas.knowledge_assessment_schema import (
 
 class KnowledgeAssessmentGenerator:
     def __init__(self, client: object | None = None) -> None:
-        self.client = client or get_groq_client()
+        self.client = client or get_openai_client()
 
     def _build_prompt(self, subject: str, objective: str | None) -> str:
         objective_text = f" Objetivo: {objective}." if objective else ""

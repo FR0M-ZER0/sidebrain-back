@@ -5,7 +5,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from celery.exceptions import Retry
-from groq import APIConnectionError, APITimeoutError, RateLimitError
+from openai import APIConnectionError, APITimeoutError, RateLimitError
 from sqlalchemy import delete
 
 from sidebrain_back.core.celery_app import celery_app

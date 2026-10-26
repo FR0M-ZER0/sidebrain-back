@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from celery import Task
-from groq import APIConnectionError, APITimeoutError, RateLimitError
+from openai import APIConnectionError, APITimeoutError, RateLimitError
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -19,7 +19,7 @@ from pydantic import (
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.constants import Env
 from sidebrain_back.core.database import async_session, engine
-from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.core.openai_client import get_openai_client
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
@@ -88,7 +88,7 @@ class GeneratedContent(BaseModel):
 
 class StepContentGenerator:
     def __init__(self, client: Any | None = None) -> None:
-        self.client = client or get_groq_client()
+        self.client = client or get_openai_client()
 
     def generate(self, context: dict[str, Any]) -> dict[str, Any]:
         system_prompt = (

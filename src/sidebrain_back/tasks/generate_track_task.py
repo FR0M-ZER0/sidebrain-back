@@ -5,7 +5,12 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from celery.exceptions import MaxRetriesExceededError
-from groq import APIConnectionError, APITimeoutError, GroqError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    OpenAIError,
+    RateLimitError,
+)
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -115,7 +120,7 @@ async def _process_generation(payload: GenerationInput, task) -> dict:
         )
         await _mark_failed(payload.request_id, result.error_code)
         return result.model_dump(mode="json")
-    except GroqError as error:
+    except OpenAIError as error:
         logger.exception(
             "track generation provider request failed",
             extra={

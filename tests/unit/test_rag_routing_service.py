@@ -79,7 +79,7 @@ def test_router_does_not_accept_incidental_language_mention():
     assert decision.language is None
 
 
-def test_router_uses_strong_deterministic_fallback_when_groq_fails():
+def test_router_uses_strong_deterministic_fallback_when_openai_fails():
     router, _ = _router(RuntimeError("provider unavailable"))
 
     decision = router.should_use_rag(

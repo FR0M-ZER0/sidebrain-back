@@ -157,7 +157,7 @@ def _patch_client(monkeypatch, completions: FakeCompletions) -> None:
         chat=SimpleNamespace(completions=completions),
     )
     monkeypatch.setattr(
-        generation_service_module, "get_groq_client", lambda: client
+        generation_service_module, "get_openai_client", lambda: client
     )
 
 

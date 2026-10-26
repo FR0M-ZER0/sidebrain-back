@@ -82,13 +82,15 @@ class FakeRagRetriever:
         return self.references
 
 
-class FakeGroqCompletions:
+class FakeOpenAICompletions:
     def __init__(self):
         self.calls = 0
 
     def create(self, **_kwargs):
         self.calls += 1
-        raise AssertionError("unrelated context must not call Groq classifier")
+        raise AssertionError(
+            "unrelated context must not call OpenAI classifier"
+        )
 
 
 class SharedSessionContext:
@@ -427,12 +429,12 @@ async def test_non_programming_initial_goal_generates_without_rag(
         topic=topic,
         knowledge_level=StepLevelEnum.BEGINNER,
     )
-    groq_completions = FakeGroqCompletions()
+    openai_completions = FakeOpenAICompletions()
     retriever = FakeRagRetriever([_reference()])
     rag_context = RagGenerationContextService(
         RagRoutingService(
             client=SimpleNamespace(
-                chat=SimpleNamespace(completions=groq_completions)
+                chat=SimpleNamespace(completions=openai_completions)
             )
         ),
         retriever,
@@ -462,7 +464,7 @@ async def test_non_programming_initial_goal_generates_without_rag(
 
     assert result["status"] == "succeeded"
     assert "Material de referência não confiável" not in prompts[0]
-    assert groq_completions.calls == 0
+    assert openai_completions.calls == 0
     assert retriever.calls == []
 
 

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidebrain_back.core.constants import Env
-from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.core.openai_client import get_openai_client
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
@@ -135,7 +135,7 @@ class GenerationService:
     ) -> GeneratedTrack:
         prompt = self.build_prompt(payload, reference_context)
         validation_issues: list[str] = []
-        client = get_groq_client()
+        client = get_openai_client()
 
         for attempt in range(self.VALIDATION_ATTEMPTS):
             attempt_prompt = prompt

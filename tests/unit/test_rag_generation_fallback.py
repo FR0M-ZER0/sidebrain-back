@@ -77,7 +77,7 @@ def test_incidental_mention_and_retrieval_failure_fail_open():
 
 
 def test_classifier_failure_never_blocks_content_generation_context():
-    completions = FakeCompletions(RuntimeError("Groq unavailable"))
+    completions = FakeCompletions(RuntimeError("OpenAI unavailable"))
     router = RagRoutingService(
         client=SimpleNamespace(chat=SimpleNamespace(completions=completions))
     )
