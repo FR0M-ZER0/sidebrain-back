@@ -31,6 +31,14 @@ from sidebrain_back.services.mission_generation_service import (
     MissionGenerationService,
 )
 
+QUIZ_JSON_FORMAT_INSTRUCTION = (
+    "Cada item de quizzes deve ser um objeto JSON com a chave literal "
+    "`question` e uma string como valor. A formatação Markdown pertence "
+    "ao valor da pergunta, nunca ao nome da chave. Exemplo de formato "
+    "(adapte a pergunta ao conteúdo): "
+    '{"question": "**Pergunta:** Como um dicionário associa informações?"}.'
+)
+
 
 class GenerationService:
     VALIDATION_ATTEMPTS = 2
@@ -86,10 +94,13 @@ class GenerationService:
             "ser um de beginner, intermediate, advanced, pro, sem "
             "repetir. A etapa 1 deve ter no mínimo 3 lessons. Cada lesson "
             "da etapa 1 tem position, title, text e exatamente 5 quizzes "
-            "baseados no conteúdo da própria lição; "
-            "cada quiz tem question. As posições das lições são contíguas. "
-            "O texto de cada lição deve ter entre 1000 e 2000 caracteres, "
-            "contando espaços, estruturado em Markdown com títulos e seções. "
+            "baseados no conteúdo da própria lição. "
+            f"{QUIZ_JSON_FORMAT_INSTRUCTION} "
+            "As posições das lições são contíguas. "
+            "O texto de cada lição deve ter entre 1000 e 1700 caracteres, "
+            "contando espaços, com alvo de aproximadamente 1500 caracteres. "
+            "Nunca ultrapasse 1700 caracteres. Estruture em Markdown com "
+            "títulos e seções. "
             "Cada question de quiz deve usar Markdown, por exemplo "
             "**Pergunta:** ... . Cada missão tem title, "
             "difficulty (easy, medium, hard, very_hard), "
@@ -126,7 +137,8 @@ class GenerationService:
             "máximo duas fontes; não invente IDs nem escreva uma "
             "bibliografia, "
             "pois ela será anexada pelo sistema. Mantenha o texto de cada "
-            "lição entre 1000 e 2000 caracteres, em Markdown. Preserve a "
+            "lição entre 1000 e 1700 caracteres, com alvo de aproximadamente "
+            "1500, em Markdown; nunca ultrapasse 1700. Preserve a "
             "estrutura Markdown dos quizzes e inclua exatamente cinco "
             "perguntas por lição. Cada etapa deve conter no mínimo três "
             "missões.\n"
@@ -153,7 +165,11 @@ class GenerationService:
                     f"{json.dumps(validation_issues, ensure_ascii=True)}. "
                     "Confira especialmente se a primeira etapa contém pelo "
                     "menos três lições, cada lição tem exatamente cinco "
-                    "quizzes e cada etapa contém pelo menos três missões."
+                    "quizzes e cada etapa contém pelo menos três missões. "
+                    "Mantenha cada texto de lição entre 1000 e 1700 "
+                    "caracteres, com alvo de aproximadamente 1500; nunca "
+                    "ultrapasse 1700. "
+                    f"{QUIZ_JSON_FORMAT_INSTRUCTION}"
                 )
 
             response = client.chat.completions.create(

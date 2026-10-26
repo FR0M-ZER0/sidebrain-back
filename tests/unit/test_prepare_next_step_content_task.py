@@ -147,6 +147,8 @@ def test_incremental_prompt_matches_persisted_open_answer_quiz_schema():
     assert "temperature" not in completions.kwargs
     assert completions.kwargs["timeout"] == 120
     system_prompt = completions.kwargs["messages"][0]["content"]
+    assert "entre 1000 e 1700 caracteres" in system_prompt
+    assert "nunca ultrapasse 1700" in system_prompt
     assert "somente question" in system_prompt
     assert "sem options, alternatives, answer ou gabarito" in system_prompt
     assert "Não inclua um wrapper step" in system_prompt

@@ -188,6 +188,46 @@ def test_generation_retries_once_when_ai_output_violates_track_schema(
     assert "pelo menos três lições" in retry_prompt
 
 
+def test_generation_retry_explains_quiz_markdown_belongs_in_value(monkeypatch):
+    invalid_payload = _generated_track(lesson_count=3, mission=_mission())
+    invalid_quiz = invalid_payload["steps"][0]["lessons"][1]["quizzes"][2]
+    del invalid_quiz["question"]
+    invalid_quiz[
+        "question:**Pergunta:** Como um dicionário associa informações?"
+    ] = "Como um dicionário associa informações?"
+    valid_payload = _generated_track(lesson_count=3, mission=_mission())
+    completions = FakeCompletions(
+        [json.dumps(invalid_payload), json.dumps(valid_payload)]
+    )
+    _patch_client(monkeypatch, completions)
+
+    GenerationService(None, None).generate_with_ai(_payload())
+
+    retry_prompt = completions.calls[1]["messages"][0]["content"]
+    assert "chave literal `question`" in retry_prompt
+    assert "Markdown pertence ao valor da pergunta" in retry_prompt
+    assert "nunca ao nome da chave" in retry_prompt
+
+
+def test_generation_retry_limits_lesson_length_with_safety_margin(monkeypatch):
+    invalid_payload = _generated_track(lesson_count=3, mission=_mission())
+    invalid_payload["steps"][0]["lessons"][2]["text"] = (
+        "## Conceito\n\n" + "x" * 2000
+    )
+    valid_payload = _generated_track(lesson_count=3, mission=_mission())
+    completions = FakeCompletions(
+        [json.dumps(invalid_payload), json.dumps(valid_payload)]
+    )
+    _patch_client(monkeypatch, completions)
+
+    GenerationService(None, None).generate_with_ai(_payload())
+
+    retry_prompt = completions.calls[1]["messages"][0]["content"]
+    assert "1000 e 1700 caracteres" in retry_prompt
+    assert "aproximadamente 1500" in retry_prompt
+    assert "string_too_long" in retry_prompt
+
+
 def test_generation_validation_failure_is_bounded_and_reports_schema_issues(
     monkeypatch,
 ):

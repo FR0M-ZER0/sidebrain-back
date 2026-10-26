@@ -35,7 +35,14 @@ def test_generation_prompt_contains_context_and_future_content_boundary():
     assert future_instruction in prompt
     assert "no mínimo três" in prompt
     assert "exatamente 5 quizzes" in prompt
-    assert "1000 e 2000 caracteres" in prompt
+    assert (
+        '{"question": "**Pergunta:** Como um dicionário associa '
+        'informações?"}' in prompt
+    )
+    assert "Markdown pertence ao valor da pergunta" in prompt
+    assert "1000 e 1700 caracteres" in prompt
+    assert "aproximadamente 1500 caracteres" in prompt
+    assert "Nunca ultrapasse 1700 caracteres" in prompt
     assert "Markdown" in prompt
     assert "no mínimo três missões" in prompt
     assert "criteria_value (inteiro > 0)" in prompt
