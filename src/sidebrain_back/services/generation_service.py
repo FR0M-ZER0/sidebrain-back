@@ -78,15 +78,20 @@ class GenerationService:
             "Não retorne uma "
             "lista. Inclua todas as etapas na ordem da progressão, "
             "com position contíguas a partir de 1. Gere conteúdo "
-            "detalhado somente para a etapa de posição 1; etapas "
-            "posteriores devem conter apenas posição, nível e "
-            "título, com lessons=[] e mission=null. Cada etapa tem "
-            "position, level, title, lessons e mission. level deve "
+            "detalhado (lições) somente para a etapa de posição 1; etapas "
+            "posteriores devem conter apenas posição, nível, título e "
+            "missions, com lessons=[]. Cada etapa tem position, level, title, "
+            "lessons e missions. Cada etapa deve conter no mínimo três "
+            "missões, também nas etapas futuras. level deve "
             "ser um de beginner, intermediate, advanced, pro, sem "
-            "repetir. A etapa 1 deve ter no mínimo 3 lessons e uma mission "
-            "não nula. Cada lesson da etapa 1 tem position, title, "
-            "text e quiz.question, com positions contíguas a "
-            "partir de 1. A mission tem title, "
+            "repetir. A etapa 1 deve ter no mínimo 3 lessons. Cada lesson "
+            "da etapa 1 tem position, title, text e exatamente 5 quizzes "
+            "baseados no conteúdo da própria lição; "
+            "cada quiz tem question. As posições das lições são contíguas. "
+            "O texto de cada lição deve ter entre 1000 e 2000 caracteres, "
+            "contando espaços, estruturado em Markdown com títulos e seções. "
+            "Cada question de quiz deve usar Markdown, por exemplo "
+            "**Pergunta:** ... . Cada missão tem title, "
             "difficulty (easy, medium, hard, very_hard), "
             "xp_reward (inteiro >= 0), criteria (number_of_lessons_completed, "
             "get_all_answer_right_in_a_lesson, complete_a_step, "
@@ -101,10 +106,7 @@ class GenerationService:
             "como 'Conclua 3 lições da etapa: Fundamentos', 'Conclua a etapa: "
             "Fundamentos' ou 'Conclua a trilha: Python'. Inclua o nome da "
             "etapa ou trilha a que o critério se refere. "
-            "Não crie IDs, "
-            "timestamps, objectives, content ou outros campos. O texto de "
-            "cada lição deve ter entre 420 e 1000 caracteres, contando "
-            "espaços."
+            "Não crie IDs, timestamps, objectives, content ou outros campos."
             "Contexto: "
             f"{json.dumps(context, ensure_ascii=True)}"
         )
@@ -124,7 +126,10 @@ class GenerationService:
             "máximo duas fontes; não invente IDs nem escreva uma "
             "bibliografia, "
             "pois ela será anexada pelo sistema. Mantenha o texto de cada "
-            "lição entre 420 e 1000 caracteres:\n"
+            "lição entre 1000 e 2000 caracteres, em Markdown. Preserve a "
+            "estrutura Markdown dos quizzes e inclua exatamente cinco "
+            "perguntas por lição. Cada etapa deve conter no mínimo três "
+            "missões.\n"
             f"{json.dumps(reference_payload, ensure_ascii=True)}"
         )
 
@@ -136,6 +141,7 @@ class GenerationService:
         prompt = self.build_prompt(payload, reference_context)
         validation_issues: list[str] = []
         client = get_openai_client()
+        add_reference_text = GenerationReferenceService.add_references_to_text
 
         for attempt in range(self.VALIDATION_ATTEMPTS):
             attempt_prompt = prompt
@@ -146,7 +152,8 @@ class GenerationService:
                     "do schema: "
                     f"{json.dumps(validation_issues, ensure_ascii=True)}. "
                     "Confira especialmente se a primeira etapa contém pelo "
-                    "menos três lições e uma missão não nula."
+                    "menos três lições, cada lição tem exatamente cinco "
+                    "quizzes e cada etapa contém pelo menos três missões."
                 )
 
             response = client.chat.completions.create(
@@ -169,10 +176,9 @@ class GenerationService:
                 if reference_context:
                     for step in generated.steps:
                         for lesson in step.lessons:
-                            lesson.text = (
-                                GenerationReferenceService.add_references_to_text(
-                                    lesson.text, reference_context
-                                )
+                            lesson.text = add_reference_text(
+                                lesson.text,
+                                reference_context,
                             )
                 return generated
             except ValidationError as error:

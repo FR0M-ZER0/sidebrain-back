@@ -30,11 +30,14 @@ def test_generation_prompt_contains_context_and_future_content_boundary():
     assert "beginner" in prompt
     assert "somente para a etapa de posição 1" in prompt
     future_instruction = (
-        "etapas posteriores devem conter apenas posição, nível e título"
+        "etapas posteriores devem conter apenas posição, nível, título e"
     )
     assert future_instruction in prompt
-    assert "no mínimo 3 lessons" in prompt
-    assert "uma mission não nula" in prompt
+    assert "no mínimo três" in prompt
+    assert "exatamente 5 quizzes" in prompt
+    assert "1000 e 2000 caracteres" in prompt
+    assert "Markdown" in prompt
+    assert "no mínimo três missões" in prompt
     assert "criteria_value (inteiro > 0)" in prompt
     assert "evento mensurável definido" in prompt
     assert "Não proponha projetos ou entregáveis" in prompt

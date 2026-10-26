@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 from pydantic import (
@@ -14,8 +15,8 @@ from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 
-MIN_LESSON_TEXT_LENGTH = 420
-MAX_LESSON_TEXT_LENGTH = 1000
+MIN_LESSON_TEXT_LENGTH = 1000
+MAX_LESSON_TEXT_LENGTH = 2000
 
 
 def _required_text(value: str) -> str:
@@ -32,6 +33,15 @@ def validate_lesson_text(value: str) -> str:
             "o texto da lição deve ter entre "
             f"{MIN_LESSON_TEXT_LENGTH} e {MAX_LESSON_TEXT_LENGTH} caracteres"
         )
+    if re.search(r"^#{1,6}\s+\S", value, flags=re.MULTILINE) is None:
+        raise ValueError("o texto da lição deve ser estruturado em Markdown")
+    return value
+
+
+def validate_quiz_question(value: str) -> str:
+    value = _required_text(value)
+    if not re.search(r"\*\*[^*]+\*\*", value):
+        raise ValueError("a pergunta do quiz deve estar formatada em Markdown")
     return value
 
 
@@ -85,7 +95,7 @@ class GeneratedQuiz(BaseModel):
     model_config = ConfigDict(extra="forbid")
     question: str = Field(min_length=1)
 
-    _validate_question = field_validator("question")(_required_text)
+    _validate_question = field_validator("question")(validate_quiz_question)
 
 
 class GeneratedLesson(BaseModel):
@@ -96,7 +106,7 @@ class GeneratedLesson(BaseModel):
         min_length=MIN_LESSON_TEXT_LENGTH,
         max_length=MAX_LESSON_TEXT_LENGTH,
     )
-    quiz: GeneratedQuiz
+    quizzes: list[GeneratedQuiz] = Field(min_length=5, max_length=5)
 
     _validate_title = field_validator("title")(_required_text)
     _validate_text = field_validator("text")(validate_lesson_text)
@@ -119,7 +129,7 @@ class GeneratedStep(BaseModel):
     level: StepLevelEnum
     title: str = Field(min_length=1, max_length=255)
     lessons: list[GeneratedLesson] = Field(default_factory=list)
-    mission: GeneratedMission | None = None
+    missions: list[GeneratedMission] = Field(min_length=3)
 
     _validate_title = field_validator("title")(_required_text)
 
@@ -145,8 +155,8 @@ class GeneratedTrack(BaseModel):
             raise ValueError("níveis das etapas não podem duplicar")
         for step in self.steps:
             lesson_positions = [lesson.position for lesson in step.lessons]
-            if step.position != 1 and (step.lessons or step.mission):
-                raise ValueError("etapas futuras não podem ter conteúdo")
+            if step.position != 1 and step.lessons:
+                raise ValueError("etapas futuras não podem ter lições")
             if lesson_positions != list(range(1, len(lesson_positions) + 1)):
                 raise ValueError("lições devem ter posições contíguas")
             if step.position == 1:
@@ -154,8 +164,8 @@ class GeneratedTrack(BaseModel):
                     raise ValueError(
                         "a primeira etapa deve ter pelo menos três lições"
                     )
-                if step.mission is None:
-                    raise ValueError("a primeira etapa deve ter uma missão")
+            if len(step.missions) < 3:
+                raise ValueError("cada etapa deve ter pelo menos três missões")
         return self
 
 

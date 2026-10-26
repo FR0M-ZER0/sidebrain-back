@@ -243,7 +243,7 @@ class TrackRepository:
             return None
 
         for candidate in ordered_steps[current_index + 1 :]:
-            if not candidate.lessons and not candidate.missions:
+            if not candidate.lessons:
                 return candidate
         return None
 
@@ -286,15 +286,7 @@ class TrackRepository:
             )
             .limit(1)
         )
-        mission_exists = await self.db.scalar(
-            select(Mission.msn_id)
-            .where(
-                Mission.msn_step_id == step_id,
-                Mission.msn_is_deleted.is_(False),
-            )
-            .limit(1)
-        )
-        return lesson_exists is not None or mission_exists is not None
+        return lesson_exists is not None
 
     @staticmethod
     def _hierarchy_options(user_id: UUID):

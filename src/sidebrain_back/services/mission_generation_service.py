@@ -43,10 +43,10 @@ class MissionGenerationService:
     @classmethod
     def align_track_mission_titles(cls, track: GeneratedTrack) -> None:
         for step in track.steps:
-            if step.mission is not None:
-                step.mission.title = cls.build_measurable_title(
-                    step.mission.criteria,
-                    step.mission.criteria_value,
+            for mission in step.missions:
+                mission.title = cls.build_measurable_title(
+                    mission.criteria,
+                    mission.criteria_value,
                     step_title=step.title,
                     track_title=track.title,
                 )

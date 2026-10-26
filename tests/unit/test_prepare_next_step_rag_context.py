@@ -145,8 +145,13 @@ class FakeStepGenerator:
             "lessons": [
                 {
                     "title": f"Async {position}",
-                    "text": ("Conteúdo. " * 50) + " [Fonte 1]",
-                    "quizzes": [],
+                    "text": (
+                        "## Conceito\n\n" + ("Conteúdo. " * 120) + " [Fonte 1]"
+                    ),
+                    "quizzes": [
+                        {"question": f"**Pergunta {index}:** explique?"}
+                        for index in range(1, 6)
+                    ],
                 }
                 for position in range(1, 4)
             ],
@@ -158,6 +163,16 @@ class FakeStepGenerator:
                     "criteria": "complete_a_step",
                     "criteria_value": 1,
                 }
+            ]
+            + [
+                {
+                    "title": "Pratique async",
+                    "difficulty": "medium",
+                    "xp_reward": 20,
+                    "criteria": "number_of_lessons_completed",
+                    "criteria_value": 3,
+                }
+                for _ in range(2)
             ],
         }
 
@@ -246,14 +261,19 @@ def test_step_task_uses_persisted_goal_topic_before_locked_generation(
         for constraint in generator.contexts[0]["constraints"]
     )
     missions = [item for item in db_session.added if isinstance(item, Mission)]
-    assert len(missions) == 1
+    assert len(missions) == 3
     assert missions[0].msn_title == "Conclua a etapa: Async"
     lessons = [item for item in db_session.added if isinstance(item, Lesson)]
     assert len(lessons) == 3
     assert all(
         rag_context.reference.source_url in item.lsn_text for item in lessons
     )
-    assert all(420 <= len(item.lsn_text) <= 1000 for item in lessons)
+    assert all(1000 <= len(item.lsn_text) <= 2000 for item in lessons)
+    assert all(item.lsn_text.startswith("## Conceito") for item in lessons)
+    quizzes = [
+        item for item in db_session.added if item.__class__.__name__ == "Quiz"
+    ]
+    assert len(quizzes) == 15
 
 
 def test_manual_step_does_not_invoke_rag_context_service(monkeypatch):

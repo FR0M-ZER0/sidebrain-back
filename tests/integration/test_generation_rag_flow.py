@@ -115,7 +115,8 @@ class FakeStepGenerator:
                 {
                     "title": f"Promises {position}",
                     "text": (
-                        "Conteúdo de teste. " * 25
+                        "## Conceito\n\n"
+                        + "Conteúdo de teste. " * 70
                         + (
                             " [Fonte 1]"
                             if context.get("reference_context")
@@ -123,7 +124,13 @@ class FakeStepGenerator:
                         )
                     ),
                     "quizzes": [
-                        {"question": f"O que é uma Promise? ({position})"}
+                        {
+                            "question": (
+                                f"**Pergunta {quiz_index}:** "
+                                f"o que significa Promise? ({position})"
+                            )
+                        }
+                        for quiz_index in range(1, 6)
                     ],
                 }
                 for position in range(1, 4)
@@ -136,6 +143,7 @@ class FakeStepGenerator:
                     "criteria": "number_of_lessons_completed",
                     "criteria_value": 3,
                 }
+                for _ in range(3)
             ],
         }
 
@@ -191,20 +199,30 @@ def _generated_track() -> GeneratedTrack:
                         {
                             "position": position,
                             "title": f"Listas {position}",
-                            "text": "Conteúdo válido. " * 30,
-                            "quiz": {
-                                "question": f"O que é uma lista? ({position})"
-                            },
+                            "text": "## Conceito\n\n"
+                            + "Conteúdo válido. " * 70,
+                            "quizzes": [
+                                {
+                                    "question": (
+                                        f"**Pergunta {index}:** "
+                                        f"o que é uma lista? ({position})"
+                                    )
+                                }
+                                for index in range(1, 6)
+                            ],
                         }
                         for position in range(1, 4)
                     ],
-                    "mission": {
-                        "title": "Pratique listas",
-                        "difficulty": "easy",
-                        "xp_reward": 25,
-                        "criteria": "number_of_lessons_completed",
-                        "criteria_value": 3,
-                    },
+                    "missions": [
+                        {
+                            "title": "Pratique listas",
+                            "difficulty": "easy",
+                            "xp_reward": 25,
+                            "criteria": "number_of_lessons_completed",
+                            "criteria_value": 3,
+                        }
+                    ]
+                    * 3,
                 }
             ],
         }
@@ -516,7 +534,11 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
     quizzes = list(
         (
             await db_session.scalars(
-                select(Quiz).where(Quiz.qui_lesson_id == lessons[0].lsn_id)
+                select(Quiz).where(
+                    Quiz.qui_lesson_id.in_(
+                        [lesson.lsn_id for lesson in lessons]
+                    )
+                )
             )
         ).all()
     )
@@ -532,9 +554,10 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
         _reference("javascript").source_url in lesson.lsn_text
         for lesson in lessons
     )
-    assert all(420 <= len(lesson.lsn_text) <= 1000 for lesson in lessons)
-    assert len(quizzes) == 1
-    assert len(missions) == 1
+    assert all(1000 <= len(lesson.lsn_text) <= 2000 for lesson in lessons)
+    assert all(lesson.lsn_text.startswith("## Conceito") for lesson in lessons)
+    assert len(quizzes) == 15
+    assert len(missions) == 3
     assert missions[0].msn_title == "Conclua 3 lições da etapa: Async"
 
 

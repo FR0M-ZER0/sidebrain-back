@@ -236,18 +236,24 @@ async def test_ai_track_persistence_updates_track_creation_badges(
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo. " * 50,
-                        "quiz": {"question": f"Pergunta {position}"},
+                        "text": "## Conceito\n\n" + "Conteúdo. " * 120,
+                        "quizzes": [
+                            {"question": f"**Pergunta {index}:** explique?"}
+                            for index in range(1, 6)
+                        ],
                     }
                     for position in range(1, 4)
                 ],
-                "mission": {
-                    "title": "Conclua as lições",
-                    "difficulty": "easy",
-                    "xp_reward": 10,
-                    "criteria": "number_of_lessons_completed",
-                    "criteria_value": 3,
-                },
+                "missions": [
+                    {
+                        "title": "Conclua as lições",
+                        "difficulty": "easy",
+                        "xp_reward": 10,
+                        "criteria": "number_of_lessons_completed",
+                        "criteria_value": 3,
+                    }
+                ]
+                * 3,
             }
         ],
     }

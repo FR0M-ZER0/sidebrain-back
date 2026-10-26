@@ -36,12 +36,20 @@ def _generated_track(lesson_count: int, mission: dict | None) -> dict:
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo da lição. " * 30,
-                        "quiz": {"question": f"Pergunta {position}?"},
+                        "text": "## Conceito\n\n" + "Conteúdo da lição. " * 80,
+                        "quizzes": [
+                            {
+                                "question": (
+                                    f"**Pergunta {quiz_index}:** "
+                                    f"explique o conceito {position}?"
+                                )
+                            }
+                            for quiz_index in range(1, 6)
+                        ],
                     }
                     for position in range(1, lesson_count + 1)
                 ],
-                "mission": mission,
+                "missions": [mission] * 3 if mission is not None else [],
             }
         ],
     }
@@ -107,11 +115,11 @@ def test_initial_track_mission_title_is_aligned_before_persistence():
     generated = GeneratedTrack.model_validate(
         _generated_track(lesson_count=3, mission=_mission())
     )
-    generated.steps[0].mission.title = "Construir um servidor RESTful"
+    generated.steps[0].missions[0].title = "Construir um servidor RESTful"
 
     MissionGenerationService.align_track_mission_titles(generated)
 
-    assert generated.steps[0].mission.title == (
+    assert generated.steps[0].missions[0].title == (
         "Conclua 3 lições da etapa: Fundamentos"
     )
 
@@ -173,7 +181,8 @@ def test_generation_retries_once_when_ai_output_violates_track_schema(
 
     assert len(completions.calls) == 2
     assert len(generated.steps[0].lessons) == 3
-    assert generated.steps[0].mission.title == "Pratique Python"
+    assert len(generated.steps[0].missions) == 3
+    assert generated.steps[0].missions[0].title == "Pratique Python"
     retry_prompt = completions.calls[1]["messages"][0]["content"]
     assert "A resposta anterior foi rejeitada pela validação" in retry_prompt
     assert "pelo menos três lições" in retry_prompt
@@ -207,7 +216,9 @@ def test_generated_track_title_removes_redundant_prefix(monkeypatch):
 def test_generated_initial_lessons_include_cited_rag_source(monkeypatch):
     generated_payload = _generated_track(lesson_count=3, mission=_mission())
     for lesson in generated_payload["steps"][0]["lessons"]:
-        lesson["text"] = "[Fonte 1] " + "Conteúdo da lição. " * 50
+        lesson["text"] = (
+            "## Conceito\n\n[Fonte 1] " + "Conteúdo da lição. " * 80
+        )
     completions = FakeCompletions([json.dumps(generated_payload)])
     _patch_client(monkeypatch, completions)
     reference = RagReferenceSchema(
@@ -232,4 +243,4 @@ def test_generated_initial_lessons_include_cited_rag_source(monkeypatch):
     for lesson in generated.steps[0].lessons:
         assert "[Fonte 1]" in lesson.text
         assert "https://docs.example/tutorial/lists" in lesson.text
-        assert 420 <= len(lesson.text) <= 1000
+        assert 1000 <= len(lesson.text) <= 2000

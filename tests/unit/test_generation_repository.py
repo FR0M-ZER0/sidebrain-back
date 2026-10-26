@@ -41,19 +41,41 @@ async def test_create_persists_generated_icon_on_track():
                     {
                         "position": position,
                         "title": f"Lição {position}",
-                        "text": "Conteúdo. " * 50,
-                        "quiz": {"question": f"Pergunta {position}"},
+                        "text": "## Conceito\n\n" + "Conteúdo. " * 150,
+                        "quizzes": [
+                            {"question": f"**Pergunta {index}:** explique?"}
+                            for index in range(1, 6)
+                        ],
                     }
                     for position in range(1, 4)
                 ],
-                "mission": {
-                    "title": "Pratique",
-                    "difficulty": "easy",
-                    "xp_reward": 10,
-                    "criteria": "number_of_lessons_completed",
-                    "criteria_value": 3,
-                },
-            }
+                "missions": [
+                    {
+                        "title": "Pratique",
+                        "difficulty": "easy",
+                        "xp_reward": 10,
+                        "criteria": "number_of_lessons_completed",
+                        "criteria_value": 3,
+                    }
+                ]
+                * 3,
+            },
+            {
+                "position": 2,
+                "level": "intermediate",
+                "title": "Prática",
+                "lessons": [],
+                "missions": [
+                    {
+                        "title": "Pratique",
+                        "difficulty": "medium",
+                        "xp_reward": 20,
+                        "criteria": "complete_a_step",
+                        "criteria_value": 1,
+                    }
+                ]
+                * 3,
+            },
         ],
     )
 
@@ -64,8 +86,8 @@ async def test_create_persists_generated_icon_on_track():
     assert track.trk_description == "Fundamentos"
     assert session.added[0] is track
     assert sum(isinstance(item, Lesson) for item in session.added) == 3
-    assert sum(isinstance(item, Quiz) for item in session.added) == 3
+    assert sum(isinstance(item, Quiz) for item in session.added) == 15
     missions = [item for item in session.added if isinstance(item, Mission)]
-    assert len(missions) == 1
+    assert len(missions) == 6
     assert missions[0].msn_title == "Pratique"
     assert missions[0].msn_xp_reward == 10

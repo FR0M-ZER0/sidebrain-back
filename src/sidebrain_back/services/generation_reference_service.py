@@ -51,8 +51,9 @@ class GenerationReferenceService:
         ):
             raise ValueError("a lição citou uma fonte RAG inexistente")
 
-        bibliography = "\n\nReferências:\n" + "\n".join(
-            cls._format_reference(citation_id, references[citation_id - 1])
+        bibliography = "\n\n## Referências\n" + "\n".join(
+            "- "
+            + cls._format_reference(citation_id, references[citation_id - 1])
             for citation_id in citation_ids
         )
         content_limit = MAX_LESSON_TEXT_LENGTH - len(bibliography)
@@ -85,16 +86,17 @@ class GenerationReferenceService:
         citation_id: int, reference: RagReferenceSchema
     ) -> str:
         return (
-            f"[Fonte {citation_id}] {reference.title} — "
-            f"{reference.source_url}"
+            f"[Fonte {citation_id}] {reference.title} — {reference.source_url}"
         )
 
     @staticmethod
     def _validate_final_text(text: str) -> str:
         normalized = text.strip()
-        if not MIN_LESSON_TEXT_LENGTH <= len(
-            normalized
-        ) <= MAX_LESSON_TEXT_LENGTH:
+        if (
+            not MIN_LESSON_TEXT_LENGTH
+            <= len(normalized)
+            <= MAX_LESSON_TEXT_LENGTH
+        ):
             raise ValueError(
                 "o texto final da lição deve ter entre "
                 f"{MIN_LESSON_TEXT_LENGTH} e "

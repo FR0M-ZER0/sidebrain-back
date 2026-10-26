@@ -313,8 +313,12 @@ para indexação/embeddings, mas não para iniciar a API ou gerar sem RAG. O gui
 [operação e CLI](./rag/README.md) documenta fontes, comandos e avaliação.
 Quando o RAG fornece referências, as lições incluem marcadores de citação no
 texto e a lista de títulos/URLs consultados. O texto persistido, incluindo essa
-lista, deve ter de 420 a 1.000 caracteres tanto na geração inicial quanto na
-incremental.
+lista, deve ter de 1.000 a 2.000 caracteres e estar estruturado em Markdown,
+tanto na geração inicial quanto na incremental. Cada lição possui exatamente
+cinco quizzes abertos baseados em seu conteúdo, com perguntas formatadas em
+Markdown. Cada etapa possui no mínimo três missões; na geração inicial, somente
+a primeira etapa recebe lições e quizzes, enquanto as etapas futuras recebem
+missões desde o início e têm seu conteúdo didático preparado incrementalmente.
 
 ### Listagem global de badges
 
