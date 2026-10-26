@@ -131,8 +131,7 @@ class StepContentGenerator:
                 {"role": "user", "content": json.dumps(context, default=str)},
             ],
             response_format={"type": "json_object"},
-            temperature=0.2,
-            timeout=30,
+            timeout=120,
         )
         content = getattr(response.choices[0].message, "content", None)
         if not isinstance(content, str) or not content.strip():

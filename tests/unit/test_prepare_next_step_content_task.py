@@ -144,6 +144,8 @@ def test_incremental_prompt_matches_persisted_open_answer_quiz_schema():
 
     StepContentGenerator(client).generate({"constraints": []})
 
+    assert "temperature" not in completions.kwargs
+    assert completions.kwargs["timeout"] == 120
     system_prompt = completions.kwargs["messages"][0]["content"]
     assert "somente question" in system_prompt
     assert "sem options, alternatives, answer ou gabarito" in system_prompt
