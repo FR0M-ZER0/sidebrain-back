@@ -32,6 +32,10 @@ from sidebrain_back.services.mission_progress_service import (
 from sidebrain_back.services.quiz_evaluation_service import (
     QuizEvaluationService,
 )
+from sidebrain_back.services.step_summary_service import (
+    StepSummaryService,
+    get_step_summary_service,
+)
 from sidebrain_back.services.track_service import (
     TrackService,
     get_track_service,
@@ -49,6 +53,7 @@ class QuizService:
         track_service: TrackService | None = None,
         mission_progress_service: MissionProgressService | None = None,
         badge_progress_service: BadgeProgressService | None = None,
+        step_summary_service: StepSummaryService | None = None,
     ):
         self.repository = repository
         self.db = db
@@ -56,6 +61,7 @@ class QuizService:
         self.track_service = track_service
         self.mission_progress_service = mission_progress_service
         self.badge_progress_service = badge_progress_service
+        self.step_summary_service = step_summary_service
 
     async def _require_lesson(
         self,
@@ -164,6 +170,10 @@ class QuizService:
                 evaluation.rate,
                 evaluation.reason,
             )
+            if self.step_summary_service is not None:
+                await self.step_summary_service.refresh_summary_for_quiz(
+                    user_id, quiz_id
+                )
             step_id = (
                 await self.repository.complete_lesson_if_quizzes_answered(
                     quiz_id,
@@ -261,6 +271,9 @@ def get_quiz_service(
     badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
         get_badge_progress_service
     ),
+    step_summary_service: StepSummaryService = Depends(  # noqa: B008
+        get_step_summary_service
+    ),
 ) -> QuizService:
     return QuizService(
         repository,
@@ -268,4 +281,5 @@ def get_quiz_service(
         track_service=track_service,
         mission_progress_service=mission_progress_service,
         badge_progress_service=badge_progress_service,
+        step_summary_service=step_summary_service,
     )

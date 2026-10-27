@@ -37,11 +37,15 @@ class _Env(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: Literal["HS256"] = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: Annotated[
-        Literal[60], BeforeValidator(int)
-    ] = 60
+        Literal[10080], BeforeValidator(int)
+    ] = 10080
 
-    GROQ_API_KEY: str
-    GROQ_MODEL: str
+    GROQ_API_KEY: str | None = None
+    GROQ_CHAT_MODEL: str | None = None
+    # Mantido para que arquivos .env antigos continuem sendo carregados.
+    GROQ_MODEL: str | None = None
+    OPENAI_CHAT_API_KEY: str | None = None
+    OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
@@ -65,6 +69,8 @@ class _Env(BaseSettings):
     OPENAI_API_KEY: str | None = None
     RAG_ROUTER_CONFIDENCE_THRESHOLD: float = 0.80
     RAG_SOURCES_CONFIG: str = "config/rag_sources.yml"
+
+    STEP_SUMMARY_MODEL_PATH: str = "artifacts/step_summary_classifier.joblib"
 
 
 Env = _Env()

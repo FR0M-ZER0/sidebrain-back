@@ -6,7 +6,7 @@ import re
 from typing import Any
 
 from sidebrain_back.core.constants import Env
-from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.core.llm_client import get_llm_client, get_llm_model
 from sidebrain_back.schemas.rag_schema import (
     RagClassificationSchema,
     RagLanguage,
@@ -43,7 +43,7 @@ class RagRoutingService:
             return self._no_rag()
 
         try:
-            decision = self._classify_with_groq(goal, topic)
+            decision = self._classify_with_llm(goal, topic)
         except Exception as error:
             logger.warning(
                 "RAG classification provider failed; "
@@ -62,12 +62,12 @@ class RagRoutingService:
             return self._no_rag(decision.confidence)
         return decision
 
-    def _classify_with_groq(
+    def _classify_with_llm(
         self, goal: str, topic: str
     ) -> RagClassificationSchema:
-        client = self.client or get_groq_client()
+        client = self.client or get_llm_client()
         response = client.chat.completions.create(
-            model=Env.GROQ_MODEL,
+            model=get_llm_model(),
             messages=[
                 {
                     "role": "system",
@@ -90,7 +90,6 @@ class RagRoutingService:
                 },
             ],
             response_format={"type": "json_object"},
-            temperature=0,
         )
         content = (
             response.choices[0].message.content if response.choices else None

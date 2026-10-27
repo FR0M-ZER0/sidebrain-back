@@ -2,7 +2,7 @@ import importlib
 from types import SimpleNamespace
 from uuid import uuid4
 
-from groq import GroqError
+from openai import OpenAIError
 
 from sidebrain_back.services.generation_errors import GenerationValidationError
 from sidebrain_back.tasks.generate_track_task import generate_track_task
@@ -66,13 +66,13 @@ def test_generation_task_rejects_invalid_input_without_calling_ai(monkeypatch):
     assert marked_failed == [(str(request_id), "generation_input_invalid")]
 
 
-def test_generation_task_marks_groq_errors_as_failed(monkeypatch):
+def test_generation_task_marks_openai_errors_as_failed(monkeypatch):
     request_id = uuid4()
     user_id = uuid4()
     marked_failed = []
 
     async def fail_generation(_payload):
-        raise GroqError("Access denied")
+        raise OpenAIError("Access denied")
 
     async def mark_failed(failed_request_id, error_code):
         marked_failed.append((failed_request_id, error_code))

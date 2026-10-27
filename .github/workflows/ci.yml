@@ -52,7 +52,7 @@ jobs:
       REDIS_PORT: 6379
       JWT_SECRET_KEY: ci-only-secret-A9mQ4tZ7kP2xR8vL5sN1
       GROQ_API_KEY: mock_api_key_for_ci
-      GROQ_MODEL: llama-3.3-70b-versatile
+      GROQ_CHAT_MODEL: openai/gpt-oss-120b
 
     steps:
       - name: Checkout do código

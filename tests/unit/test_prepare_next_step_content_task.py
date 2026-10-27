@@ -8,12 +8,38 @@ from pydantic import ValidationError
 
 from sidebrain_back.tasks.prepare_next_step_content_task import (
     GeneratedContent,
+    GeneratedLesson,
     StepContentGenerator,
 )
 
 step_task_module = import_module(
     "sidebrain_back.tasks.prepare_next_step_content_task"
 )
+
+
+def _lesson_text(length=1400):
+    prefix = "## Conceito\n\n"
+    return prefix + "x" * (length - len(prefix))
+
+
+def _quizzes():
+    return [
+        {"question": f"**Pergunta {index}:** explique o conceito?"}
+        for index in range(1, 6)
+    ]
+
+
+def _missions(count=3):
+    return [
+        {
+            "title": "Pratique",
+            "difficulty": "medium",
+            "xp_reward": 0,
+            "criteria": "number_of_lessons_completed",
+            "criteria_value": 3,
+        }
+        for _ in range(count)
+    ]
 
 
 def test_step_task_disposes_async_engine_after_execution(monkeypatch):
@@ -64,26 +90,36 @@ def test_generated_content_accepts_domain_fields_only():
             "lessons": [
                 {
                     "title": f"Lição {position}",
-                    "text": "Conteúdo",
-                    "quizzes": [{"question": f"Pergunta {position}?"}],
+                    "text": _lesson_text(),
+                    "quizzes": _quizzes(),
                 }
                 for position in range(1, 4)
             ],
-            "missions": [
-                {
-                    "title": "Pratique",
-                    "difficulty": "medium",
-                    "xp_reward": 0,
-                    "criteria": "number_of_lessons_completed",
-                    "criteria_value": 3,
-                }
-            ],
+            "missions": _missions(),
         }
     )
 
     assert len(content.lessons) == 3
-    assert content.lessons[0].quizzes[0].question == "Pergunta 1?"
+    assert len(content.lessons[0].quizzes) == 5
+    assert content.lessons[0].quizzes[0].question.startswith("**Pergunta")
     assert content.missions[0].xp_reward == 0
+
+
+@pytest.mark.parametrize("length", [999, 2001])
+def test_incremental_lesson_enforces_text_length_bounds(length):
+    with pytest.raises(ValidationError):
+        GeneratedLesson(
+            title="Lição", text=_lesson_text(length), quizzes=_quizzes()
+        )
+
+
+@pytest.mark.parametrize("length", [1000, 2000])
+def test_incremental_lesson_accepts_text_length_boundaries(length):
+    lesson = GeneratedLesson(
+        title="Lição", text=_lesson_text(length), quizzes=_quizzes()
+    )
+
+    assert len(lesson.text) == length
 
 
 def test_incremental_prompt_matches_persisted_open_answer_quiz_schema():
@@ -108,7 +144,11 @@ def test_incremental_prompt_matches_persisted_open_answer_quiz_schema():
 
     StepContentGenerator(client).generate({"constraints": []})
 
+    assert "temperature" not in completions.kwargs
+    assert completions.kwargs["timeout"] == 120
     system_prompt = completions.kwargs["messages"][0]["content"]
+    assert "entre 1000 e 1700 caracteres" in system_prompt
+    assert "nunca ultrapasse 1700" in system_prompt
     assert "somente question" in system_prompt
     assert "sem options, alternatives, answer ou gabarito" in system_prompt
     assert "Não inclua um wrapper step" in system_prompt
@@ -119,10 +159,10 @@ def test_generated_content_rejects_unpersisted_multiple_choice_fields():
         "lessons": [
             {
                 "title": f"Lição {position}",
-                "text": "Conteúdo",
+                "text": _lesson_text(),
                 "quizzes": [
                     {
-                        "question": "Qual é a resposta?",
+                        "question": "**Pergunta:** qual é a resposta?",
                         "options": ["A", "B"],
                         "answer": "A",
                     }
@@ -130,15 +170,7 @@ def test_generated_content_rejects_unpersisted_multiple_choice_fields():
             }
             for position in range(1, 4)
         ],
-        "missions": [
-            {
-                "title": "Conclua 3 lições",
-                "difficulty": "easy",
-                "xp_reward": 10,
-                "criteria": "number_of_lessons_completed",
-                "criteria_value": 3,
-            }
-        ],
+        "missions": _missions(),
     }
 
     with pytest.raises(ValidationError):
@@ -149,17 +181,29 @@ def test_generated_content_rejects_unpersisted_multiple_choice_fields():
     "payload",
     [
         {
-            "lessons": [{"title": "Só uma", "text": "Conteúdo", "quizzes": []}]
+            "lessons": [
+                {
+                    "title": "Só uma",
+                    "text": _lesson_text(),
+                    "quizzes": _quizzes(),
+                }
+            ]
             * 3,
             "missions": [],
         },
         {
-            "lessons": [{"title": "Lição", "text": "Conteúdo", "quizzes": []}]
+            "lessons": [
+                {
+                    "title": "Lição",
+                    "text": _lesson_text(),
+                    "quizzes": _quizzes(),
+                }
+            ]
             * 3,
             "missions": [
                 {
-                    "title": "Inválida",
-                    "difficulty": "medium",
+                    "title": "Conclua 3 lições",
+                    "difficulty": "easy",
                     "xp_reward": 10,
                     "criteria": "complete_a_step",
                     "criteria_value": 0,
@@ -180,29 +224,21 @@ def test_generated_content_rejects_persistence_control_fields():
                 "lessons": [
                     {
                         "title": "Variáveis",
-                        "text": "Conteúdo",
-                        "quizzes": [],
+                        "text": _lesson_text(),
+                        "quizzes": _quizzes(),
                     },
                     {
                         "title": "Tipos",
-                        "text": "Conteúdo",
-                        "quizzes": [],
+                        "text": _lesson_text(),
+                        "quizzes": _quizzes(),
                     },
                     {
                         "title": "Operadores",
-                        "text": "Conteúdo",
-                        "quizzes": [],
+                        "text": _lesson_text(),
+                        "quizzes": _quizzes(),
                         "lsn_id": "forbidden",
                     },
                 ],
-                "missions": [
-                    {
-                        "title": "Pratique",
-                        "difficulty": "easy",
-                        "xp_reward": 10,
-                        "criteria": "complete_a_step",
-                        "criteria_value": 1,
-                    }
-                ],
+                "missions": _missions(),
             }
         )

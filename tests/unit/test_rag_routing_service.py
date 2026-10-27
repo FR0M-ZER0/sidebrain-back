@@ -51,6 +51,7 @@ def test_router_accepts_valid_high_confidence_language(
     assert decision.confidence == 0.93
     assert len(completions.calls) == 1
     assert completions.calls[0]["response_format"] == {"type": "json_object"}
+    assert "temperature" not in completions.calls[0]
 
 
 def test_router_rejects_classifier_confidence_below_threshold():
@@ -79,7 +80,7 @@ def test_router_does_not_accept_incidental_language_mention():
     assert decision.language is None
 
 
-def test_router_uses_strong_deterministic_fallback_when_groq_fails():
+def test_router_uses_strong_deterministic_fallback_when_openai_fails():
     router, _ = _router(RuntimeError("provider unavailable"))
 
     decision = router.should_use_rag(

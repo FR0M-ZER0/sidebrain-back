@@ -48,6 +48,7 @@ class Repository:
     def __init__(self, track=True):
         self.track = SimpleNamespace() if track else None
         self.step = None
+        self.summary = None
         self.created_with = None
 
     async def get_accessible_track(self, *_args):
@@ -62,6 +63,9 @@ class Repository:
 
     async def get(self, *_args):
         return self.step
+
+    async def get_summary(self, *_args):
+        return self.summary
 
     async def update(self, step, level, title):
         step.stp_level = level
@@ -112,6 +116,69 @@ async def test_create_returns_404_for_inaccessible_track():
     with pytest.raises(ProblemDetailError) as error:
         await service.create_step(
             make_user(), uuid4(), StepCreate(level="beginner", title="Intro")
+        )
+
+    assert error.value.status_code == 404
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("summary", ["Resumo da etapa.", None])
+async def test_get_step_summary_returns_persisted_summary(summary):
+    repository = Repository()
+    step_id = uuid4()
+    repository.summary = (step_id, summary)
+
+    response = await StepService(repository, FakeSession()).get_step_summary(
+        make_user(), uuid4(), step_id
+    )
+
+    assert response.step_id == step_id
+    assert response.summary == summary
+
+
+@pytest.mark.anyio
+async def test_get_step_summary_returns_404_for_unavailable_step():
+    with pytest.raises(ProblemDetailError) as error:
+        await StepService(Repository(), FakeSession()).get_step_summary(
+            make_user(), uuid4(), uuid4()
+        )
+
+    assert error.value.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_generate_step_summary_persists_and_returns_summary():
+    repository = Repository()
+    step_id = uuid4()
+    track_id = uuid4()
+    user = make_user()
+    repository.summary = (step_id, None)
+
+    class SummaryServiceSpy:
+        def __init__(self):
+            self.call = None
+
+        async def generate_summary_for_step(self, user_id, requested_step_id):
+            self.call = (user_id, requested_step_id)
+            return "Resumo gerado."
+
+    summary_service = SummaryServiceSpy()
+    session = FakeSession()
+    response = await StepService(
+        repository, session, summary_service
+    ).generate_step_summary(user, track_id, step_id)
+
+    assert response.step_id == step_id
+    assert response.summary == "Resumo gerado."
+    assert summary_service.call == (user.usr_id, step_id)
+    assert session.committed is True
+
+
+@pytest.mark.anyio
+async def test_generate_step_summary_returns_404_for_unavailable_step():
+    with pytest.raises(ProblemDetailError) as error:
+        await StepService(Repository(), FakeSession()).generate_step_summary(
+            make_user(), uuid4(), uuid4()
         )
 
     assert error.value.status_code == 404

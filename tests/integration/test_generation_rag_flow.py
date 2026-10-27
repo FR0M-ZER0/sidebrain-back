@@ -82,13 +82,15 @@ class FakeRagRetriever:
         return self.references
 
 
-class FakeGroqCompletions:
+class FakeOpenAICompletions:
     def __init__(self):
         self.calls = 0
 
     def create(self, **_kwargs):
         self.calls += 1
-        raise AssertionError("unrelated context must not call Groq classifier")
+        raise AssertionError(
+            "unrelated context must not call OpenAI classifier"
+        )
 
 
 class SharedSessionContext:
@@ -112,9 +114,23 @@ class FakeStepGenerator:
             "lessons": [
                 {
                     "title": f"Promises {position}",
-                    "text": "Conteúdo de teste",
+                    "text": (
+                        "## Conceito\n\n"
+                        + "Conteúdo de teste. " * 70
+                        + (
+                            " [Fonte 1]"
+                            if context.get("reference_context")
+                            else ""
+                        )
+                    ),
                     "quizzes": [
-                        {"question": f"O que é uma Promise? ({position})"}
+                        {
+                            "question": (
+                                f"**Pergunta {quiz_index}:** "
+                                f"o que significa Promise? ({position})"
+                            )
+                        }
+                        for quiz_index in range(1, 6)
                     ],
                 }
                 for position in range(1, 4)
@@ -127,6 +143,7 @@ class FakeStepGenerator:
                     "criteria": "number_of_lessons_completed",
                     "criteria_value": 3,
                 }
+                for _ in range(3)
             ],
         }
 
@@ -182,20 +199,30 @@ def _generated_track() -> GeneratedTrack:
                         {
                             "position": position,
                             "title": f"Listas {position}",
-                            "text": "Conteúdo válido",
-                            "quiz": {
-                                "question": f"O que é uma lista? ({position})"
-                            },
+                            "text": "## Conceito\n\n"
+                            + "Conteúdo válido. " * 70,
+                            "quizzes": [
+                                {
+                                    "question": (
+                                        f"**Pergunta {index}:** "
+                                        f"o que é uma lista? ({position})"
+                                    )
+                                }
+                                for index in range(1, 6)
+                            ],
                         }
                         for position in range(1, 4)
                     ],
-                    "mission": {
-                        "title": "Pratique listas",
-                        "difficulty": "easy",
-                        "xp_reward": 25,
-                        "criteria": "number_of_lessons_completed",
-                        "criteria_value": 3,
-                    },
+                    "missions": [
+                        {
+                            "title": "Pratique listas",
+                            "difficulty": "easy",
+                            "xp_reward": 25,
+                            "criteria": "number_of_lessons_completed",
+                            "criteria_value": 3,
+                        }
+                    ]
+                    * 3,
                 }
             ],
         }
@@ -310,6 +337,7 @@ async def test_initial_generation_uses_references_and_preserves_idempotency(
     GenerationSuccess.model_validate(result)
     assert len(prompts) == 1
     assert "https://docs.example/tutorial/lists" in prompts[0]
+    assert '"reference_id": 1' in prompts[0]
     assert len(retriever.calls) == 1
 
     repeated = await generation_task_module._run_generation(
@@ -419,12 +447,12 @@ async def test_non_programming_initial_goal_generates_without_rag(
         topic=topic,
         knowledge_level=StepLevelEnum.BEGINNER,
     )
-    groq_completions = FakeGroqCompletions()
+    openai_completions = FakeOpenAICompletions()
     retriever = FakeRagRetriever([_reference()])
     rag_context = RagGenerationContextService(
         RagRoutingService(
             client=SimpleNamespace(
-                chat=SimpleNamespace(completions=groq_completions)
+                chat=SimpleNamespace(completions=openai_completions)
             )
         ),
         retriever,
@@ -454,7 +482,7 @@ async def test_non_programming_initial_goal_generates_without_rag(
 
     assert result["status"] == "succeeded"
     assert "Material de referência não confiável" not in prompts[0]
-    assert groq_completions.calls == 0
+    assert openai_completions.calls == 0
     assert retriever.calls == []
 
 
@@ -492,7 +520,7 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
     )
 
     assert result["status"] == "generated"
-    assert contexts[0]["reference_context"][0]["source_url"] == (
+    assert contexts[0]["reference_context"][0]["url"] == (
         _reference("javascript").source_url
     )
     assert contexts[0]["step"]["level"] == "pro"
@@ -506,7 +534,11 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
     quizzes = list(
         (
             await db_session.scalars(
-                select(Quiz).where(Quiz.qui_lesson_id == lessons[0].lsn_id)
+                select(Quiz).where(
+                    Quiz.qui_lesson_id.in_(
+                        [lesson.lsn_id for lesson in lessons]
+                    )
+                )
             )
         ).all()
     )
@@ -518,8 +550,14 @@ async def test_incremental_generation_uses_persisted_context_and_keeps_schema(
         ).all()
     )
     assert len(lessons) == 3
-    assert len(quizzes) == 1
-    assert len(missions) == 1
+    assert all(
+        _reference("javascript").source_url in lesson.lsn_text
+        for lesson in lessons
+    )
+    assert all(1000 <= len(lesson.lsn_text) <= 2000 for lesson in lessons)
+    assert all(lesson.lsn_text.startswith("## Conceito") for lesson in lessons)
+    assert len(quizzes) == 15
+    assert len(missions) == 3
     assert missions[0].msn_title == "Conclua 3 lições da etapa: Async"
 
 

@@ -41,14 +41,18 @@ Somente trilhas ativas do usuário autenticado são retornadas. `total_items` e
 `page_size` contam trilhas antes do carregamento da hierarquia. Cada item mantém
 a hierarquia completa de leitura descrita em [data-model.md](../data-model.md),
 incluindo etapas, lições, quizzes, respostas, arquivos, feedbacks, missões e
-progresso de missão do usuário. Filtros que não encontram resultados retornam
-`200` com `data: []`; filtros ou paginação inválidos retornam `422`.
+progresso de missão do usuário. Cada etapa inclui `summary`, a síntese das
+justificativas das respostas do usuário naquela etapa; o valor é `null` antes
+da primeira resposta. Filtros que não encontram resultados retornam `200` com
+`data: []`; filtros ou paginação inválidos retornam `422`.
 
 ## Consultar trilha
 
 `GET /api/v1/tracks/{track_id}`
 
-Response `200`: objeto de trilha completo, incluindo etapas, lições, arquivos, feedbacks, quizzes, respostas e missões com o progresso do usuário autenticado.
+Response `200`: objeto de trilha completo, incluindo etapas com seus resumos,
+lições, arquivos, feedbacks, quizzes, respostas e missões com o progresso do
+usuário autenticado.
 
 UUID malformado: `422`. UUID inexistente, excluído ou pertencente a outro usuário: `404`.
 

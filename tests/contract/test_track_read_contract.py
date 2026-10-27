@@ -38,6 +38,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
                 stp_id=uuid4(),
                 stp_level="beginner",
                 stp_title="Fundamentals",
+                stp_summary="Resumo da etapa.",
                 stp_status="idle",
                 stp_updated_at=now,
                 missions=[
@@ -92,6 +93,7 @@ def test_track_hierarchy_quiz_preserves_timestamps_and_public_identifiers():
     answer = quiz.answers[0]
     mission = response.steps[0].missions[0]
 
+    assert response.steps[0].summary == "Resumo da etapa."
     assert quiz.lesson_id == lesson_id
     assert quiz.updated_at == now
     assert answer.user_id == user_id

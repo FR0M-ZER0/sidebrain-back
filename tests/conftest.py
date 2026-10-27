@@ -41,7 +41,7 @@ _TEST_ENV = {
     "REDIS_HOST": "127.0.0.1",
     "REDIS_PORT": "6379",
     "GROQ_API_KEY": "test-only-key",
-    "GROQ_MODEL": "test-model",
+    "GROQ_CHAT_MODEL": "test-model",
     "JWT_SECRET_KEY": "test-only-secret-key-at-least-32-bytes",
 }
 for _name, _value in _TEST_ENV.items():

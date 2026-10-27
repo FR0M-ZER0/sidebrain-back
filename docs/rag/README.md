@@ -9,15 +9,27 @@ referências.
 ## Requisitos e configuração
 
 - PostgreSQL com a extensão `vector` habilitada e migrations aplicadas.
-- `OPENAI_API_KEY` para indexação vetorial e consultas manuais. A chave é
-  opcional para iniciar a API e gerar trilhas sem RAG.
-- `GROQ_API_KEY` e `GROQ_MODEL` já configurados para o roteador de domínio.
+- `OPENAI_API_KEY` para indexação vetorial e consultas manuais. Essa chave é
+  independente da chave de chat e opcional para iniciar a API e gerar trilhas
+  sem RAG.
+- `OPENAI_CHAT_API_KEY` para usar OpenAI na geração. Se não estiver definida, o
+  projeto usa Groq com `GROQ_API_KEY` e `GROQ_CHAT_MODEL`. A mesma seleção de
+  provedor vale para geração de trilhas (inicial e incremental), avaliações,
+  quizzes e roteamento do RAG.
 - Fontes e licenças revisadas em `config/rag_sources.yml`.
 
 As variáveis da feature estão no `.env`:
 
 ```dotenv
+# Chave exclusiva para embeddings do RAG/banco vetorial
 OPENAI_API_KEY=
+
+# Chat: OpenAI quando informada; caso contrário, Groq
+OPENAI_CHAT_API_KEY=
+OPENAI_CHAT_MODEL=gpt-4o-mini
+GROQ_API_KEY=
+GROQ_CHAT_MODEL=openai/gpt-oss-120b
+
 RAG_ROUTER_CONFIDENCE_THRESHOLD=0.80
 RAG_SOURCES_CONFIG=config/rag_sources.yml
 ```
@@ -110,6 +122,12 @@ identifica Python ou JavaScript com confiança igual ou superior a
 recuperação. As referências são incluídas como material não confiável com URL e
 atribuição, sem alterar o schema da resposta gerada. A geração manual e a
 preparação de trilhas manuais não usam RAG.
+Quando uma lição usa esse contexto, o texto contém marcadores de citação e uma
+lista de títulos e URLs das fontes. O texto é estruturado em Markdown e deve
+ter de 1.000 a 2.000 caracteres, incluindo a lista, tanto na geração inicial
+quanto na incremental. Cada lição contém cinco quizzes abertos baseados no
+conteúdo, com as perguntas também formatadas em Markdown; cada etapa tem pelo
+menos três missões.
 
 ## Testes
 

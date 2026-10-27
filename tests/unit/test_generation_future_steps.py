@@ -19,30 +19,58 @@ def test_future_steps_reject_detailed_content():
                         {
                             "position": position,
                             "title": f"Lição {position}",
-                            "text": "Conteúdo",
-                            "quiz": {"question": f"Pergunta {position}"},
+                            "text": "## Conceito\n\n" + "Conteúdo. " * 120,
+                            "quizzes": [
+                                {
+                                    "question": (
+                                        f"**Pergunta {index}:** explique?"
+                                    )
+                                }
+                                for index in range(1, 6)
+                            ],
                         }
                         for position in range(1, 4)
                     ],
-                    "mission": {
-                        "title": "Pratique",
-                        "difficulty": "easy",
-                        "xp_reward": 10,
-                        "criteria": "complete_a_step",
-                        "criteria_value": 1,
-                    },
+                    "missions": [
+                        {
+                            "title": "Pratique",
+                            "difficulty": "easy",
+                            "xp_reward": 10,
+                            "criteria": "complete_a_step",
+                            "criteria_value": 1,
+                        }
+                    ]
+                    * 3,
                 },
                 {
                     "position": 2,
                     "level": "intermediate",
                     "title": "Prática",
-                    "mission": {
-                        "title": "Missão",
-                        "difficulty": "easy",
-                        "xp_reward": 10,
-                        "criteria": "complete_a_step",
-                        "criteria_value": 1,
-                    },
+                    "lessons": [
+                        {
+                            "position": 1,
+                            "title": "Conteúdo futuro",
+                            "text": "## Conceito\n\n" + "Conteúdo. " * 120,
+                            "quizzes": [
+                                {
+                                    "question": (
+                                        f"**Pergunta {index}:** explique?"
+                                    )
+                                }
+                                for index in range(1, 6)
+                            ],
+                        }
+                    ],
+                    "missions": [
+                        {
+                            "title": "Missão",
+                            "difficulty": "easy",
+                            "xp_reward": 10,
+                            "criteria": "complete_a_step",
+                            "criteria_value": 1,
+                        }
+                    ]
+                    * 3,
                 },
             ],
         )
