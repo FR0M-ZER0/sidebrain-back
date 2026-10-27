@@ -40,8 +40,12 @@ class _Env(BaseSettings):
         Literal[10080], BeforeValidator(int)
     ] = 10080
 
-    GROQ_API_KEY: str
-    GROQ_MODEL: str
+    GROQ_API_KEY: str | None = None
+    GROQ_CHAT_MODEL: str | None = None
+    # Mantido para que arquivos .env antigos continuem sendo carregados.
+    GROQ_MODEL: str | None = None
+    OPENAI_CHAT_API_KEY: str | None = None
+    OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod

@@ -17,9 +17,8 @@ from pydantic import (
 )
 
 from sidebrain_back.core.celery_app import celery_app
-from sidebrain_back.core.constants import Env
 from sidebrain_back.core.database import async_session, engine
-from sidebrain_back.core.openai_client import get_openai_client
+from sidebrain_back.core.llm_client import get_llm_client, get_llm_model
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.enums.mission_criteria_enum import MissionCriteriaEnum
 from sidebrain_back.enums.mission_difficulty_enum import MissionDifficultyEnum
@@ -91,7 +90,7 @@ class GeneratedContent(BaseModel):
 
 class StepContentGenerator:
     def __init__(self, client: Any | None = None) -> None:
-        self.client = client or get_openai_client()
+        self.client = client or get_llm_client()
 
     def generate(self, context: dict[str, Any]) -> dict[str, Any]:
         system_prompt = (
@@ -128,7 +127,7 @@ class StepContentGenerator:
                 "deve ter pelo menos três missões."
             )
         response = self.client.chat.completions.create(
-            model=Env.GROQ_MODEL,
+            model=get_llm_model(),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": json.dumps(context, default=str)},

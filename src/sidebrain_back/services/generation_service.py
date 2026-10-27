@@ -5,8 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sidebrain_back.core.constants import Env
-from sidebrain_back.core.openai_client import get_openai_client
+from sidebrain_back.core.llm_client import get_llm_client, get_llm_model
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
@@ -152,7 +151,7 @@ class GenerationService:
     ) -> GeneratedTrack:
         prompt = self.build_prompt(payload, reference_context)
         validation_issues: list[str] = []
-        client = get_openai_client()
+        client = get_llm_client()
         add_reference_text = GenerationReferenceService.add_references_to_text
 
         for attempt in range(self.VALIDATION_ATTEMPTS):
@@ -173,7 +172,7 @@ class GenerationService:
                 )
 
             response = client.chat.completions.create(
-                model=Env.GROQ_MODEL,
+                model=get_llm_model(),
                 messages=[{"role": "user", "content": attempt_prompt}],
                 response_format={"type": "json_object"},
             )

@@ -32,7 +32,7 @@ def test_evaluator_returns_rate_selected_by_ai(monkeypatch, rate):
     )
     client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
     monkeypatch.setattr(
-        quiz_evaluation_service, "get_openai_client", lambda: client
+        quiz_evaluation_service, "get_llm_client", lambda: client
     )
 
     result = QuizEvaluationService().evaluate("What is 2 + 2?", "4")
@@ -59,7 +59,7 @@ def test_evaluator_rejects_missing_or_invalid_ai_rate(monkeypatch, content):
     completions = FakeCompletions(content)
     client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
     monkeypatch.setattr(
-        quiz_evaluation_service, "get_openai_client", lambda: client
+        quiz_evaluation_service, "get_llm_client", lambda: client
     )
 
     with pytest.raises(ValueError):
