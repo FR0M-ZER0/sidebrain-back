@@ -1,34 +1,47 @@
-import re
 from collections import Counter
 
-from sidebrain_back.services.step_summary_analysis_service import (
-    StepSummaryAnalysisService,
-)
-from sidebrain_back.services.step_summary_topic_service import (
-    StepSummaryTopicService,
+from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.services.step_summary_classifier_service import (
+    StepSummaryClassifierService,
 )
 
-_CODE_TOPIC_PATTERN = re.compile(
-    r"[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\(\))?"
-)
+_TOPIC_LABELS = {
+    "arrays": "Arrays",
+    "async": "Assincronismo",
+    "classes": "Classes",
+    "condicionais": "Condicionais",
+    "dom": "DOM",
+    "funcoes": "Funções",
+    "html": "HTML",
+    "nodejs": "Node.js",
+    "objetos": "Objetos",
+    "python": "Python",
+    "strings": "Strings",
+    "testes": "Testes",
+    "tratamento_erros": "Tratamento de erros",
+    "variaveis": "Variáveis",
+}
+_CORRECT_RATES = {AnswerRateEnum.GOOD, AnswerRateEnum.PERFECT}
 
 
 class StepSummaryGeneratorService:
-    def __init__(self):
-        self.analysis_service = StepSummaryAnalysisService()
-        self.topic_service = StepSummaryTopicService()
+    def __init__(
+        self, classifier: StepSummaryClassifierService | None = None
+    ) -> None:
+        self.classifier = classifier or StepSummaryClassifierService()
 
-    def generate_step_summary(self, texts: list[str]) -> str:
-        if not texts:
+    def generate_step_summary(
+        self, answers: list[tuple[str, AnswerRateEnum]]
+    ) -> str:
+        if not answers:
             return "Nenhuma pergunta foi processada."
 
-        analyses = self.analysis_service.analyze_reasons(texts)
-        if not analyses:
-            return "Nenhuma pergunta foi processada."
-
-        total_questions = len(analyses)
+        topics = self.classifier.classify_topics(
+            [reason for reason, _rate in answers]
+        )
+        total_questions = len(answers)
         correct_answers = sum(
-            analysis["verdict"] == "correct" for analysis in analyses
+            rate in _CORRECT_RATES for _reason, rate in answers
         )
         question_noun = "pergunta" if total_questions == 1 else "perguntas"
         opening = (
@@ -36,27 +49,16 @@ class StepSummaryGeneratorService:
             f"{total_questions} {question_noun}."
         )
 
-        difficulty_counts = Counter()
-        strength_counts = Counter()
-        labels = {}
-        for text, analysis in zip(texts, analyses, strict=True):
-            topic = self.topic_service.extract_topic(text, analysis)
-            if not topic:
-                continue
-            topic = " ".join(topic.split()).rstrip(".!?")
-            if not topic:
-                continue
-            key = topic.casefold()
-            label = (
-                topic
-                if _CODE_TOPIC_PATTERN.fullmatch(topic)
-                else topic[0].upper() + topic[1:]
+        difficulty_counts: Counter[str] = Counter()
+        strength_counts: Counter[str] = Counter()
+        for (_reason, rate), topic in zip(answers, topics, strict=True):
+            label = _TOPIC_LABELS.get(topic, topic.replace("_", " ").title())
+            counts = (
+                strength_counts
+                if rate in _CORRECT_RATES
+                else difficulty_counts
             )
-            labels.setdefault(key, label)
-            if analysis["verdict"] == "correct":
-                strength_counts[key] += 1
-            elif analysis["verdict"] in {"incorrect", "incomplete"}:
-                difficulty_counts[key] += 1
+            counts[label] += 1
 
         sections = [opening]
         for heading, counts in (
@@ -64,15 +66,9 @@ class StepSummaryGeneratorService:
             ("Pontos fortes", strength_counts),
         ):
             lines = [f"{heading}:"]
-            for key, repetitions in counts.most_common():
-                detail = (
-                    f" ({repetitions} respostas)" if repetitions > 1 else ""
-                )
-                lines.append(f"- {labels[key]}{detail}")
+            for topic, _count in counts.most_common():
+                lines.append(f"- {topic}")
             if not counts:
-                lines.append(
-                    "- As justificativas não forneceram detalhes suficientes "
-                    "para listar pontos nesta seção."
-                )
+                lines.append("- Nenhum tópico identificado nesta seção.")
             sections.append("\n".join(lines))
         return "\n\n".join(sections)

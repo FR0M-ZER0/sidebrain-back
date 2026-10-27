@@ -198,12 +198,14 @@ async def test_submit_answer_persists_evaluation_reason(
     assert response.reason == reason
     assert stored_step is not None
     assert stored_step.stp_summary == (
-        StepSummaryGeneratorService().generate_step_summary([reason])
+        StepSummaryGeneratorService().generate_step_summary(
+            [(reason, AnswerRateEnum.PERFECT)]
+        )
     )
 
 
 @pytest.mark.anyio
-async def test_step_summary_reasons_are_scoped_and_stably_ordered(
+async def test_step_summary_answers_are_scoped_and_stably_ordered(
     db_session,
     learning_hierarchy_factory,
     quiz_factory,
@@ -259,9 +261,12 @@ async def test_step_summary_reasons_are_scoped_and_stably_ordered(
         )
         is None
     )
-    assert await repository.list_reasons_by_step_id(
+    assert await repository.list_answers_by_step_id(
         hierarchy.user.usr_id, hierarchy.step.stp_id
-    ) == ["Primeiro motivo.", "Segundo motivo."]
+    ) == [
+        ("Primeiro motivo.", AnswerRateEnum.PERFECT),
+        ("Segundo motivo.", AnswerRateEnum.GOOD),
+    ]
 
 
 @pytest.mark.anyio

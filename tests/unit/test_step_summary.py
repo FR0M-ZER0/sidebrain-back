@@ -2,17 +2,31 @@ from uuid import uuid4
 
 import pytest
 
+from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.services.step_summary_generator_service import (
     StepSummaryGeneratorService,
 )
 from sidebrain_back.services.step_summary_service import StepSummaryService
-from sidebrain_back.services.step_summary_topic_service import (
-    StepSummaryTopicService,
-)
+
+
+class FixedTopicClassifier:
+    def __init__(self, topics):
+        self.topics = topics
+
+    def classify_topics(self, texts):
+        assert len(texts) == len(self.topics)
+        return self.topics
+
+
+def generate_summary(reasons, rates, topics):
+    answers = list(zip(reasons, rates, strict=True))
+    classifier = FixedTopicClassifier(topics)
+    return StepSummaryGeneratorService(classifier).generate_step_summary(
+        answers
+    )
 
 
 def test_generate_step_summary_matches_the_pipeline_output():
-    generator = StepSummaryGeneratorService()
     reasons = [
         "A resposta aponta que Python é uma linguagem de alto nível, "
         "o que é uma vantagem, porém a pergunta pede a principal "
@@ -27,184 +41,125 @@ def test_generate_step_summary_matches_the_pipeline_output():
         'uma função em Python é "def".',
     ]
 
-    summary = generator.generate_step_summary(reasons)
+    summary = generate_summary(
+        reasons,
+        [
+            AnswerRateEnum.ALMOST_GOT_IT,
+            AnswerRateEnum.PERFECT,
+            AnswerRateEnum.WRONG,
+        ],
+        ["python", "arrays", "funcoes"],
+    )
 
     assert summary == (
         "Nesta etapa, você acertou 1 de 3 perguntas.\n\n"
         "Para revisar:\n"
-        "- As vantagens do Python para iniciantes\n"
-        "- A definição de funções em Python\n\n"
+        "- Python\n"
+        "- Funções\n\n"
         "Pontos fortes:\n"
-        "- A criação de listas vazias em Python"
+        "- Arrays"
     )
 
 
-@pytest.mark.parametrize(
-    "reason,verdict,keywords",
-    [
-        (
-            "A resposta está incompleta: faltou explicitar que return "
-            "devolve um valor e encerra a função.",
-            "incomplete",
-            ["explicitar que", "return", "função"],
-        ),
-        (
-            "A resposta está correta: o atributo defer adia a execução "
-            "do script até o HTML ser analisado.",
-            "correct",
-            ["atributo", "defer", "adia"],
-        ),
-        (
-            "A resposta está correta: `console.log()` ajuda a depurar "
-            "valores no JavaScript.",
-            "correct",
-            ["console", "log", "ajuda a depurar"],
-        ),
-        (
-            "A resposta está incorreta: o operador === não converte "
-            "tipos antes da comparação.",
-            "incorrect",
-            ["operador", "converte", "comparação"],
-        ),
-    ],
-)
-def test_topic_fallback_returns_the_central_term(reason, verdict, keywords):
-    topic = StepSummaryTopicService().extract_topic(
-        reason, {"verdict": verdict, "keywords": keywords}
-    )
-
-    expected = {
-        "incomplete": "return",
-        "correct": "defer" if "defer" in reason else "console.log()",
-        "incorrect": "comparação",
-    }[verdict]
-    assert topic == expected
-
-
-def test_review_fallback_prefers_the_missing_content_over_praise():
-    topic = StepSummaryTopicService().extract_topic(
-        "A resposta menciona funções e parâmetros. "
-        "Faltou explicar que return encerra a função.",
-        {
-            "verdict": "incomplete",
-            "keywords": ["funções", "parâmetros", "return"],
-        },
-    )
-
-    assert topic == "return"
-
-
-def test_inline_code_topic_is_extracted_even_inside_a_long_target():
-    topic = StepSummaryTopicService().extract_topic(
-        "A pergunta pede explicar o comportamento de `return` em funções.",
-        {"verdict": "correct", "keywords": ["return", "funções"]},
-    )
-
-    assert topic == "return"
-
-
-@pytest.mark.parametrize(
-    "reason,keywords",
-    [
-        ("Adequado quando isto.", ["adequado quando", "isto"]),
-        ("Função.", ["resultado"]),
-        ("A função " + "executa " * 60 + "o cálculo.", ["resultado"]),
-    ],
-)
-def test_topic_fallback_omits_noise_or_overlong_fragments(reason, keywords):
-    assert (
-        StepSummaryTopicService().extract_topic(
-            reason, {"verdict": "correct", "keywords": keywords}
-        )
-        is None
-    )
-
-
-def test_summary_groups_repeated_evidence_and_preserves_score():
+def test_summary_groups_predicted_topics_and_uses_persisted_rates():
     reason = (
         "A resposta está correta: `console.log()` ajuda a depurar valores."
     )
-    summary = StepSummaryGeneratorService().generate_step_summary(
+    summary = generate_summary(
         [
             reason,
             reason.upper(),
             "A resposta está incorreta: `return` retorna valores.",
-        ]
+        ],
+        [
+            AnswerRateEnum.PERFECT,
+            AnswerRateEnum.GOOD,
+            AnswerRateEnum.WRONG,
+        ],
+        ["async", "async", "funcoes"],
     )
 
     assert summary.startswith("Nesta etapa, você acertou 2 de 3 perguntas.")
-    assert summary.count("console.log") == 1
-    assert "(2 respostas)" in summary
     review, strengths = summary.split("Pontos fortes:")
-    assert "- return" in review
-    assert "- console.log() (2 respostas)" in strengths
+    assert "- Funções" in review
+    assert "- Assincronismo" in strengths
+    assert "respostas)" not in summary
 
 
-def test_summary_uses_only_the_central_code_topic():
-    summary = StepSummaryGeneratorService().generate_step_summary(
-        ["Está correta: `console.log()` ajuda a depurar partes do código."]
+def test_summary_renders_classifier_topic_labels():
+    summary = generate_summary(
+        ["Está correta: `console.log()` ajuda a depurar partes do código."],
+        [AnswerRateEnum.PERFECT],
+        ["dom"],
     )
 
     assert summary == (
         "Nesta etapa, você acertou 1 de 1 pergunta.\n\n"
         "Para revisar:\n"
-        "- As justificativas não forneceram detalhes suficientes para "
-        "listar pontos nesta seção.\n\n"
+        "- Nenhum tópico identificado nesta seção.\n\n"
         "Pontos fortes:\n"
-        "- console.log()"
+        "- DOM"
     )
 
 
-def test_summary_prefers_language_keywords_to_surrounding_explanations():
-    summary = StepSummaryGeneratorService().generate_step_summary(
+def test_summary_groups_different_labels_from_classifier():
+    summary = generate_summary(
         [
             "A resposta está incompleta: faltou explicar que return "
             "encerra a função.",
             "A resposta está correta: o atributo defer adia a execução.",
             "A resposta está correta: a sintaxe const define uma variável.",
-        ]
+        ],
+        [
+            AnswerRateEnum.ALMOST_GOT_IT,
+            AnswerRateEnum.GOOD,
+            AnswerRateEnum.PERFECT,
+        ],
+        ["funcoes", "html", "variaveis"],
     )
 
     assert summary.startswith("Nesta etapa, você acertou 2 de 3 perguntas.")
-    assert "- return" in summary
-    assert "- defer" in summary
-    assert "- const" in summary
-    assert "explicar" not in summary
-    assert "define uma variável" not in summary
+    assert "- Funções" in summary
+    assert "- HTML" in summary
+    assert "- Variáveis" in summary
 
 
-def test_summary_preserves_five_of_nineteen_without_inventing_topics():
-    summary = StepSummaryGeneratorService().generate_step_summary(
-        ["Resposta correta."] * 5 + ["Resposta incorreta."] * 14
+def test_summary_counts_repeated_topics_by_answer_rate():
+    summary = generate_summary(
+        ["Justificativa da resposta."] * 19,
+        [AnswerRateEnum.PERFECT] * 5 + [AnswerRateEnum.WRONG] * 14,
+        ["python"] * 19,
     )
 
     assert summary.startswith("Nesta etapa, você acertou 5 de 19 perguntas.")
-    assert "Para revisar:" in summary
-    assert "Pontos fortes:" in summary
-    assert "não forneceram detalhes suficientes" in summary
-    assert "bom domínio" not in summary
+    assert summary.count("- Python") == 2
+    assert "respostas)" not in summary
 
 
-def test_unknown_verdict_is_not_presented_as_an_error_or_strength():
-    summary = StepSummaryGeneratorService().generate_step_summary(
-        ["Console.log imprime valores no console."]
+def test_summary_counts_saved_rate_instead_of_reclassifying_verdict():
+    summary = generate_summary(
+        ["Console.log imprime valores no console."],
+        [AnswerRateEnum.PERFECT],
+        ["nodejs"],
     )
 
-    assert summary.startswith("Nesta etapa, você acertou 0 de 1 pergunta.")
+    assert summary.startswith("Nesta etapa, você acertou 1 de 1 pergunta.")
     assert "Console.log" not in summary
+    assert "- Node.js" in summary
 
 
-def test_summary_groups_topics_from_different_reasons():
-    summary = StepSummaryGeneratorService().generate_step_summary(
+def test_summary_groups_different_reasons_in_the_same_class():
+    summary = generate_summary(
         [
             "A resposta está incorreta. A pergunta pede tratar exceções.",
             "A resposta está incompleta. A pergunta pede capturar exceções.",
-        ]
+        ],
+        [AnswerRateEnum.WRONG, AnswerRateEnum.ALMOST_GOT_IT],
+        ["tratamento_erros", "tratamento_erros"],
     )
 
-    assert "- O tratamento de exceções (2 respostas)" in summary
-    assert summary.count("tratamento de exceções") == 1
-    assert "Python" not in summary
+    assert "- Tratamento de erros" in summary
+    assert summary.count("Tratamento de erros") == 1
 
 
 def test_generate_step_summary_matches_empty_pipeline_output():
@@ -231,23 +186,41 @@ async def test_refresh_summary_uses_only_non_empty_reasons_for_the_quiz_step():
             assert requested_quiz_id == quiz_id
             return step_id
 
-        async def list_reasons_by_step_id(
+        async def list_answers_by_step_id(
             self, requested_user_id, requested_step_id
         ):
             assert requested_user_id == user_id
             assert requested_step_id == step_id
-            return [" reason one ", None, "  ", "reason two"]
+            return [
+                (" reason one ", AnswerRateEnum.GOOD),
+                (None, AnswerRateEnum.WRONG),
+                ("  ", AnswerRateEnum.WRONG),
+                ("reason two", AnswerRateEnum.ALMOST_GOT_IT),
+            ]
 
         async def update_summary(self, requested_step_id, summary):
             self.updated = (requested_step_id, summary)
 
+    class GeneratorSpy:
+        def __init__(self):
+            self.answers = None
+
+        def generate_step_summary(self, answers):
+            self.answers = answers
+            return "Resumo gerado."
+
     repository = RepositorySpy()
-    await StepSummaryService(repository).refresh_summary_for_quiz(
+    generator = GeneratorSpy()
+    await StepSummaryService(repository, generator).refresh_summary_for_quiz(
         user_id, quiz_id
     )
 
     assert repository.updated[0] == step_id
-    assert repository.updated[1].startswith("Nesta etapa, você acertou")
+    assert repository.updated[1] == "Resumo gerado."
+    assert generator.answers == [
+        ("reason one", AnswerRateEnum.GOOD),
+        ("reason two", AnswerRateEnum.ALMOST_GOT_IT),
+    ]
 
 
 @pytest.mark.anyio
@@ -256,7 +229,7 @@ async def test_refresh_summary_skips_quiz_without_accessible_step():
         async def get_step_id_by_quiz_id(self, _user_id, _quiz_id):
             return None
 
-        async def list_reasons_by_step_id(self, _user_id, _step_id):
+        async def list_answers_by_step_id(self, _user_id, _step_id):
             raise AssertionError("reasons must not be queried")
 
         async def update_summary(self, _step_id, _summary):

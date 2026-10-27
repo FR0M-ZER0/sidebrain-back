@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidebrain_back.core.database import get_db
+from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.models.answer_model import Answer
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.quiz_model import Quiz
@@ -34,11 +35,11 @@ class StepSummaryRepository:
             )
         )
 
-    async def list_reasons_by_step_id(
+    async def list_answers_by_step_id(
         self, user_id: UUID, step_id: UUID
-    ) -> list[str | None]:
-        result = await self.db.scalars(
-            select(Answer.ans_reason)
+    ) -> list[tuple[str | None, AnswerRateEnum]]:
+        result = await self.db.execute(
+            select(Answer.ans_reason, Answer.ans_rate)
             .join(Quiz, Quiz.qui_id == Answer.ans_question_id)
             .join(Lesson, Lesson.lsn_id == Quiz.qui_lesson_id)
             .join(Step, Step.stp_id == Lesson.lsn_step_id)
@@ -55,7 +56,7 @@ class StepSummaryRepository:
             )
             .order_by(Answer.ans_created_at.asc(), Answer.ans_id.asc())
         )
-        return list(result.all())
+        return [(reason, rate) for reason, rate in result.all()]
 
     async def update_summary(self, step_id: UUID, summary: str) -> None:
         await self.db.execute(
