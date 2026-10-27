@@ -1,0 +1,114 @@
+version: 1
+
+defaults:
+  crawler:
+    user_agent: "SidebrainRAG/1.0 (+mailto:replace-with-maintainer-contact@example.invalid)"
+    timeout_seconds: 20
+    max_concurrency_per_host: 2
+    request_interval_seconds: 1.0
+    robots_cache_hours: 24
+  chunking:
+    target_tokens: 500
+    overlap_ratio: 0.12
+    tokenizer: tiktoken
+    encoding: cl100k_base
+  deduplication:
+    exact: true
+    approximate: true
+    simhash_bits: 64
+    simhash_max_hamming_distance: 3
+    require_equal_code_hash: true
+  embeddings:
+    model: text-embedding-3-small
+    dimensions: 1536
+    batch_size: 64
+    max_attempts: 3
+    max_input_tokens: 8192
+    max_batch_tokens: 300000
+    price_per_million_input_tokens: null
+
+sources:
+  - name: python-tutorial
+    type: url
+    url: https://docs.python.org/3/tutorial/
+    language: python
+    level: beginner
+    license: PSF-2.0
+    license_url: https://docs.python.org/3/license.html
+    content_licenses:
+      prose:
+        license: PSF-2.0
+        license_url: https://docs.python.org/3/license.html
+        external_processing_allowed: true
+      code_example:
+        license: "PSF-2.0 AND 0BSD (Python documentation examples from 3.8.6+)"
+        license_url: https://docs.python.org/3/license.html#zero-clause-bsd-license-for-code-in-the-python-documentation
+        external_processing_allowed: true
+    include_paths:
+      - /3/tutorial/**
+    exclude_paths:
+      - /3/search.html
+      - /3/genindex.html
+      - /3/py-modindex.html
+      - /3/_sources/**
+      - "?*"
+    version_strategy: final_canonical_url
+    connector:
+      max_depth: 4
+
+  - name: python-library
+    type: url
+    url: https://docs.python.org/3/library/
+    language: python
+    level: advanced
+    license: PSF-2.0
+    license_url: https://docs.python.org/3/license.html
+    content_licenses:
+      prose:
+        license: PSF-2.0
+        license_url: https://docs.python.org/3/license.html
+        external_processing_allowed: true
+      code_example:
+        license: "PSF-2.0 AND 0BSD (Python documentation examples from 3.8.6+)"
+        license_url: https://docs.python.org/3/license.html#zero-clause-bsd-license-for-code-in-the-python-documentation
+        external_processing_allowed: true
+    include_paths:
+      - /3/library/**
+    exclude_paths:
+      - /3/search.html
+      - /3/genindex.html
+      - /3/py-modindex.html
+      - /3/_sources/**
+      - "?*"
+    version_strategy: final_canonical_url
+    connector:
+      max_depth: 4
+
+  - name: mdn-javascript
+    type: url
+    url: https://developer.mozilla.org/en-US/docs/Web/JavaScript/
+    language: javascript
+    level: intermediate
+    license: CC-BY-SA-2.5-or-later
+    license_url: https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Attrib_copyright_license
+    content_licenses:
+      prose:
+        license: CC-BY-SA-2.5-or-later
+        license_url: https://creativecommons.org/licenses/by-sa/2.5/
+        external_processing_allowed: true
+      code_example:
+        license: unknown
+        license_url: null
+        external_processing_allowed: false
+    include_paths:
+      - /en-US/docs/Web/JavaScript/**
+    exclude_paths:
+      - /en-US/docs/Web/JavaScript/files/**
+      - /en-US/docs/Web/API/**
+      - /en-US/docs/Learn_web_development/**
+      - /en-US/docs/search/**
+      - /en-US/docs/WebAssembly/**
+      - "?*"
+    version_strategy: etag_last_modified_or_collection_date
+    connector:
+      max_depth: 4

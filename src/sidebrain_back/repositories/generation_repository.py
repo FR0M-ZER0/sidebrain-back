@@ -49,27 +49,26 @@ class GenerationRepository:
             )
             self.db.add(step)
             await self.db.flush()
-            if generated_step.position != 1:
-                continue
-            for generated_lesson in generated_step.lessons:
-                lesson = Lesson(
-                    lsn_step_id=step.stp_id,
-                    lsn_title=generated_lesson.title,
-                    lsn_text=generated_lesson.text,
-                    lsn_position=generated_lesson.position,
-                    lsn_status=LessonStatusEnum.IDLE,
-                    lsn_is_deleted=False,
-                )
-                self.db.add(lesson)
-                await self.db.flush()
-                self.db.add(
-                    Quiz(
-                        qui_lesson_id=lesson.lsn_id,
-                        qui_question=generated_lesson.quiz.question,
+            if generated_step.position == 1:
+                for generated_lesson in generated_step.lessons:
+                    lesson = Lesson(
+                        lsn_step_id=step.stp_id,
+                        lsn_title=generated_lesson.title,
+                        lsn_text=generated_lesson.text,
+                        lsn_position=generated_lesson.position,
+                        lsn_status=LessonStatusEnum.IDLE,
+                        lsn_is_deleted=False,
                     )
-                )
-            if generated_step.mission:
-                mission = generated_step.mission
+                    self.db.add(lesson)
+                    await self.db.flush()
+                    for generated_quiz in generated_lesson.quizzes:
+                        self.db.add(
+                            Quiz(
+                                qui_lesson_id=lesson.lsn_id,
+                                qui_question=generated_quiz.question,
+                            )
+                        )
+            for mission in generated_step.missions:
                 self.db.add(
                     Mission(
                         msn_step_id=step.stp_id,

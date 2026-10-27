@@ -5,7 +5,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from celery.exceptions import Retry
-from groq import APIConnectionError, APITimeoutError, RateLimitError
+from openai import APIConnectionError, APITimeoutError, RateLimitError
 from sqlalchemy import delete
 
 from sidebrain_back.core.celery_app import celery_app
@@ -333,6 +333,7 @@ def test_v2_invalid_generation_is_definitive_and_sanitized():
 
 
 @pytest.mark.anyio
+@pytest.mark.usefixtures("database_schema")
 async def test_v2_skip_never_constructs_provider_and_is_idempotent():
     user_id = uuid4()
     assessment_id = uuid4()

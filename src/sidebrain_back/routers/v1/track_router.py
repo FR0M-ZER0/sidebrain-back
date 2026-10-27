@@ -1,11 +1,12 @@
 import asyncio
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
+from sidebrain_back.routers.v1.auth_router import get_current_user
 from sidebrain_back.schemas.generation_schema import (
     GenerationAccepted,
     GenerationProgress,
@@ -15,6 +16,7 @@ from sidebrain_back.schemas.generation_schema import (
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.track_schema import (
     TrackCreate,
+    TrackListParams,
     TrackResponse,
     TrackUpdate,
 )
@@ -110,12 +112,11 @@ async def prepare_next_step(
 
 @router.get("", response_model=PaginatedResponse[TrackResponse])
 async def list_tracks(
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    params: Annotated[TrackListParams, Query()],
     user: User = Depends(get_current_user),  # noqa: B008
     service: TrackService = Depends(get_track_service),  # noqa: B008
 ) -> PaginatedResponse[TrackResponse]:
-    return await service.list_tracks(user, page, page_size)
+    return await service.list_tracks(user, params)
 
 
 @router.get("/{track_id}", response_model=TrackResponse)

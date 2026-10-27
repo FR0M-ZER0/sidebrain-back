@@ -3,11 +3,12 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from sidebrain_back.core.database import get_db
+from sidebrain_back.enums.step_level_enum import STEP_LEVEL_RANK, StepLevelEnum
 from sidebrain_back.models.feedback_model import Feedback
 from sidebrain_back.models.lesson_file_model import LessonFile
 from sidebrain_back.models.lesson_model import Lesson
@@ -46,19 +47,68 @@ class TrackRepository:
         return track
 
     async def list(
-        self, user_id: UUID, offset: int, limit: int
+        self,
+        user_id: UUID,
+        offset: int,
+        limit: int,
+        *,
+        q: str | None = None,
+        level: StepLevelEnum | None = None,
+        has_missions: bool | None = None,
+        sort: str = "recent",
     ) -> tuple[list[Track], int]:
-        filters = (
+        filters = [
             Track.trk_user_id == user_id,
             Track.trk_is_deleted.is_(False),
-        )
+        ]
+        if q is not None:
+            escaped = (
+                q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
+            pattern = f"%{escaped}%"
+            filters.append(
+                or_(
+                    Track.trk_title.ilike(pattern, escape="\\"),
+                    Track.trk_description.ilike(pattern, escape="\\"),
+                )
+            )
+        if level is not None:
+            filters.append(
+                Track.trk_id.in_(
+                    select(Step.stp_track_id).where(
+                        Step.stp_track_id == Track.trk_id,
+                        Step.stp_is_deleted.is_(False),
+                        Step.stp_level == level,
+                    )
+                )
+            )
+        if has_missions is not None:
+            active_mission_exists = exists(
+                select(Mission.msn_id)
+                .join(Step, Step.stp_id == Mission.msn_step_id)
+                .where(
+                    Step.stp_track_id == Track.trk_id,
+                    Step.stp_is_deleted.is_(False),
+                    Mission.msn_is_deleted.is_(False),
+                )
+            )
+            filters.append(
+                active_mission_exists
+                if has_missions
+                else ~active_mission_exists
+            )
         total = await self.db.scalar(
             select(func.count()).select_from(Track).where(*filters)
+        )
+        ordering = (
+            (Track.trk_created_at.asc(), Track.trk_id.asc())
+            if sort == "oldest"
+            else (Track.trk_created_at.desc(), Track.trk_id.desc())
         )
         result = await self.db.execute(
             select(Track)
             .where(*filters)
-            .order_by(Track.trk_created_at.desc(), Track.trk_id.desc())
+            .order_by(*ordering)
             .offset(offset)
             .limit(limit)
             .options(self._hierarchy_options(user_id))
@@ -175,7 +225,14 @@ class TrackRepository:
             )
             .order_by(Step.stp_updated_at, Step.stp_id)
         )
-        ordered_steps = list(steps.all())
+        ordered_steps = sorted(
+            steps.all(),
+            key=lambda candidate: (
+                STEP_LEVEL_RANK[candidate.stp_level],
+                candidate.stp_updated_at,
+                candidate.stp_id.int,
+            ),
+        )
         try:
             current_index = next(
                 index
@@ -186,7 +243,7 @@ class TrackRepository:
             return None
 
         for candidate in ordered_steps[current_index + 1 :]:
-            if not candidate.lessons and not candidate.missions:
+            if not candidate.lessons:
                 return candidate
         return None
 
@@ -229,15 +286,7 @@ class TrackRepository:
             )
             .limit(1)
         )
-        mission_exists = await self.db.scalar(
-            select(Mission.msn_id)
-            .where(
-                Mission.msn_step_id == step_id,
-                Mission.msn_is_deleted.is_(False),
-            )
-            .limit(1)
-        )
-        return lesson_exists is not None or mission_exists is not None
+        return lesson_exists is not None
 
     @staticmethod
     def _hierarchy_options(user_id: UUID):
