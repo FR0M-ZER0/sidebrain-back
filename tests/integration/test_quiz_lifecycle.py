@@ -163,6 +163,7 @@ async def test_submit_answer_persists_evaluation_reason(
     hierarchy = await learning_hierarchy_factory()
     quiz = await quiz_factory(hierarchy.lesson)
     expected_question = quiz.qui_question
+    step_id = hierarchy.step.stp_id
     await db_session.commit()
     reason = "A resposta explica corretamente o conceito pedido."
 
@@ -190,7 +191,7 @@ async def test_submit_answer_persists_evaluation_reason(
         QuizAnswerCreateRequest(text="A named reference to a value"),
     )
     stored = await db_session.get(Answer, response.id)
-    stored_step = await db_session.get(Step, hierarchy.step.stp_id)
+    stored_step = await db_session.get(Step, step_id)
 
     assert stored is not None
     assert stored.ans_rate is AnswerRateEnum.PERFECT
@@ -228,6 +229,7 @@ async def test_step_summary_answers_are_scoped_and_stably_ordered(
     await answer_factory(
         second_quiz,
         hierarchy.user,
+        rate=AnswerRateEnum.GOOD,
         reason="Segundo motivo.",
         created_at=created_at + timedelta(seconds=1),
     )
