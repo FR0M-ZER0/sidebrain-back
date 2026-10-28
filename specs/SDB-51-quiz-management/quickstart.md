@@ -32,11 +32,11 @@ que exercitam UUID, FKs, enum e queries devem usar PostgreSQL.
 
 ## Validação manual do fluxo principal
 
-Defina UUIDs existentes no ambiente:
+Obtenha um JWT por cadastro ou login e defina os IDs existentes no ambiente:
 
 ```bash
 export API_BASE="http://localhost:8080/api/v1"
-export USER_ID="00000000-0000-0000-0000-000000000001"
+export ACCESS_TOKEN="<accessToken retornado por POST /auth/login>"
 export LESSON_ID="00000000-0000-0000-0000-000000000002"
 ```
 
@@ -44,7 +44,7 @@ Crie um quiz:
 
 ```bash
 curl -i -X POST "$API_BASE/lessons/$LESSON_ID/quizzes" \
-  -H "Authorization: Bearer $USER_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"question":"  What is a variable in Python?  "}'
 ```
@@ -56,10 +56,10 @@ Liste e consulte:
 
 ```bash
 curl -i "$API_BASE/lessons/$LESSON_ID/quizzes?page=1&page_size=20" \
-  -H "Authorization: Bearer $USER_ID"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 
 curl -i "$API_BASE/quizzes/$QUIZ_ID" \
-  -H "Authorization: Bearer $USER_ID"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 Espere `200`, envelope paginado na listagem e Answers ordenadas por
@@ -69,12 +69,12 @@ Atualize e remova:
 
 ```bash
 curl -i -X PUT "$API_BASE/quizzes/$QUIZ_ID" \
-  -H "Authorization: Bearer $USER_ID" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"question":"How does a Python variable reference a value?"}'
 
 curl -i -X DELETE "$API_BASE/quizzes/$QUIZ_ID" \
-  -H "Authorization: Bearer $USER_ID"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 Espere `200` no PUT e `204` sem body no DELETE. Depois do DELETE, detalhe,

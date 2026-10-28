@@ -268,6 +268,7 @@ async def test_invalid_cross_question_selection_rolls_back_everything(
 
 
 @pytest.mark.anyio
+@pytest.mark.usefixtures("database_schema")
 async def test_two_concurrent_submissions_preserve_first_result():
     user_id = uuid4()
     assessment_id = uuid4()

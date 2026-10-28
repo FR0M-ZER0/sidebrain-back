@@ -15,6 +15,9 @@ keys:
 Uso:
     python seed.py
 
+Credencial descartável do usuário de exemplo:
+    ana.silva@example.com / sidebrain-dev-123
+
 Aviso:
     Antes de inserir os dados, apaga todos os registros do schema atual
     (exceto alembic_version). Use apenas no banco que deseja reinicializar.
@@ -32,6 +35,7 @@ import uuid
 from datetime import date, datetime, timedelta
 
 import sqlalchemy as sa
+from pwdlib import PasswordHash
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -69,6 +73,7 @@ DATABASE_URL = os.environ.get(
 )
 
 SEED_USER_ID = uuid.UUID("00000000-0000-4000-8000-000000000001")
+SEED_PASSWORD_HASH = PasswordHash.recommended().hash("sidebrain-dev-123")
 
 metadata = sa.MetaData()
 
@@ -413,7 +418,7 @@ async def seed(session: AsyncSession) -> None:
             "usr_id": SEED_USER_ID,
             "usr_email": "ana.silva@example.com",
             "usr_name": "Ana Silva",
-            "usr_password_hash": "hash_ana",
+            "usr_password_hash": SEED_PASSWORD_HASH,
             "usr_created_at": now,
             "usr_updated_at": now,
         },

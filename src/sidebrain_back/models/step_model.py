@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func, text
 from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -39,6 +39,7 @@ class Step(Base):
         nullable=False,
     )
     stp_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    stp_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     stp_status: Mapped[StepStatusEnum] = mapped_column(
         ENUM(
             StepStatusEnum,

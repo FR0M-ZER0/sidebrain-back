@@ -21,8 +21,20 @@ from sidebrain_back.schemas.quiz_schema import (
     QuizResponse,
     QuizUpdateRequest,
 )
+from sidebrain_back.services.badge_progress_service import (
+    BadgeProgressService,
+    get_badge_progress_service,
+)
+from sidebrain_back.services.mission_progress_service import (
+    MissionProgressService,
+    get_mission_progress_service,
+)
 from sidebrain_back.services.quiz_evaluation_service import (
     QuizEvaluationService,
+)
+from sidebrain_back.services.step_summary_service import (
+    StepSummaryService,
+    get_step_summary_service,
 )
 from sidebrain_back.services.track_service import (
     TrackService,
@@ -39,11 +51,17 @@ class QuizService:
         db: AsyncSession,
         evaluator: QuizEvaluationService | None = None,
         track_service: TrackService | None = None,
+        mission_progress_service: MissionProgressService | None = None,
+        badge_progress_service: BadgeProgressService | None = None,
+        step_summary_service: StepSummaryService | None = None,
     ):
         self.repository = repository
         self.db = db
         self.evaluator = evaluator or QuizEvaluationService()
         self.track_service = track_service
+        self.mission_progress_service = mission_progress_service
+        self.badge_progress_service = badge_progress_service
+        self.step_summary_service = step_summary_service
 
     async def _require_lesson(
         self,
@@ -138,19 +156,39 @@ class QuizService:
             quiz = await self._require_quiz(user_id, quiz_id)
             question = quiz.qui_question
             await self.db.rollback()
-            rate = self.evaluator.evaluate(question, payload.text)
+            evaluation = self.evaluator.evaluate(question, payload.text)
+            track_id = None
+            progress_service = self.mission_progress_service
+            if progress_service is not None:
+                track_id = await progress_service.get_mission_track_for_quiz(
+                    user_id, quiz_id
+                )
             answer = await self.repository.create_answer(
                 quiz_id,
                 user_id,
                 payload.text,
-                rate,
+                evaluation.rate,
+                evaluation.reason,
             )
+            if self.step_summary_service is not None:
+                await self.step_summary_service.refresh_summary_for_quiz(
+                    user_id, quiz_id
+                )
             step_id = (
                 await self.repository.complete_lesson_if_quizzes_answered(
                     quiz_id,
                     user_id,
                 )
             )
+            if track_id is not None and progress_service is not None:
+                await progress_service.update_missions_by_track_id(
+                    user_id, track_id
+                )
+            badge_progress = self.badge_progress_service
+            if badge_progress is not None:
+                await badge_progress.register_activity_and_update_badges(
+                    user_id
+                )
             response = AnswerResponse.model_validate(answer)
             await self.db.commit()
             if step_id is not None and self.track_service is not None:
@@ -227,5 +265,21 @@ def get_quiz_service(
     repository: QuizRepository = Depends(get_quiz_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
     track_service: TrackService = Depends(get_track_service),  # noqa: B008
+    mission_progress_service: MissionProgressService = Depends(  # noqa: B008
+        get_mission_progress_service
+    ),
+    badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
+        get_badge_progress_service
+    ),
+    step_summary_service: StepSummaryService = Depends(  # noqa: B008
+        get_step_summary_service
+    ),
 ) -> QuizService:
-    return QuizService(repository, db, track_service=track_service)
+    return QuizService(
+        repository,
+        db,
+        track_service=track_service,
+        mission_progress_service=mission_progress_service,
+        badge_progress_service=badge_progress_service,
+        step_summary_service=step_summary_service,
+    )

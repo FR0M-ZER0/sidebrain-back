@@ -2,12 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.models.user_model import User
+from sidebrain_back.routers.v1.auth_router import get_current_user
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.step_schema import (
     StepCreate,
     StepResponse,
+    StepSummaryResponse,
     StepUpdate,
 )
 from sidebrain_back.services.step_service import StepService, get_step_service
@@ -46,6 +47,26 @@ async def get_step(
     service: StepService = Depends(get_step_service),  # noqa: B008
 ) -> StepResponse:
     return await service.get_step(user, track_id, step_id)
+
+
+@router.get("/{step_id}/summary", response_model=StepSummaryResponse)
+async def get_step_summary(
+    track_id: UUID,
+    step_id: UUID,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: StepService = Depends(get_step_service),  # noqa: B008
+) -> StepSummaryResponse:
+    return await service.get_step_summary(user, track_id, step_id)
+
+
+@router.post("/{step_id}/summary", response_model=StepSummaryResponse)
+async def generate_step_summary(
+    track_id: UUID,
+    step_id: UUID,
+    user: User = Depends(get_current_user),  # noqa: B008
+    service: StepService = Depends(get_step_service),  # noqa: B008
+) -> StepSummaryResponse:
+    return await service.generate_step_summary(user, track_id, step_id)
 
 
 @router.put("/{step_id}", response_model=StepResponse)

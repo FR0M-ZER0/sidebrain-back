@@ -31,8 +31,13 @@ from sidebrain_back.schemas.generation_schema import (
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.track_schema import (
     TrackCreate,
+    TrackListParams,
     TrackResponse,
     TrackUpdate,
+)
+from sidebrain_back.services.badge_progress_service import (
+    BadgeProgressService,
+    get_badge_progress_service,
 )
 from sidebrain_back.services.generation_request_service import (
     GenerationRequestService,
@@ -48,6 +53,7 @@ class TrackService:
         db: AsyncSession,
         generation_requests: GenerationRequestRepository | None = None,
         assessments: KnowledgeAssessmentRepository | None = None,
+        badge_progress_service: BadgeProgressService | None = None,
     ):
         self.repository = repository
         self.db = db
@@ -55,6 +61,7 @@ class TrackService:
             generation_requests or GenerationRequestRepository(db)
         )
         self.assessments = assessments or KnowledgeAssessmentRepository(db)
+        self.badge_progress_service = badge_progress_service
 
     @classmethod
     def completion_ratio(
@@ -249,6 +256,11 @@ class TrackService:
     ) -> TrackResponse:
         try:
             track = await self.repository.create(user, payload.title, None)
+            badge_progress = self.badge_progress_service
+            if badge_progress is not None:
+                await badge_progress.register_activity_and_update_badges(
+                    user.usr_id
+                )
             response = TrackResponse.model_validate(track)
             await self.db.commit()
             return response
@@ -259,15 +271,18 @@ class TrackService:
             ) from error
 
     async def list_tracks(
-        self, user: User, page: int, page_size: int
+        self, user: User, params: TrackListParams
     ) -> PaginatedResponse[TrackResponse]:
         tracks, total = await self.repository.list(
-            user.usr_id, (page - 1) * page_size, page_size
+            user.usr_id,
+            (params.page - 1) * params.page_size,
+            params.page_size,
+            **params.model_dump(exclude={"page", "page_size"}),
         )
         return PaginatedResponse.build(
             [TrackResponse.model_validate(track) for track in tracks],
-            page,
-            page_size,
+            params.page,
+            params.page_size,
             total,
         )
 
@@ -322,10 +337,14 @@ class TrackService:
 def get_track_service(
     repository: TrackRepository = Depends(get_track_repository),  # noqa: B008
     db: AsyncSession = Depends(get_db),  # noqa: B008
+    badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
+        get_badge_progress_service
+    ),
 ) -> TrackService:
     return TrackService(
         repository,
         db,
         GenerationRequestRepository(db),
         KnowledgeAssessmentRepository(db),
+        badge_progress_service,
     )

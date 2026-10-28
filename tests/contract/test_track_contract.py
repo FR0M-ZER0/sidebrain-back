@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from main import app
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.track_schema import TrackCreate
+from sidebrain_back.services.track_service import get_track_service
 
 
 def test_track_endpoints_require_authentication():
@@ -48,3 +49,43 @@ def test_pagination_empty_response_has_zero_total_pages():
         "total_items": 0,
         "total_pages": 0,
     }
+
+
+def test_track_list_binds_filters_and_returns_pagination(test_app):
+    class ServiceDouble:
+        def __init__(self):
+            self.params = None
+
+        async def list_tracks(self, _user, params):
+            self.params = params
+            return PaginatedResponse.build(
+                [], params.page, params.page_size, total_items=0
+            )
+
+    service = ServiceDouble()
+    test_app.dependency_overrides[get_track_service] = lambda: service
+    client = TestClient(test_app)
+    response = client.get(
+        "/api/v1/tracks",
+        params={
+            "q": " Python ",
+            "level": "beginner",
+            "has_missions": "false",
+            "sort": "oldest",
+            "page": 2,
+            "page_size": 5,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "data": [],
+        "page": 2,
+        "page_size": 5,
+        "total_items": 0,
+        "total_pages": 0,
+    }
+    assert service.params.q == "Python"
+    assert service.params.level.value == "beginner"
+    assert service.params.has_missions is False
+    assert service.params.sort == "oldest"
