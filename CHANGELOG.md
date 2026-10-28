@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.1.0](https://github.com/FR0M-ZER0/sidebrain-back/compare/v1.0.0...v1.1.0) (2026-10-28)
+
+
+### Features
+
+* **sdb-100:** adiciona filtros e recálculo de badges ([7fe23a2](https://github.com/FR0M-ZER0/sidebrain-back/commit/7fe23a2f0091a71c771738e284cf5b5ba4b76265))
+* **sdb-100:** adiciona justificativa ao rate do quiz ([291261f](https://github.com/FR0M-ZER0/sidebrain-back/commit/291261f30143092a789e88d6bef7bd920cb9cd78))
+* **sdb-100:** adiciona missões mensuráveis às etapas ([5355356](https://github.com/FR0M-ZER0/sidebrain-back/commit/53553568c571c1dd5d0c36232bf19c4859af4482))
+* **sdb-100:** adiciona progresso e listagem global de missões ([1631d17](https://github.com/FR0M-ZER0/sidebrain-back/commit/1631d1793c7d70c727c359c7696902ae4154190d))
+* **sdb-100:** atualiza badges com atividades do usuário ([73b43f8](https://github.com/FR0M-ZER0/sidebrain-back/commit/73b43f8873f96b69da31c33b3c0ef1b3be47471c))
+* **sdb-100:** filtra listagem de trilhas do usuário ([96c60d7](https://github.com/FR0M-ZER0/sidebrain-back/commit/96c60d7af14906713cd7e92322487c17fd863eba))
+* **sdb-100:** inclui resumo de XP no perfil ([cc46846](https://github.com/FR0M-ZER0/sidebrain-back/commit/cc468463f344d699945f4f8d2b71421e53e7d4bb))
+* **sdb-86:** adiciona endpoints de gerenciamento de missões ([a211bee](https://github.com/FR0M-ZER0/sidebrain-back/commit/a211beed66b5bfba3c686564e94febe32d9c3a19))
+* **sdb-87:** adiciona endpoints de badge ([660b3ea](https://github.com/FR0M-ZER0/sidebrain-back/commit/660b3ea923a6409367430d7b133162b8b288035e))
+* **sdb-88:** adiciona resumo por etapa ([e150088](https://github.com/FR0M-ZER0/sidebrain-back/commit/e1500883fcc26b015139b406d804cdd251e21ddf))
+* **sdb-88:** adiciona tempo de expiração do token como variavel ([f1d2bd1](https://github.com/FR0M-ZER0/sidebrain-back/commit/f1d2bd1f064731c949b1d2c04bcbbb71b1da2713))
+* **sdb-88:** expande conteúdo didático das etapas ([5a73544](https://github.com/FR0M-ZER0/sidebrain-back/commit/5a7354473543131e8a42e2654af6b94a0080e8c1))
+* **sdb-88:** integra classificador ao sumário da etapa ([9e9a36b](https://github.com/FR0M-ZER0/sidebrain-back/commit/9e9a36b38ae649941421c24f7e9fa81edfee94e9))
+* **sdb-88:** limita texto e cita fontes das lições ([0c0a783](https://github.com/FR0M-ZER0/sidebrain-back/commit/0c0a783ae933e70294afb52d035b33f9fc3a1fb3))
+* **sdb-88:** seleciona provedor de chat por configuração ([312752d](https://github.com/FR0M-ZER0/sidebrain-back/commit/312752d3dd905eab3e8c8a72335f3f55c5795036))
+* **sdb-89:** adiciona pipeline de indexação e busca RAG ([9afce4c](https://github.com/FR0M-ZER0/sidebrain-back/commit/9afce4cfff873480947759cb4887ce3b5fa7b4ea))
+* **sdb-89:** adiciona suporte ao pgvector ([049074d](https://github.com/FR0M-ZER0/sidebrain-back/commit/049074d40c4d2dafc0faddf571d6c24a277f8db3))
+* **sdb-89:** integra RAG à geração de trilhas ([5b69575](https://github.com/FR0M-ZER0/sidebrain-back/commit/5b695754b691fb25ebeaa3fd4ee2237515ce2779))
+* **sdb-90:** adiciona endpoints para gerenciamento do ranking de usuários por xp ([0052e1a](https://github.com/FR0M-ZER0/sidebrain-back/commit/0052e1a74dd804ba29b95c12952ae6c1f278de74))
+* **sdb-93:** adiciona funcionalidade para gerar missões por IA ([1240dc7](https://github.com/FR0M-ZER0/sidebrain-back/commit/1240dc7cb1ecb8723a4466a140771b6519b944f1))
+
+
+### Bug Fixes
+
+* **sdb-100:** corrige geração incremental de conteúdo ([fea7f64](https://github.com/FR0M-ZER0/sidebrain-back/commit/fea7f6416be81fcfbbcd40916f1be07ba8a01f85))
+* **sdb-100:** descarta pool async na geração inicial ([a9f132d](https://github.com/FR0M-ZER0/sidebrain-back/commit/a9f132d39b2fd94bfdbda16af5e4d8b6a288894e))
+* **sdb-100:** usa dependência correta no ranking ([6d3bc57](https://github.com/FR0M-ZER0/sidebrain-back/commit/6d3bc57fa4c960d29ff1091989573ba4da8f8f80))
+* **SDB-81:** corrige configuração de autenticação no CI ([5279554](https://github.com/FR0M-ZER0/sidebrain-back/commit/52795549e664cabf2f1f25a878383e8b48d2e74a))
+* **sdb-81:** corrige configuração do banco de testes ([a1c7678](https://github.com/FR0M-ZER0/sidebrain-back/commit/a1c76789b03494e3fb6d964e7fcc2e8f08796690))
+* **sdb-81:** corrige estrutura do arquivo de dependências ([706baa7](https://github.com/FR0M-ZER0/sidebrain-back/commit/706baa75a0a128da47276375c7ad71d693af0c99))
+* **SDB-81:** corrige validações de autenticação e migração ([fbde83c](https://github.com/FR0M-ZER0/sidebrain-back/commit/fbde83c588aa3b18f7c665eecdec26807526992a))
+* **SDB-81:** garante unicidade das falhas no Redis ([86d3a9f](https://github.com/FR0M-ZER0/sidebrain-back/commit/86d3a9fb8da55446df46724c9728865f23677727))
+* **SDB-81:** impede troca de senha durante bloqueio ([69b985c](https://github.com/FR0M-ZER0/sidebrain-back/commit/69b985ca7b5158ae69a7626d5bfc130d04de45c1))
+* **SDB-81:** resolve conflitos com a dev ([06d515d](https://github.com/FR0M-ZER0/sidebrain-back/commit/06d515d39cca97bfa6f1d79a576ddd76f4955bdc))
+* **SDB-81:** valida tipos antes de normalizar usuário ([10e8240](https://github.com/FR0M-ZER0/sidebrain-back/commit/10e8240b7183ceee3638053c8c01ec30f9a649b0))
+* **sdb-88:** ajusta chamadas OpenAI ao modelo configurado ([3632a7c](https://github.com/FR0M-ZER0/sidebrain-back/commit/3632a7cb52acf67b2a3332b7d55f14d8508064fa))
+* **sdb-88:** destaca tópicos centrais no resumo da etapa ([67468dd](https://github.com/FR0M-ZER0/sidebrain-back/commit/67468ddd1286217c868812bf78d9d3dfde40938d))
+* **sdb-88:** ordena etapas pela progressão de nível ([e173c1f](https://github.com/FR0M-ZER0/sidebrain-back/commit/e173c1f2608012fb421a1f57acd0cc4208a73cbc))
+* **sdb-88:** reforça validação do conteúdo gerado ([53d0b68](https://github.com/FR0M-ZER0/sidebrain-back/commit/53d0b68a052c90224382cc967f53dae5b41bb686))
+* **sdb-88:** remove prefixo genérico do título da trilha ([1cbbbfd](https://github.com/FR0M-ZER0/sidebrain-back/commit/1cbbbfd28089f15389559755744d2c9e1822edb0))
+* **sdb-88:** repara coluna de resumo da etapa ([8363d36](https://github.com/FR0M-ZER0/sidebrain-back/commit/8363d36f287c2eeec57a90af832b028bc443610a))
+
 ## 1.0.0 (2026-09-29)
 
 
