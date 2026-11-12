@@ -51,6 +51,7 @@ class UserService:
         return await self._build_user_me_response(user)
 
     async def _build_user_me_response(self, user: User) -> UserMeResponse:
+        """Monta o perfil usando a mesma fonte de XP e missões do ranking."""
         ranking = await self.ranking_repository.get_user_xp_summary(
             user.usr_id
         )

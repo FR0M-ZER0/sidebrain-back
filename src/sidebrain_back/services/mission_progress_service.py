@@ -114,7 +114,11 @@ class MissionProgressService:
     async def update_missions_by_track_id(
         self, user_id: UUID, track_id: UUID
     ) -> None:
-        """Recalcula na transação do chamador, sob lock da trilha."""
+        """Recalcula na transação do chamador, sob lock da trilha.
+
+        Mantém idempotência estrita ao ignorar progressos já em ``DONE``,
+        impedindo duplicação de XP em submissões ou recálculos repetidos.
+        """
         facts = await self.repository.get_learning_facts(
             user_id, track_id, self.CORRECT_RATES
         )
@@ -161,6 +165,7 @@ class MissionProgressService:
     async def recalculate_missions_by_step_id(
         self, user_id: UUID, step_id: UUID
     ) -> None:
+        """Recalcula e comita progresso sincronamente, sem fila de XP."""
         try:
             track_id = await self.repository.get_track_by_step_for_update(
                 user_id, step_id

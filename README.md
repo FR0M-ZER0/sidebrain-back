@@ -258,3 +258,12 @@ nome `lesson_files` por compatibilidade.
 O fluxo segue `router -> service -> repository -> model`, com carregamento em
 lote de Feedbacks, Files, Quizzes e Answers. Consulte o
 [contrato completo](./specs/SDB-57-lesson-management/contracts/lessons.md).
+
+## XP e Ranking
+
+O cálculo de XP e o ranking global de usuários usam uma **única fonte de verdade síncrona**, sem filas, workers assíncronos de XP, contadores persistidos em `User` ou materialized views:
+
+- **Fórmula oficial:** `xp = COALESCE(SUM(Mission.msn_xp_reward), 0)` e `missionsCompleted = COUNT(Mission.msn_id)` considerando exclusivamente usuários ativos (`usr_is_deleted = false`), missões ativas (`msn_is_deleted = false`) e registros em `MissionProgress` com status `done` (excluir apenas `Step` ou `Track` pai preserva o XP de missões ativas já concluídas).
+- **Fluxo síncrono pós-commit:** ao submeter uma resposta em `POST /api/v1/quizzes/{quiz_id}/answers` (ou recalcular em `POST /api/v1/steps/{step_id}/missions/recalculate-progress`), o sistema atualiza o progresso das missões sob lock na mesma transação — ignorando de forma idempotente missões já `done` — e realiza `commit` antes de responder.
+- **Consistência entre perfil e ranking:** `GET /api/v1/users/me`, `PUT /api/v1/users/me`, `GET /api/v1/rankings` e `GET /api/v1/rankings/me` compartilham a mesma agregação em `RankingRepository`, com ordenação determinística (`xp DESC`, `usr_created_at ASC`, `usr_id ASC`). Excluir logicamente uma missão em `DELETE /api/v1/missions/{mission_id}` remove sua recompensa imediatamente das consultas seguintes.
+- **Critérios para reavaliar filas no futuro:** processamento assíncrono só deve ser proposto em tarefa dedicada se medições reais comprovarem gargalo de escrita ou leitura e o produto aceitar consistência eventual explícita, definindo SLA de atraso máximo, publicação transacional (outbox ou equivalente), idempotência, ordenação/concorrência e reconciliação com a fonte de verdade. Consulte o [contrato de consistência](./specs/SDB-105-xp-ranking-consistency/contracts/xp-ranking-consistency.md).
