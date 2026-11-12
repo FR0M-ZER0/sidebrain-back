@@ -132,8 +132,25 @@ def test_summary_counts_repeated_topics_by_answer_rate():
     )
 
     assert summary.startswith("Nesta etapa, você acertou 5 de 19 perguntas.")
-    assert summary.count("- Python") == 2
+    assert summary.count("- Python") == 1
     assert "respostas)" not in summary
+
+
+def test_summary_places_tied_topic_counts_in_review():
+    summary = generate_summary(
+        ["Justificativa."] * 4,
+        [
+            AnswerRateEnum.PERFECT,
+            AnswerRateEnum.GOOD,
+            AnswerRateEnum.WRONG,
+            AnswerRateEnum.ALMOST_GOT_IT,
+        ],
+        ["python"] * 4,
+    )
+
+    review, strengths = summary.split("Pontos fortes:")
+    assert "- Python" in review
+    assert "- Python" not in strengths
 
 
 def test_summary_counts_saved_rate_instead_of_reclassifying_verdict():

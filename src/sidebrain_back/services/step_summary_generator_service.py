@@ -49,16 +49,29 @@ class StepSummaryGeneratorService:
             f"{total_questions} {question_noun}."
         )
 
-        difficulty_counts: Counter[str] = Counter()
-        strength_counts: Counter[str] = Counter()
+        review_counts_by_topic: Counter[str] = Counter()
+        strength_counts_by_topic: Counter[str] = Counter()
+        topic_counts: Counter[str] = Counter()
         for (_reason, rate), topic in zip(answers, topics, strict=True):
             label = _TOPIC_LABELS.get(topic, topic.replace("_", " ").title())
-            counts = (
-                strength_counts
+            topic_counts[label] += 1
+            counts_by_topic = (
+                strength_counts_by_topic
                 if rate in _CORRECT_RATES
-                else difficulty_counts
+                else review_counts_by_topic
             )
-            counts[label] += 1
+            counts_by_topic[label] += 1
+
+        difficulty_counts: Counter[str] = Counter()
+        strength_counts: Counter[str] = Counter()
+        for topic in topic_counts:
+            review_count = review_counts_by_topic[topic]
+            strength_count = strength_counts_by_topic[topic]
+            if strength_count > review_count:
+                strength_counts[topic] = strength_count
+            else:
+                # Empates ficam em "Para revisar" por segurança.
+                difficulty_counts[topic] = review_count
 
         sections = [opening]
         for heading, counts in (
