@@ -24,6 +24,7 @@ sidebrain_back/
 ├── schemas/         # Contratos de entrada/saída (Pydantic)
 ├── services/        # Regras de negócio e orquestração
 ├── tasks/           # Tarefas assíncronas (Celery)
+├── notifications/   # Publisher/worker RabbitMQ separado do Celery
 └── utils/          # Funções auxiliares puras, sem estado e sem dependências de infraestrutura
 
 tests/
@@ -53,6 +54,12 @@ Regras de negócio e orquestração de operações. Consome `repositories`, apli
 
 ### `tasks/`
 Tarefas assíncronas executadas via **Celery** (ex.: envio de e-mails, processamento de arquivos, jobs agendados/periódicos, integrações externas demoradas). Consomem `services` para reaproveitar a lógica de negócio já validada, evitando duplicar regras entre o fluxo síncrono da API e o processamento assíncrono. Não contêm regra de negócio própria — apenas orquestram a execução em background e tratam preocupações específicas de Celery (retries, idempotência, serialização de argumentos, timeouts).
+
+### `notifications/`
+
+Infraestrutura de publicação e consumo de notificações em RabbitMQ. O pacote
+mantém sua própria configuração, topologia, retries e dead-letter queue, sem
+alterar o broker ou backend Redis das tasks Celery.
 
 ### `routers/v1/`
 Camada de apresentação HTTP. Define os endpoints, recebe/valida requests via `schemas`, delega a lógica para `services` e retorna as respostas. Versionamento explícito em `v1` permite evolução da API sem quebrar clientes existentes.

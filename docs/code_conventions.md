@@ -75,6 +75,11 @@ As tasks devem ser sufixadas com task, exemplo:
 def generate_user_report_task(user_id: int) -> None: ...
 ```
 
+Workers RabbitMQ não são tasks Celery e devem usar nomes descritivos no pacote
+`notifications`; a função de entrada deve ser exposta pelo script
+`notifications-worker`. A configuração de RabbitMQ deve vir do ambiente e
+segredos não podem aparecer em logs.
+
 ## Paginação
 
 Toda resposta de listagem (`list_*`) deve seguir o formato paginado:
