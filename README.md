@@ -78,6 +78,19 @@ uv run dev
 uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
 
+Para iniciar o broker e o worker de notificações separadamente:
+```bash
+docker compose up -d rabbitmq
+uv run notifications-worker
+```
+
+O fluxo de notificações usa as variáveis `RABBITMQ_HOST`, `RABBITMQ_PORT`,
+`RABBITMQ_USER`, `RABBITMQ_PASSWORD`, `RABBITMQ_VHOST`, `RABBITMQ_EXCHANGE`,
+`RABBITMQ_ROUTING_KEY`, `RABBITMQ_QUEUE`, `RABBITMQ_DLX`, `RABBITMQ_DLQ`,
+`RABBITMQ_MAX_ATTEMPTS`, `RABBITMQ_RETRY_DELAY_SECONDS` e
+`RABBITMQ_BACKOFF_FACTOR`, documentadas em `.env.example`. As tasks Celery
+continuam usando Redis.
+
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
 
 ## Testes

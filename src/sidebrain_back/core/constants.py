@@ -34,6 +34,20 @@ class _Env(BaseSettings):
     REDIS_PORT: int
     REDIS_AUTH_DB: Annotated[Literal[2], BeforeValidator(int)] = 2
 
+    RABBITMQ_HOST: str = "127.0.0.1"
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str = "guest"
+    RABBITMQ_PASSWORD: str = "guest"
+    RABBITMQ_VHOST: str = "/"
+    RABBITMQ_EXCHANGE: str = "notification.exchange"
+    RABBITMQ_ROUTING_KEY: str = "notification"
+    RABBITMQ_QUEUE: str = "notification.queue"
+    RABBITMQ_DLX: str = "notification.dlx"
+    RABBITMQ_DLQ: str = "notification.dead-letter.queue"
+    RABBITMQ_MAX_ATTEMPTS: int = 5
+    RABBITMQ_RETRY_DELAY_SECONDS: float = 1.0
+    RABBITMQ_BACKOFF_FACTOR: float = 2.0
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: Literal["HS256"] = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: Annotated[
@@ -64,6 +78,47 @@ class _Env(BaseSettings):
                 "JWT_SECRET_KEY deve ter ao menos 32 bytes, diversidade "
                 "de caracteres e não pode ser um placeholder."
             )
+        return value
+
+    @field_validator(
+        "RABBITMQ_HOST",
+        "RABBITMQ_USER",
+        "RABBITMQ_PASSWORD",
+        "RABBITMQ_VHOST",
+        "RABBITMQ_EXCHANGE",
+        "RABBITMQ_ROUTING_KEY",
+        "RABBITMQ_QUEUE",
+        "RABBITMQ_DLX",
+        "RABBITMQ_DLQ",
+    )
+    @classmethod
+    def validate_rabbitmq_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("configuração RabbitMQ não pode ser vazia")
+        return value
+
+    @field_validator("RABBITMQ_PORT")
+    @classmethod
+    def validate_rabbitmq_port(cls, value: int) -> int:
+        if not 1 <= value <= 65535:
+            raise ValueError("RABBITMQ_PORT deve estar entre 1 e 65535")
+        return value
+
+    @field_validator("RABBITMQ_MAX_ATTEMPTS")
+    @classmethod
+    def validate_rabbitmq_attempts(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("RABBITMQ_MAX_ATTEMPTS deve ser positivo")
+        return value
+
+    @field_validator(
+        "RABBITMQ_RETRY_DELAY_SECONDS",
+        "RABBITMQ_BACKOFF_FACTOR",
+    )
+    @classmethod
+    def validate_rabbitmq_backoff(cls, value: float) -> float:
+        if value < 0:
+            raise ValueError("parâmetros de backoff não podem ser negativos")
         return value
 
     OPENAI_API_KEY: str | None = None
