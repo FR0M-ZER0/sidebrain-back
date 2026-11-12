@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 import httpx
 import pytest
@@ -68,7 +69,8 @@ async def _authenticated_http_client(
 async def _assert_xp_consistency(
     client: httpx.AsyncClient,
     db_session,
-    user: User,
+    user_id: UUID,
+    headers: dict[str, str],
     *,
     expected_xp: int,
     expected_missions: int,
@@ -76,7 +78,6 @@ async def _assert_xp_consistency(
 ) -> int:
     """Valida igualdade entre /users/me, /rankings/me e /rankings."""
     db_session.expire_all()
-    headers = _auth_headers(user)
 
     profile_resp = await client.get("/api/v1/users/me", headers=headers)
     assert profile_resp.status_code == 200
@@ -87,7 +88,7 @@ async def _assert_xp_consistency(
     my_rank_resp = await client.get("/api/v1/rankings/me", headers=headers)
     assert my_rank_resp.status_code == 200
     my_rank = my_rank_resp.json()
-    assert my_rank["userId"] == str(user.usr_id)
+    assert my_rank["userId"] == str(user_id)
     assert my_rank["xp"] == expected_xp
     assert my_rank["missionsCompleted"] == expected_missions
 
@@ -97,7 +98,7 @@ async def _assert_xp_consistency(
     )
     assert list_resp.status_code == 200
     entries = list_resp.json()["data"]
-    matching = [item for item in entries if item["userId"] == str(user.usr_id)]
+    matching = [item for item in entries if item["userId"] == str(user_id)]
     assert len(matching) == 1
     assert matching[0] == my_rank
 
@@ -145,6 +146,9 @@ async def test_quiz_completion_updates_profile_and_ranking_immediately(
         other_mission,
         status=MissionProgressStatusEnum.DONE,
     )
+    user_a_id, headers_a = user_a.usr_id, _auth_headers(user_a)
+    user_b_id, headers_b = user_b.usr_id, _auth_headers(user_b)
+    quiz_id = quiz.qui_id
     await db_session.commit()
 
     async with _authenticated_http_client(
@@ -154,7 +158,8 @@ async def test_quiz_completion_updates_profile_and_ranking_immediately(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_b,
+            user_b_id,
+            headers_b,
             expected_xp=100,
             expected_missions=1,
             expected_position=1,
@@ -162,16 +167,17 @@ async def test_quiz_completion_updates_profile_and_ranking_immediately(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_a,
+            user_a_id,
+            headers_a,
             expected_xp=0,
             expected_missions=0,
             expected_position=2,
         )
 
         submit_resp = await client.post(
-            f"/api/v1/quizzes/{quiz.qui_id}/answers",
+            f"/api/v1/quizzes/{quiz_id}/answers",
             json={"text": "Resposta correta"},
-            headers=_auth_headers(user_a),
+            headers=headers_a,
         )
         assert submit_resp.status_code == 201
 
@@ -179,7 +185,8 @@ async def test_quiz_completion_updates_profile_and_ranking_immediately(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_a,
+            user_a_id,
+            headers_a,
             expected_xp=150,
             expected_missions=1,
             expected_position=1,
@@ -187,7 +194,8 @@ async def test_quiz_completion_updates_profile_and_ranking_immediately(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_b,
+            user_b_id,
+            headers_b,
             expected_xp=100,
             expected_missions=1,
             expected_position=2,
@@ -217,22 +225,25 @@ async def test_partial_submission_and_precommit_failure_preserve_xp(
         criteria="number_of_lessons_completed",
         criteria_value=2,
     )
+    user_id, headers = user.usr_id, _auth_headers(user)
+    quiz_1_id, quiz_2_id = quiz_1.qui_id, quiz_2.qui_id
     await db_session.commit()
 
     async with _authenticated_http_client(
         db_session, test_app, monkeypatch
     ) as client:
         partial_resp = await client.post(
-            f"/api/v1/quizzes/{quiz_1.qui_id}/answers",
+            f"/api/v1/quizzes/{quiz_1_id}/answers",
             json={"text": "Parcial"},
-            headers=_auth_headers(user),
+            headers=headers,
         )
         assert partial_resp.status_code == 201
 
         initial_pos = await _assert_xp_consistency(
             client,
             db_session,
-            user,
+            user_id,
+            headers,
             expected_xp=0,
             expected_missions=0,
         )
@@ -246,16 +257,17 @@ async def test_partial_submission_and_precommit_failure_preserve_xp(
             fail_recalculation,
         )
         failed_resp = await client.post(
-            f"/api/v1/quizzes/{quiz_2.qui_id}/answers",
+            f"/api/v1/quizzes/{quiz_2_id}/answers",
             json={"text": "Falha"},
-            headers=_auth_headers(user),
+            headers=headers,
         )
         assert failed_resp.status_code == 500
 
         await _assert_xp_consistency(
             client,
             db_session,
-            user,
+            user_id,
+            headers,
             expected_xp=0,
             expected_missions=0,
             expected_position=initial_pos,
@@ -297,6 +309,8 @@ async def test_profile_and_ranking_share_identical_xp_and_completed_count(
     await mission_progress_factory(
         user_zero, m_in_progress, status=MissionProgressStatusEnum.IN_PROGRESS
     )
+    multi_id, headers_multi = user_multi.usr_id, _auth_headers(user_multi)
+    zero_id, headers_zero = user_zero.usr_id, _auth_headers(user_zero)
     await db_session.commit()
 
     async with _authenticated_http_client(
@@ -305,7 +319,8 @@ async def test_profile_and_ranking_share_identical_xp_and_completed_count(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_multi,
+            multi_id,
+            headers_multi,
             expected_xp=200,
             expected_missions=2,
             expected_position=1,
@@ -313,7 +328,8 @@ async def test_profile_and_ranking_share_identical_xp_and_completed_count(
         await _assert_xp_consistency(
             client,
             db_session,
-            user_zero,
+            zero_id,
+            headers_zero,
             expected_xp=0,
             expected_missions=0,
             expected_position=2,
@@ -322,7 +338,7 @@ async def test_profile_and_ranking_share_identical_xp_and_completed_count(
         update_resp = await client.put(
             "/api/v1/users/me",
             json={"name": "Multi Atualizado"},
-            headers=_auth_headers(user_multi),
+            headers=headers_multi,
         )
         assert update_resp.status_code == 200
         updated_profile = update_resp.json()
@@ -350,14 +366,15 @@ async def test_recalculation_and_resubmission_are_idempotent(
         criteria="number_of_lessons_completed",
         criteria_value=1,
     )
+    user_id, headers = user.usr_id, _auth_headers(user)
+    quiz_id, step_id = quiz.qui_id, hierarchy.step.stp_id
     await db_session.commit()
 
     async with _authenticated_http_client(
         db_session, test_app, monkeypatch
     ) as client:
-        headers = _auth_headers(user)
         first_submit = await client.post(
-            f"/api/v1/quizzes/{quiz.qui_id}/answers",
+            f"/api/v1/quizzes/{quiz_id}/answers",
             json={"text": "Correta"},
             headers=headers,
         )
@@ -366,22 +383,20 @@ async def test_recalculation_and_resubmission_are_idempotent(
         pos = await _assert_xp_consistency(
             client,
             db_session,
-            user,
+            user_id,
+            headers,
             expected_xp=150,
             expected_missions=1,
         )
 
-        recalc_url = (
-            f"/api/v1/steps/{hierarchy.step.stp_id}"
-            "/missions/recalculate-progress"
-        )
+        recalc_url = f"/api/v1/steps/{step_id}/missions/recalculate-progress"
         recalc_first = await client.post(recalc_url, headers=headers)
         assert recalc_first.status_code == 204
         recalc_second = await client.post(recalc_url, headers=headers)
         assert recalc_second.status_code == 204
 
         repeat_submit = await client.post(
-            f"/api/v1/quizzes/{quiz.qui_id}/answers",
+            f"/api/v1/quizzes/{quiz_id}/answers",
             json={"text": "Repetida"},
             headers=headers,
         )
@@ -390,7 +405,8 @@ async def test_recalculation_and_resubmission_are_idempotent(
         await _assert_xp_consistency(
             client,
             db_session,
-            user,
+            user_id,
+            headers,
             expected_xp=150,
             expected_missions=1,
             expected_position=pos,
@@ -438,20 +454,22 @@ async def test_mission_soft_delete_excludes_xp_while_parent_delete_keeps_xp(
     await mission_progress_factory(
         user_c, mission_preserved, status=MissionProgressStatusEnum.DONE
     )
+    user_a_id, headers_a = user_a.usr_id, _auth_headers(user_a)
+    user_c_id, headers_c = user_c.usr_id, _auth_headers(user_c)
+    mission_1_id, mission_2_id = mission_1.msn_id, mission_2.msn_id
+    track_c_id, step_c_id = hierarchy_2.track.trk_id, hierarchy_2.step.stp_id
     await db_session.commit()
 
     async with _authenticated_http_client(
         db_session, test_app, monkeypatch
     ) as client:
-        headers_a = _auth_headers(user_a)
-        headers_c = _auth_headers(user_c)
-
         # Inicial: user_a (350 XP, pos 1), user_c (180 XP, pos 2),
         # user_b (120 XP, pos 3).
         await _assert_xp_consistency(
             client,
             db_session,
-            user_a,
+            user_a_id,
+            headers_a,
             expected_xp=350,
             expected_missions=2,
             expected_position=1,
@@ -459,14 +477,15 @@ async def test_mission_soft_delete_excludes_xp_while_parent_delete_keeps_xp(
 
         # Excluir mission_2 (250 XP) reduz user_a imediatamente para 100 XP.
         del_m2 = await client.delete(
-            f"/api/v1/missions/{mission_2.msn_id}",
+            f"/api/v1/missions/{mission_2_id}",
             headers=headers_a,
         )
         assert del_m2.status_code == 204
         await _assert_xp_consistency(
             client,
             db_session,
-            user_a,
+            user_a_id,
+            headers_a,
             expected_xp=100,
             expected_missions=1,
             expected_position=3,
@@ -474,14 +493,15 @@ async def test_mission_soft_delete_excludes_xp_while_parent_delete_keeps_xp(
 
         # Excluir mission_1 zera o XP de user_a mantendo-o ativo no ranking.
         del_m1 = await client.delete(
-            f"/api/v1/missions/{mission_1.msn_id}",
+            f"/api/v1/missions/{mission_1_id}",
             headers=headers_a,
         )
         assert del_m1.status_code == 204
         await _assert_xp_consistency(
             client,
             db_session,
-            user_a,
+            user_a_id,
+            headers_a,
             expected_xp=0,
             expected_missions=0,
             expected_position=3,
@@ -489,29 +509,30 @@ async def test_mission_soft_delete_excludes_xp_while_parent_delete_keeps_xp(
 
         # Excluir apenas Step e Track pai de mission_preserved mantém 180 XP.
         del_step = await client.delete(
-            f"/api/v1/tracks/{hierarchy_2.track.trk_id}"
-            f"/steps/{hierarchy_2.step.stp_id}",
+            f"/api/v1/tracks/{track_c_id}/steps/{step_c_id}",
             headers=headers_c,
         )
         assert del_step.status_code == 204
         await _assert_xp_consistency(
             client,
             db_session,
-            user_c,
+            user_c_id,
+            headers_c,
             expected_xp=180,
             expected_missions=1,
             expected_position=1,
         )
 
         del_track = await client.delete(
-            f"/api/v1/tracks/{hierarchy_2.track.trk_id}",
+            f"/api/v1/tracks/{track_c_id}",
             headers=headers_c,
         )
         assert del_track.status_code == 204
         await _assert_xp_consistency(
             client,
             db_session,
-            user_c,
+            user_c_id,
+            headers_c,
             expected_xp=180,
             expected_missions=1,
             expected_position=1,
