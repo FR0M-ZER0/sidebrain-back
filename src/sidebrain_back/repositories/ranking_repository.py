@@ -30,6 +30,12 @@ class UserXpSummary:
 
 
 class RankingRepository:
+    """Fonte única de verdade síncrona para XP e ranking sob demanda.
+
+    Calcula XP e missões concluídas diretamente do estado persistido, sem
+    filas assíncronas, contadores em ``User`` ou materialized views.
+    """
+
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -138,6 +144,13 @@ class RankingRepository:
 
     @staticmethod
     def _ranking_summary():
+        """Agrega XP e missões concluídas por usuário ativo.
+
+        Fórmula: ``xp = COALESCE(SUM(msn_xp_reward), 0)`` e
+        ``missions_completed = COUNT(msn_id)`` para ``usr_is_deleted=False``,
+        ``mpg_status=DONE`` e ``msn_is_deleted=False`` (preserva XP quando
+        apenas ``Step`` ou ``Track`` pai sofre exclusão lógica).
+        """
         xp_expr = func.coalesce(func.sum(Mission.msn_xp_reward), 0).label("xp")
         missions_expr = func.count(Mission.msn_id).label("missions_completed")
         return (

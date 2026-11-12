@@ -151,6 +151,11 @@ class QuizService:
         quiz_id: UUID,
         payload: QuizAnswerCreateRequest,
     ) -> AnswerResponse:
+        """Persiste resposta e progresso de missão na mesma transação.
+
+        Executa avaliação, atualização idempotente das missões e commit antes
+        de responder; XP e ranking refletem o commit sem fila nem worker.
+        """
         user_id = user.usr_id
         try:
             quiz = await self._require_quiz(user_id, quiz_id)
