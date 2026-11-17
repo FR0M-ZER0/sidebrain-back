@@ -19,10 +19,12 @@ from sidebrain_back.schemas.generation_schema import (
     GenerationInput,
     GenerationSuccess,
 )
-from sidebrain_back.services.ai_memory_service import AIMemoryService
 from sidebrain_back.services.generation_errors import (
     GenerationPersistenceError,
     GenerationValidationError,
+)
+from sidebrain_back.services.generation_memory_service import (
+    GenerationMemoryService,
 )
 
 
@@ -108,93 +110,30 @@ class GenerationService:
             return GenerationSuccess(
                 request_id=payload.request_id, track_id=existing.trk_id
             )
-        cache = None
-        cache_owner = str(payload.request_id)
-        cache_owner_acquired = False
+        cache_id = None
         if self.cache_repository and Env.AI_MEMORY_ENABLED:
-            try:
-                context = AIMemoryService.track_context(
-                    payload.goal,
-                    payload.topic,
-                    knowledge_level=(
+            generated, source, cache_id = await GenerationMemoryService(
+                self.db, self.cache_repository
+            ).generate(
+                content_type="track",
+                context={
+                    "goal": payload.goal,
+                    "topic": payload.topic,
+                    "knowledge_level": (
                         payload.knowledge_level.value
-                        if payload.knowledge_level
-                        else None
+                        if payload.knowledge_level else None
                     ),
-                    assessment_answers=[
+                    "assessment_answers": [
                         answer.model_dump(mode="json")
                         for answer in payload.assessment_answers or []
                     ],
-                )
-                fingerprint, envelope = AIMemoryService.fingerprint(
-                    content_type="track",
-                    canonical_context=context,
-                    provider="groq",
-                    model=Env.GROQ_MODEL,
-                )
-                cache = await self.cache_repository.get_ready(
-                    fingerprint, "track"
-                )
-                if cache is not None and cache.payload is not None:
-                    generated = GeneratedTrack.model_validate(cache.payload)
-                    source = "cache"
-                else:
-                    (
-                        cache,
-                        cache_owner_acquired,
-                    ) = await self.cache_repository.reserve(
-                        fingerprint=fingerprint,
-                        content_type="track",
-                        fingerprint_version=envelope["fingerprint_version"],
-                        prompt_version=envelope["prompt_version"],
-                        provider=envelope["provider"],
-                        model=envelope["model"],
-                        canonical_context=envelope["canonical_context"],
-                        lease_owner=cache_owner,
-                        lease_seconds=Env.AI_MEMORY_LEASE_SECONDS,
-                    )
-                    await self.db.commit()
-                    if not cache_owner_acquired:
-                        cache = await self.cache_repository.wait_for_ready(
-                            fingerprint,
-                            "track",
-                            timeout_seconds=Env.AI_MEMORY_LEASE_SECONDS,
-                        )
-                        if cache is not None and cache.payload is not None:
-                            generated = GeneratedTrack.model_validate(
-                                cache.payload
-                            )
-                            source = "cache"
-                        else:
-                            (
-                                cache,
-                                cache_owner_acquired,
-                            ) = await self.cache_repository.reserve(
-                                fingerprint=fingerprint,
-                                content_type="track",
-                                fingerprint_version=envelope[
-                                    "fingerprint_version"
-                                ],
-                                prompt_version=envelope["prompt_version"],
-                                provider=envelope["provider"],
-                                model=envelope["model"],
-                                canonical_context=envelope[
-                                    "canonical_context"
-                                ],
-                                lease_owner=cache_owner,
-                                lease_seconds=Env.AI_MEMORY_LEASE_SECONDS,
-                            )
-                            await self.db.commit()
-                    if cache_owner_acquired:
-                        generated = self.generate_with_ai(payload)
-                        source = "ai"
-            except (ValueError, TypeError, IntegrityError):
-                await self.db.rollback()
-                cache = None
-                cache_owner_acquired = False
-                generated = self.generate_with_ai(payload)
-                source = "ai"
+                },
+                topic_field="topic",
+                schema=GeneratedTrack,
+                generator=lambda: self.generate_with_ai(payload),
+            )
         else:
+            await self.db.rollback()
             generated = self.generate_with_ai(payload)
             source = "ai"
         try:
@@ -204,14 +143,6 @@ class GenerationService:
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
                 )
-                if (
-                    cache is not None
-                    and cache_owner_acquired
-                    and source == "ai"
-                ):
-                    await self.cache_repository.publish_ready(
-                        cache, generated.model_dump(mode="json")
-                    )
                 if self.request_repository:
                     await self.request_repository.mark_succeeded(
                         payload.request_id, track.trk_id
@@ -219,7 +150,7 @@ class GenerationService:
                     await self.request_repository.set_source(
                         payload.request_id,
                         source=source,
-                        cache_id=cache.id if cache is not None else None,
+                        cache_id=cache_id,
                     )
         except IntegrityError:
             await self.db.rollback()

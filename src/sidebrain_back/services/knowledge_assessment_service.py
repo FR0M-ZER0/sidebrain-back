@@ -12,6 +12,9 @@ from sidebrain_back.enums.knowledge_assessment_status_enum import (
     KnowledgeAssessmentStatusEnum,
 )
 from sidebrain_back.models.user_model import User
+from sidebrain_back.repositories.generation_cache_repository import (
+    GenerationCacheRepository,
+)
 from sidebrain_back.repositories.knowledge_assessment_repository import (
     KnowledgeAssessmentRepository,
     get_knowledge_assessment_repository,
@@ -27,6 +30,9 @@ from sidebrain_back.schemas.knowledge_assessment_schema import (
     level_for_score,
 )
 from sidebrain_back.services.ai_memory_service import AIMemoryService
+from sidebrain_back.services.generation_memory_service import (
+    GenerationMemoryService,
+)
 from sidebrain_back.services.knowledge_assessment_generator import (
     KnowledgeAssessmentGenerator,
 )
@@ -40,11 +46,13 @@ class KnowledgeAssessmentService:
         repository: KnowledgeAssessmentRepository | None = None,
         db: AsyncSession | None = None,
         publisher: object | None = None,
+        cache_repository: GenerationCacheRepository | None = None,
     ) -> None:
         self.generator = generator
         self.repository = repository
         self.db = db
         self.publisher = publisher
+        self.cache_repository = cache_repository
 
     def prepare_assessment(
         self, context: AssessmentContext
@@ -289,13 +297,27 @@ class KnowledgeAssessmentService:
 
         if self.generator is None:
             raise RuntimeError("Generator não configurado.")
-        generated = self.generator.generate(subject, objective)
-        payload = GeneratedAssessmentPayload.model_validate(generated)
+        if self.cache_repository is not None:
+            payload, source, _ = await GenerationMemoryService(
+                db, self.cache_repository
+            ).generate(
+                content_type="assessment",
+                context={"subject": subject, "objective": objective},
+                topic_field="subject",
+                schema=GeneratedAssessmentPayload,
+                generator=lambda: self.generator.generate(subject, objective),
+            )
+        else:
+            await db.rollback()
+            payload = GeneratedAssessmentPayload.model_validate(
+                self.generator.generate(subject, objective)
+            )
+            source = "ai"
         locked = await repository.get_for_update(assessment_id, user_id)
         if locked is None:
             raise ValueError("Avaliação pendente não encontrada.")
-        await repository.mark_generated(locked, payload)
-        locked.source = "ai"
+        if await repository.mark_generated(locked, payload):
+            locked.source = source
         await db.commit()
         return locked.kas_status
 

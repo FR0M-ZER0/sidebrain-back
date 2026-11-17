@@ -104,6 +104,7 @@ class GenerationCacheRepository:
             cache = await self.get_ready(fingerprint, content_type)
             if cache is not None:
                 return cache
+            await self.db.rollback()
             await asyncio.sleep(poll_interval_seconds)
         return None
 
