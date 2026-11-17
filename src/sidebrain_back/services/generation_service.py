@@ -121,7 +121,8 @@ class GenerationService:
                     "topic": payload.topic,
                     "knowledge_level": (
                         payload.knowledge_level.value
-                        if payload.knowledge_level else None
+                        if payload.knowledge_level
+                        else None
                     ),
                     "assessment_answers": [
                         answer.model_dump(mode="json")
