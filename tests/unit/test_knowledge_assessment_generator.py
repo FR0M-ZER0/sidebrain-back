@@ -108,6 +108,7 @@ def test_v2_prompt_delegates_only_questions_and_private_answer_key():
     assert payload.model_dump(mode="json") == _provider_payload()
     request = generator.client.chat.completions
     prompt = request.last_kwargs["messages"][1]["content"]
+    assert "temperature" not in request.last_kwargs
     assert "correct_alternative_id" in prompt
     assert "assessment_id" not in prompt
     assert "'status'" not in prompt

@@ -9,14 +9,24 @@ from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
 from sidebrain_back.models.answer_model import Answer
 from sidebrain_back.models.quiz_model import Quiz
+from sidebrain_back.models.step_model import Step
 from sidebrain_back.models.user_model import User
 from sidebrain_back.repositories.quiz_repository import QuizRepository
+from sidebrain_back.repositories.step_summary_repository import (
+    StepSummaryRepository,
+)
 from sidebrain_back.repositories.track_repository import TrackRepository
 from sidebrain_back.schemas.quiz_schema import (
+    QuizAnswerCreateRequest,
     QuizCreateRequest,
+    QuizEvaluationResult,
     QuizUpdateRequest,
 )
 from sidebrain_back.services.quiz_service import QuizService
+from sidebrain_back.services.step_summary_generator_service import (
+    StepSummaryGeneratorService,
+)
+from sidebrain_back.services.step_summary_service import StepSummaryService
 
 
 @pytest.mark.anyio
@@ -142,6 +152,123 @@ async def test_lesson_is_completed_after_user_answers_every_quiz(
 
     assert completed_step_id == hierarchy.step.stp_id
     assert hierarchy.lesson.lsn_status is LessonStatusEnum.DONE
+
+
+@pytest.mark.anyio
+async def test_submit_answer_persists_evaluation_reason(
+    db_session,
+    learning_hierarchy_factory,
+    quiz_factory,
+):
+    hierarchy = await learning_hierarchy_factory()
+    quiz = await quiz_factory(hierarchy.lesson)
+    expected_question = quiz.qui_question
+    step_id = hierarchy.step.stp_id
+    await db_session.commit()
+    reason = "A resposta explica corretamente o conceito pedido."
+
+    class Evaluator:
+        def evaluate(self, question, answer):
+            assert question == expected_question
+            assert answer == "A named reference to a value"
+            return QuizEvaluationResult(
+                rate=AnswerRateEnum.PERFECT,
+                reason=reason,
+            )
+
+    service = QuizService(
+        QuizRepository(db_session),
+        db_session,
+        evaluator=Evaluator(),
+        step_summary_service=StepSummaryService(
+            StepSummaryRepository(db_session)
+        ),
+    )
+
+    response = await service.submit_quiz_answer(
+        hierarchy.user,
+        quiz.qui_id,
+        QuizAnswerCreateRequest(text="A named reference to a value"),
+    )
+    stored = await db_session.get(Answer, response.id)
+    stored_step = await db_session.get(Step, step_id)
+
+    assert stored is not None
+    assert stored.ans_rate is AnswerRateEnum.PERFECT
+    assert stored.ans_reason == reason
+    assert response.reason == reason
+    assert stored_step is not None
+    assert stored_step.stp_summary == (
+        StepSummaryGeneratorService().generate_step_summary(
+            [(reason, AnswerRateEnum.PERFECT)]
+        )
+    )
+
+
+@pytest.mark.anyio
+async def test_step_summary_answers_are_scoped_and_stably_ordered(
+    db_session,
+    learning_hierarchy_factory,
+    quiz_factory,
+    answer_factory,
+):
+    hierarchy = await learning_hierarchy_factory()
+    first_quiz = await quiz_factory(hierarchy.lesson)
+    second_quiz = await quiz_factory(hierarchy.lesson)
+    deleted_quiz = await quiz_factory(hierarchy.lesson, deleted=True)
+    other_user = User(
+        usr_id=uuid4(),
+        usr_email=f"{uuid4()}@example.com",
+        usr_name="Other",
+        usr_password_hash="hash",
+        usr_is_deleted=False,
+    )
+    db_session.add(other_user)
+    await db_session.flush()
+    created_at = datetime.now(UTC).replace(tzinfo=None)
+    await answer_factory(
+        second_quiz,
+        hierarchy.user,
+        rate=AnswerRateEnum.GOOD,
+        reason="Segundo motivo.",
+        created_at=created_at + timedelta(seconds=1),
+    )
+    await answer_factory(
+        first_quiz,
+        hierarchy.user,
+        reason="Primeiro motivo.",
+        created_at=created_at,
+    )
+    await answer_factory(
+        first_quiz,
+        other_user,
+        reason="Motivo de outro usuário.",
+    )
+    await answer_factory(
+        deleted_quiz,
+        hierarchy.user,
+        reason="Motivo de quiz excluído.",
+    )
+    repository = StepSummaryRepository(db_session)
+
+    assert (
+        await repository.get_step_id_by_quiz_id(
+            hierarchy.user.usr_id, first_quiz.qui_id
+        )
+        == hierarchy.step.stp_id
+    )
+    assert (
+        await repository.get_step_id_by_quiz_id(
+            other_user.usr_id, first_quiz.qui_id
+        )
+        is None
+    )
+    assert await repository.list_answers_by_step_id(
+        hierarchy.user.usr_id, hierarchy.step.stp_id
+    ) == [
+        ("Primeiro motivo.", AnswerRateEnum.PERFECT),
+        ("Segundo motivo.", AnswerRateEnum.GOOD),
+    ]
 
 
 @pytest.mark.anyio

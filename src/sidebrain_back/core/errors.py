@@ -14,12 +14,14 @@ class ProblemDetailError(Exception):
         detail: str,
         errors: list[dict[str, Any]] | None = None,
         error_code: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.status_code = status_code
         self.title = title
         self.detail = detail
         self.errors = errors
         self.error_code = error_code
+        self.headers = headers
 
 
 def _problem(
@@ -28,6 +30,7 @@ def _problem(
     detail: str,
     errors: list[dict[str, Any]] | None = None,
     error_code: str | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     body: dict[str, Any] = {
         "type": f"https://sidebrain.api/errors/{status_code}",
@@ -39,7 +42,12 @@ def _problem(
         body["errors"] = errors
     if error_code:
         body["error_code"] = error_code
-    return JSONResponse(status_code=status_code, content=body)
+    return JSONResponse(
+        status_code=status_code,
+        content=body,
+        headers=headers,
+        media_type="application/problem+json",
+    )
 
 
 def register_error_handlers(application: FastAPI) -> None:
@@ -53,6 +61,7 @@ def register_error_handlers(application: FastAPI) -> None:
             error.detail,
             error.errors,
             error.error_code,
+            error.headers,
         )
 
     @application.exception_handler(RequestValidationError)
@@ -77,7 +86,12 @@ def register_error_handlers(application: FastAPI) -> None:
         title = (
             "Erro de autenticação" if error.status_code == 401 else "Erro HTTP"
         )
-        return _problem(error.status_code, title, str(error.detail))
+        return _problem(
+            error.status_code,
+            title,
+            str(error.detail),
+            headers=error.headers,
+        )
 
     @application.exception_handler(SQLAlchemyError)
     async def database_handler(

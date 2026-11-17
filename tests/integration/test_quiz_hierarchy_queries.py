@@ -5,8 +5,8 @@ import httpx
 import pytest
 from sqlalchemy import event
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.core.database import engine, get_db
+from sidebrain_back.routers.v1.auth_router import get_current_user
 
 SC005_WARMUP_REQUESTS = 5
 SC005_SAMPLE_REQUESTS = 100

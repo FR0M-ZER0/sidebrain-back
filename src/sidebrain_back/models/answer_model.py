@@ -33,6 +33,7 @@ class Answer(Base):
         nullable=False,
     )
     ans_text: Mapped[str] = mapped_column(Text, nullable=False)
+    ans_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     ans_rate: Mapped[AnswerRateEnum] = mapped_column(
         ENUM(
             AnswerRateEnum,

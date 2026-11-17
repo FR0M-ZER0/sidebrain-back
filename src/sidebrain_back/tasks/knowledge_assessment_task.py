@@ -5,7 +5,7 @@ import logging
 from uuid import UUID
 
 from celery import Task
-from groq import APIConnectionError, APITimeoutError, RateLimitError
+from openai import APIConnectionError, APITimeoutError, RateLimitError
 
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.database import async_session, engine

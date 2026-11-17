@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from sidebrain_back.core.constants import Env
+from sidebrain_back.core.llm_client import get_llm_model
 from sidebrain_back.enums.generation_cache_enum import (
     GenerationCacheContentTypeEnum,
 )
@@ -62,7 +63,7 @@ class AIMemoryService:
         content_type: GenerationCacheContentTypeEnum | str,
         canonical_context: Mapping[str, Any],
         prompt_version: str | None = None,
-        provider: str = "groq",
+        provider: str | None = None,
         model: str | None = None,
         fingerprint_version: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
@@ -72,8 +73,11 @@ class AIMemoryService:
             "content_type": str(content_type),
             "canonical_context": cls.canonicalize_json(canonical_context),
             "prompt_version": prompt_version or Env.GROQ_PROMPT_VERSION,
-            "provider": provider,
-            "model": model or Env.GROQ_MODEL,
+            "provider": provider
+            or (
+                "openai" if (Env.OPENAI_CHAT_API_KEY or "").strip() else "groq"
+            ),
+            "model": model or get_llm_model(),
         }
         serialized = json.dumps(
             envelope, ensure_ascii=True, sort_keys=True, separators=(",", ":")

@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: SideBrain Mission Generation API
+  version: 1.0.0
+  description: Solicitação assíncrona e consulta do estado de geração de missões.
+servers:
+  - url: /
+paths:
+  /v1/steps/{step_id}/missions/generate:
+    post:
+      operationId: requestStepMissionGeneration
+      summary: Solicitar geração de missões para um Step
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: step_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MissionGenerateRequest"
+      responses:
+        "202":
+          description: Geração enfileirada ou já pendente/em execução.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionGenerateAccepted"
+        "200":
+          description: O Step já possui missões ativas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionGenerateSkipped"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "503":
+          description: Não foi possível publicar a tarefa.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+  /v1/missions/generations/{task_id}:
+    get:
+      operationId: getMissionGenerationStatus
+      summary: Consultar o estado de uma geração de missões
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Estado consultável da geração pertencente ao usuário.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MissionGenerationStatus"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          description: Task inexistente ou não pertencente ao usuário.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Problem:
+      description: Erro público no formato Problem Details.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+  schemas:
+    MissionGenerateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        count:
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 3
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, very_hard]
+        focus:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Texto aparado antes da validação.
+    MissionGenerateAccepted:
+      type: object
+      additionalProperties: false
+      required: [status, stepId, taskId]
+      properties:
+        status:
+          type: string
+          const: accepted
+        stepId:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          description: ID estável da task para consultar o estado.
+    MissionGenerateSkipped:
+      type: object
+      additionalProperties: false
+      required: [status, reason]
+      properties:
+        status:
+          type: string
+          const: skipped
+        reason:
+          type: string
+          const: missions_already_exist
+    MissionGenerationStatus:
+      type: object
+      additionalProperties: false
+      required: [taskId, stepId, status]
+      properties:
+        taskId:
+          type: string
+        stepId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, succeeded, failed]
+        errorCode:
+          type: string
+          description: Código de falha sanitizado; ausente salvo em falha.
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string

@@ -27,6 +27,7 @@ Response `201`:
   "id": "uuid",
   "level": "beginner",
   "title": "Introduction",
+  "summary": null,
   "status": "idle",
   "updated_at": "2026-09-19T12:00:00",
   "lessons": [],
@@ -52,6 +53,7 @@ Response `200`:
       "id": "uuid",
       "level": "beginner",
       "title": "Introduction",
+      "summary": null,
       "status": "idle",
       "updated_at": "2026-09-19T12:00:00",
       "lessons": [],
@@ -69,9 +71,41 @@ Response `200`:
 
 Retorna um Step ativo pertencente ao Track da URL, incluindo Lessons com
 `quizzes.answers`, `feedbacks`, `lesson_files` e Missions com `mission_progresses`
-do usuário atual. Filhos excluídos são omitidos.
-
+do usuário atual. Filhos excluídos são omitidos. `summary` contém a síntese dos
+motivos de resposta do usuário na etapa e é atualizado após cada resposta de quiz;
+antes da primeira resposta, seu valor é `null`.
 Response `200`: `StepResponse` conforme o POST.
+
+## POST `/tracks/{track_id}/steps/{step_id}/summary`
+
+Gera ou recalcula o resumo com os motivos das respostas do usuário aos quizzes
+ativos da etapa, persiste o resultado e o retorna. Não recebe body.
+
+Response `200`:
+
+```json
+{
+  "step_id": "uuid",
+  "summary": "Nesta etapa, você acertou 2 de 3 perguntas."
+}
+```
+
+## GET `/tracks/{track_id}/steps/{step_id}/summary`
+
+Retorna somente o resumo persistido da etapa. A etapa precisa estar ativa e
+pertencer ao Track ativo do usuário autenticado.
+
+Response `200`:
+
+```json
+{
+  "step_id": "uuid",
+  "summary": "Nesta etapa, você acertou 2 de 3 perguntas."
+}
+```
+
+Antes de a etapa ter respostas avaliadas, `summary` é `null`. Etapa inexistente,
+excluída ou fora da hierarquia do usuário retorna `404`.
 
 ## PUT `/tracks/{track_id}/steps/{step_id}`
 

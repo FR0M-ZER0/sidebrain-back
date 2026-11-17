@@ -43,9 +43,17 @@ class StepResponse(PublicModel):
     id: UUID = Field(alias="stp_id", serialization_alias="id")
     level: Any = Field(alias="stp_level", serialization_alias="level")
     title: str = Field(alias="stp_title", serialization_alias="title")
+    summary: str | None = Field(
+        default=None, alias="stp_summary", serialization_alias="summary"
+    )
     status: Any = Field(alias="stp_status", serialization_alias="status")
     updated_at: datetime = Field(
         alias="stp_updated_at", serialization_alias="updated_at"
     )
     lessons: list[LessonResponse] = Field(default_factory=list)
     missions: list[MissionResponse] = Field(default_factory=list)
+
+
+class StepSummaryResponse(PublicModel):
+    step_id: UUID
+    summary: str | None

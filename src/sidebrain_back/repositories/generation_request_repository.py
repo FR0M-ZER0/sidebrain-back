@@ -5,7 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
+from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.models.generation_request_model import GenerationRequest
+from sidebrain_back.models.step_model import Step
+from sidebrain_back.models.track_model import Track
 
 
 class GenerationRequestRepository:
@@ -18,6 +21,28 @@ class GenerationRequestRepository:
                 GenerationRequest.request_id == request_id
             )
         )
+
+    async def get_rag_context_by_step_id(
+        self, step_id: UUID
+    ) -> tuple[GenerationRequest, StepLevelEnum] | None:
+        result = await self.db.execute(
+            select(GenerationRequest, Step.stp_level)
+            .join(
+                Track,
+                Track.trk_generation_request_id
+                == GenerationRequest.request_id,
+            )
+            .join(Step, Step.stp_track_id == Track.trk_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_is_deleted.is_(False),
+            )
+        )
+        row = result.one_or_none()
+        if row is None:
+            return None
+        return row[0], row[1]
 
     async def get_by_request_and_user(
         self, request_id: UUID, user_id: UUID

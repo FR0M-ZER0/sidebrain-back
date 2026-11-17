@@ -94,6 +94,23 @@ class StepRepository:
         )
         return result.scalars().unique().one_or_none()
 
+    async def get_summary(
+        self, user_id: UUID, track_id: UUID, step_id: UUID
+    ) -> tuple[UUID, str | None] | None:
+        result = await self.db.execute(
+            select(Step.stp_id, Step.stp_summary)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Step.stp_id == step_id,
+                Step.stp_track_id == track_id,
+                Step.stp_is_deleted.is_(False),
+                Track.trk_user_id == user_id,
+                Track.trk_is_deleted.is_(False),
+            )
+        )
+        row = result.one_or_none()
+        return (row[0], row[1]) if row is not None else None
+
     async def update(
         self, step: Step, level: StepLevelEnum, title: str
     ) -> Step:

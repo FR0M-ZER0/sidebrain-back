@@ -11,6 +11,7 @@ from sidebrain_back.models.user_model import User
 from sidebrain_back.schemas.quiz_schema import (
     QuizAnswerCreateRequest,
     QuizCreateRequest,
+    QuizEvaluationResult,
     QuizUpdateRequest,
 )
 from sidebrain_back.services.quiz_service import QuizService
@@ -84,12 +85,13 @@ class ReadRepository:
         quiz.qui_updated_at = "same-instant"
         quiz.qui_deleted_at = quiz.qui_updated_at
 
-    async def create_answer(self, quiz_id, user_id, text, rate):
+    async def create_answer(self, quiz_id, user_id, text, rate, reason):
         return SimpleNamespace(
             ans_id=uuid4(),
             ans_user_id=user_id,
             ans_text=text,
             ans_rate=rate,
+            ans_reason=reason,
         )
 
     async def complete_lesson_if_quizzes_answered(self, quiz_id, user_id):
@@ -275,9 +277,25 @@ async def test_submit_answer_saves_text_and_self_rating():
         def evaluate(self, question, answer):
             assert question == quiz.qui_question
             assert answer == "My answer"
-            return AnswerRateEnum.PERFECT
+            return QuizEvaluationResult(
+                rate=AnswerRateEnum.PERFECT,
+                reason="A resposta está correta e completa.",
+            )
 
-    service = QuizService(ReadRepository(quiz=quiz), session, FakeEvaluator())
+    class StepSummarySpy:
+        def __init__(self):
+            self.calls = []
+
+        async def refresh_summary_for_quiz(self, user_id, quiz_id):
+            self.calls.append((user_id, quiz_id))
+
+    step_summary = StepSummarySpy()
+    service = QuizService(
+        ReadRepository(quiz=quiz),
+        session,
+        FakeEvaluator(),
+        step_summary_service=step_summary,
+    )
     user = SingleReadUser()
 
     response = await service.submit_quiz_answer(
@@ -289,8 +307,10 @@ async def test_submit_answer_saves_text_and_self_rating():
     assert response.text == "My answer"
     assert response.user_id == user.user_id
     assert response.rate == AnswerRateEnum.PERFECT
+    assert response.reason == "A resposta está correta e completa."
     assert session.committed is True
     assert user.read_count == 1
+    assert step_summary.calls == [(user.user_id, quiz.qui_id)]
 
 
 @pytest.mark.anyio
@@ -305,7 +325,10 @@ async def test_submit_answer_enqueues_next_step_when_lesson_finishes():
 
     class Evaluator:
         def evaluate(self, question, answer):
-            return AnswerRateEnum.GOOD
+            return QuizEvaluationResult(
+                rate=AnswerRateEnum.GOOD,
+                reason="A resposta está correta.",
+            )
 
     class TrackServiceSpy:
         def __init__(self):

@@ -1,3 +1,24 @@
+
+## Badges
+
+O catálogo global de badges está disponível para qualquer usuário autenticado:
+
+- `POST /api/v1/badges` cria um badge e normaliza o nome.
+- `GET /api/v1/badges` lista badges ativos com paginação.
+- `GET /api/v1/badges/{badge_id}` consulta um badge e somente o progresso do
+  usuário autenticado.
+- `PATCH /api/v1/badges/{badge_id}` atualiza campos editáveis parcialmente.
+- `DELETE /api/v1/badges/{badge_id}` realiza exclusão lógica e preserva o
+  histórico de progresso.
+
+Valide a feature com:
+
+```bash
+uv run pytest tests/unit/test_badge_schema.py tests/unit/test_badge_service.py tests/integration/test_badge_lifecycle.py tests/contract/test_badge_contract.py
+uv run ruff check .
+```
+
+Consulte o [contrato completo](./specs/SDB-87-badge-management/contracts/badges.md).
 # API do Sidebrain
 
 ## 🚀 Tecnologias
@@ -5,6 +26,7 @@
 - **FastAPI**: Framework web moderno e de alta performance para construção de APIs
 - **Pydantic**: Validação de dados e serialização via modelos tipados
 - **SQLAlchemy**: ORM para comunicação com o banco de dados
+- **pgvector**: Extensão do PostgreSQL para armazenamento e busca de vetores
 - **uv**: Gerenciador de pacotes e ambientes Python, rápido e moderno
 - **Uvicorn**: Servidor ASGI para execução da aplicação FastAPI
 - **Alembic**: Ferramenta de migração de banco de dados para SQLAlchemy
@@ -36,22 +58,69 @@ cp .env.example .env
 docker compose up -d
 ```
 
-5. Rode as migrações:
+5. Habilite a extensão `vector` no banco da aplicação (uma vez por banco):
+```bash
+docker compose exec postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS vector;"'
+```
+
+6. Rode as migrações:
 ```bash
 uv run alembic upgrade head
 ```
 
-6. Rode a API em ambiente dev usando:
+7. Rode a API em ambiente dev usando:
 ```bash
 uv run dev
 ```
 
-7. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
+8. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
 ```bash
 uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
 
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
+
+## Testes
+
+Os testes de integração usam um PostgreSQL exclusivo com a extensão `vector`.
+Configure as variáveis `TEST_POSTGRES_*` no `.env`, conforme `.env.example`.
+A porta padrão desse banco é `5434` e deve estar livre no host.
+
+```bash
+docker compose --profile test up -d --wait postgres_test
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+```
+
+O `conftest.py` usa essas configurações para conectar ao banco de testes,
+aplica as migrations e isola os dados da fixture `db_session` por rollback.
+As variáveis `POSTGRES_*` continuam configurando o banco da aplicação.
+
+Para executar apenas os testes unitários e de contrato:
+
+```bash
+uv run pytest tests/unit tests/contract
+```
+
+Os cinco testes de aceitação HTTP exigem uma API em execução e a variável
+`AUTH_CONSUMER_BASE_URL`; sem ela, são ignorados automaticamente.
+
+## Autenticação e perfil
+
+Configure `JWT_SECRET_KEY` no `.env`. Cadastre uma conta em
+`POST /api/v1/auth/register` ou entre em `POST /api/v1/auth/login`; ambas as
+operações retornam `accessToken`. Envie esse valor nos recursos protegidos:
+
+```text
+Authorization: Bearer <accessToken>
+```
+
+O token expira em 60 minutos. O perfil autenticado fica em
+`GET|PUT|DELETE /api/v1/users/me`, e a senha é alterada por
+`PUT /api/v1/users/me/password`. UUID puro não é uma credencial válida. Consulte
+[a orientação de migração](./docs/auth_migration.md) antes de atualizar um
+ambiente com consumidores existentes ou hashes legados.
 
 ## Monitoramento das tasks
 
@@ -88,6 +157,21 @@ uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 
 O gabarito, IDs do provider e detalhes de falha nunca aparecem na API. IDs
 inexistentes e avaliações de outra pessoa retornam o mesmo `404`.
+
+## Prompts para agentes
+
+Para usar o [prompt de criação de pull request](./docs/prompts/create-pr.md),
+é necessário ter o **GitHub CLI (`gh`) instalado** e autenticado com uma conta
+que tenha acesso ao repositório.
+
+Siga as [instruções oficiais de instalação](https://cli.github.com/) e, em
+seguida, verifique a instalação e faça a autenticação:
+
+```bash
+gh --version
+gh auth login
+gh auth status
+```
 
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)

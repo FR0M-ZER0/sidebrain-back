@@ -57,12 +57,14 @@ class QuizRepository:
         user_id: UUID,
         text: str,
         rate: AnswerRateEnum,
+        reason: str,
     ) -> Answer:
         answer = Answer(
             ans_question_id=quiz_id,
             ans_user_id=user_id,
             ans_text=text,
             ans_rate=rate,
+            ans_reason=reason,
         )
         self.db.add(answer)
         await self.db.flush()

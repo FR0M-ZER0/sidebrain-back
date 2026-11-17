@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, String, func, text
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,13 @@ if TYPE_CHECKING:
 
 class User(Base):
     __tablename__ = "user"
+    __table_args__ = (
+        Index(
+            "uq_user_usr_email_normalized",
+            text("lower(btrim(usr_email))"),
+            unique=True,
+        ),
+    )
 
     usr_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -34,6 +41,9 @@ class User(Base):
     )
     usr_name: Mapped[str] = mapped_column(String(255), nullable=False)
     usr_password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    usr_token_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
     usr_created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )

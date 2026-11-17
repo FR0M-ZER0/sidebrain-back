@@ -1,3 +1,7 @@
+# ruff: noqa: E402
+import os
+import subprocess
+import sys
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -5,21 +9,63 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi import FastAPI
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from main import app
-from sidebrain_back.core.auth import get_current_user
-from sidebrain_back.core.database import Base, engine, get_db
+
+class _TestPostgresSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="TEST_POSTGRES_",
+        extra="ignore",
+    )
+
+    HOST: str = "127.0.0.1"
+    PORT: int = 5434
+    USER: str = "sidebrain_test"
+    PASSWORD: str = "sidebrain_test"
+    DB: str = "sidebrain_test"
+
+
+_test_postgres = _TestPostgresSettings()
+
+_TEST_ENV = {
+    "HOST": "127.0.0.1",
+    "PORT": "8080",
+    "MODE": "test",
+    "POSTGRES_HOST": _test_postgres.HOST,
+    "POSTGRES_PORT": str(_test_postgres.PORT),
+    "POSTGRES_USER": _test_postgres.USER,
+    "POSTGRES_PASSWORD": _test_postgres.PASSWORD,
+    "POSTGRES_DB": _test_postgres.DB,
+    "REDIS_HOST": "127.0.0.1",
+    "REDIS_PORT": "6379",
+    "GROQ_API_KEY": "test-only-key",
+    "GROQ_CHAT_MODEL": "test-model",
+    "JWT_SECRET_KEY": "test-only-secret-key-at-least-32-bytes",
+}
+for _name, _value in _TEST_ENV.items():
+    os.environ[_name] = _value
+
+from main import app  # noqa: E402
+from sidebrain_back.core.database import engine, get_db
 from sidebrain_back.enums.answer_rate_enum import AnswerRateEnum
+from sidebrain_back.enums.badge_criteria_enum import BadgeCriteriaEnum
+from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
 from sidebrain_back.enums.knowledge_assessment_status_enum import (
     KnowledgeAssessmentStatusEnum,
 )
 from sidebrain_back.enums.lesson_file_type_enum import LessonFileTypeEnum
 from sidebrain_back.enums.lesson_status_enum import LessonStatusEnum
+from sidebrain_back.enums.mission_progress_status_enum import (
+    MissionProgressStatusEnum,
+)
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
 from sidebrain_back.models import (
     Answer,
+    Badge,
+    BadgeProgress,
     Feedback,
     KnowledgeAssessment,
     KnowledgeAssessmentAlternative,
@@ -27,11 +73,14 @@ from sidebrain_back.models import (
     KnowledgeAssessmentQuestion,
     Lesson,
     LessonFile,
+    Mission,
+    MissionProgress,
     Quiz,
     Step,
     Track,
     User,
 )
+from sidebrain_back.routers.v1.auth_router import get_current_user
 
 
 @dataclass
@@ -64,16 +113,78 @@ def authenticated_user() -> User:
 
 
 @pytest.fixture
+def badge_factory(db_session: AsyncSession):
+    async def create(
+        *,
+        name: str = "Primeira trilha",
+        description: str | None = "Conclua uma trilha.",
+        rarity: BadgeRarityEnum = BadgeRarityEnum.COMMON,
+        criteria: BadgeCriteriaEnum = BadgeCriteriaEnum.TRACKS_COMPLETED,
+        criteria_value: int = 1,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Badge:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        badge = Badge(
+            bdg_id=uuid4(),
+            bdg_name=name,
+            bdg_description=description,
+            bdg_rarity=rarity,
+            bdg_criteria=criteria,
+            bdg_criteria_value=criteria_value,
+            bdg_updated_at=now,
+            bdg_is_deleted=deleted,
+            bdg_deleted_at=now if deleted else None,
+        )
+        db_session.add(badge)
+        if flush:
+            await db_session.flush()
+        return badge
+
+    return create
+
+
+@pytest.fixture
+def badge_progress_factory(db_session: AsyncSession):
+    async def create(
+        badge: Badge,
+        user: User,
+        *,
+        status: str = "in_progress",
+        flush: bool = True,
+    ) -> BadgeProgress:
+        progress = BadgeProgress(
+            bpg_id=uuid4(),
+            bpg_user_id=user.usr_id,
+            bpg_badge_id=badge.bdg_id,
+            bpg_status=status,
+            bpg_updated_at=datetime.now(UTC).replace(tzinfo=None),
+        )
+        db_session.add(progress)
+        if flush:
+            await db_session.flush()
+        return progress
+
+    return create
+
+
+@pytest.fixture
 def async_session() -> AsyncSession:
     return AsyncSession()
 
 
-@pytest.fixture
-async def db_session() -> AsyncIterator[AsyncSession]:
-    try:
-        async with engine.begin() as connection:
-            await connection.run_sync(Base.metadata.create_all)
+@pytest.fixture(scope="session")
+def database_schema() -> None:
+    # Alembic configura logging global; isole-o do processo do pytest.
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        check=True,
+    )
 
+
+@pytest.fixture
+async def db_session(database_schema) -> AsyncIterator[AsyncSession]:
+    try:
         async with engine.connect() as connection:
             transaction = await connection.begin()
             session = AsyncSession(
@@ -188,6 +299,7 @@ def answer_factory(db_session: AsyncSession):
         answer_id: UUID | None = None,
         text: str = "A named reference to a value",
         rate: AnswerRateEnum = AnswerRateEnum.PERFECT,
+        reason: str | None = None,
         created_at: datetime | None = None,
         flush: bool = True,
     ) -> Answer:
@@ -198,6 +310,7 @@ def answer_factory(db_session: AsyncSession):
             ans_user_id=user.usr_id,
             ans_text=text,
             ans_rate=rate,
+            ans_reason=reason,
             ans_created_at=now,
             ans_updated_at=now,
         )
@@ -263,6 +376,40 @@ def lesson_factory(db_session: AsyncSession):
         if flush:
             await db_session.flush()
         return lesson
+
+    return create
+
+
+@pytest.fixture
+def mission_factory(db_session: AsyncSession):
+    async def create(
+        step: Step,
+        *,
+        title: str = "Complete lessons",
+        difficulty: str = "medium",
+        xp_reward: int = 100,
+        criteria: str = "number_of_lessons_completed",
+        criteria_value: int = 3,
+        deleted: bool = False,
+        flush: bool = True,
+    ) -> Mission:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        mission = Mission(
+            msn_id=uuid4(),
+            msn_step_id=step.stp_id,
+            msn_title=title,
+            msn_difficulty=difficulty,
+            msn_xp_reward=xp_reward,
+            msn_criteria=criteria,
+            msn_criteria_value=criteria_value,
+            msn_updated_at=now,
+            msn_is_deleted=deleted,
+            msn_deleted_at=now if deleted else None,
+        )
+        db_session.add(mission)
+        if flush:
+            await db_session.flush()
+        return mission
 
     return create
 
@@ -507,6 +654,70 @@ def knowledge_assessment_hierarchy_factory(
             correct_alternatives=correct_alternatives,
             incorrect_alternatives=incorrect_alternatives,
         )
+
+    return create
+
+
+@pytest.fixture
+def user_factory(db_session: AsyncSession):
+    async def create(
+        *,
+        user_id: UUID | None = None,
+        email: str | None = None,
+        name: str = "Test User",
+        password_hash: str = "test-hash",
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        deleted: bool = False,
+        deleted_at: datetime | None = None,
+        flush: bool = True,
+    ) -> User:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        user = User(
+            usr_id=user_id or uuid4(),
+            usr_email=email or f"{uuid4()}@example.com",
+            usr_name=name,
+            usr_password_hash=password_hash,
+            usr_created_at=created_at or now,
+            usr_updated_at=updated_at or now,
+            usr_is_deleted=deleted,
+            usr_deleted_at=deleted_at or (now if deleted else None),
+        )
+        db_session.add(user)
+        if flush:
+            await db_session.flush()
+        return user
+
+    return create
+
+
+@pytest.fixture
+def mission_progress_factory(db_session: AsyncSession):
+    async def create(
+        user: User,
+        mission: Mission,
+        *,
+        progress_id: UUID | None = None,
+        status: MissionProgressStatusEnum = MissionProgressStatusEnum.DONE,
+        score: int | None = None,
+        finished_in: datetime | None = None,
+        updated_at: datetime | None = None,
+        flush: bool = True,
+    ) -> MissionProgress:
+        now = datetime.now(UTC).replace(tzinfo=None)
+        progress = MissionProgress(
+            mpg_id=progress_id or uuid4(),
+            mpg_user_id=user.usr_id,
+            mpg_mission_id=mission.msn_id,
+            mpg_status=status,
+            mpg_score=score,
+            mpg_finished_in=finished_in,
+            mpg_updated_at=updated_at or now,
+        )
+        db_session.add(progress)
+        if flush:
+            await db_session.flush()
+        return progress
 
     return create
 

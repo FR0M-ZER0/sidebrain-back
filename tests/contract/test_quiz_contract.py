@@ -54,6 +54,7 @@ class CreateQuizService:
             user_id=user.usr_id,
             text=payload.text,
             rate=AnswerRateEnum.PERFECT,
+            reason="A resposta está completa e correta.",
         )
 
     async def update_quiz(self, user, quiz_id, payload):
@@ -75,6 +76,7 @@ class CreateQuizService:
                     user_id=uuid4(),
                     text="Answer",
                     rate=AnswerRateEnum.PERFECT,
+                    reason="A resposta está completa e correta.",
                 )
             ],
         )
@@ -170,8 +172,17 @@ def test_list_quizzes_returns_paginated_public_contract(test_app):
     assert (body["page"], body["page_size"]) == (2, 10)
     quiz = body["data"][0]
     assert set(quiz) == {"id", "lesson_id", "question", "answers"}
-    assert set(quiz["answers"][0]) == {"id", "user_id", "text", "rate"}
+    assert set(quiz["answers"][0]) == {
+        "id",
+        "user_id",
+        "text",
+        "rate",
+        "reason",
+    }
     assert quiz["answers"][0]["rate"] == "perfect"
+    assert quiz["answers"][0]["reason"] == (
+        "A resposta está completa e correta."
+    )
 
 
 def test_get_quiz_returns_public_contract(test_app):
@@ -184,7 +195,13 @@ def test_get_quiz_returns_public_contract(test_app):
     body = response.json()
     assert body["id"] == str(quiz_id)
     assert set(body) == {"id", "lesson_id", "question", "answers"}
-    assert set(body["answers"][0]) == {"id", "user_id", "text", "rate"}
+    assert set(body["answers"][0]) == {
+        "id",
+        "user_id",
+        "text",
+        "rate",
+        "reason",
+    }
 
 
 def test_submit_quiz_answer_returns_created_answer(test_app):
@@ -199,6 +216,7 @@ def test_submit_quiz_answer_returns_created_answer(test_app):
     assert response.status_code == 201
     assert response.json()["text"] == "my response"
     assert response.json()["rate"] == "perfect"
+    assert response.json()["reason"] == "A resposta está completa e correta."
 
 
 @pytest.mark.parametrize(

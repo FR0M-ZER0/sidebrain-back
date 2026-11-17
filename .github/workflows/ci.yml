@@ -10,7 +10,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: meu_usuario
           POSTGRES_PASSWORD: minha_senha
@@ -43,10 +43,16 @@ jobs:
       POSTGRES_USER: meu_usuario
       POSTGRES_PASSWORD: minha_senha
       POSTGRES_DB: meu_banco_de_dados
+      TEST_POSTGRES_HOST: 127.0.0.1
+      TEST_POSTGRES_PORT: 5432
+      TEST_POSTGRES_USER: meu_usuario
+      TEST_POSTGRES_PASSWORD: minha_senha
+      TEST_POSTGRES_DB: meu_banco_de_dados
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      JWT_SECRET_KEY: ci-only-secret-A9mQ4tZ7kP2xR8vL5sN1
       GROQ_API_KEY: mock_api_key_for_ci
-      GROQ_MODEL: llama-3.3-70b-versatile
+      GROQ_CHAT_MODEL: openai/gpt-oss-120b
 
     steps:
       - name: Checkout do código

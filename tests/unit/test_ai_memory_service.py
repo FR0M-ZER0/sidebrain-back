@@ -1,5 +1,6 @@
 import pytest
 
+from sidebrain_back.core.constants import Env
 from sidebrain_back.services.ai_memory_service import AIMemoryService
 
 
@@ -47,3 +48,20 @@ def test_fingerprint_changes_when_model_or_prompt_changes():
 
     assert original != model_fingerprint
     assert original != prompt_fingerprint
+
+
+def test_fingerprint_uses_selected_provider_and_model(monkeypatch):
+    monkeypatch.setattr(Env, "OPENAI_CHAT_API_KEY", "key")
+    monkeypatch.setattr(Env, "OPENAI_CHAT_MODEL", "shared-model")
+    monkeypatch.setattr(Env, "GROQ_CHAT_MODEL", "shared-model")
+    openai_key, envelope = AIMemoryService.fingerprint(
+        content_type="assessment", canonical_context={"subject": "python"}
+    )
+    monkeypatch.setattr(Env, "OPENAI_CHAT_API_KEY", None)
+    groq_key, groq_envelope = AIMemoryService.fingerprint(
+        content_type="assessment", canonical_context={"subject": "python"}
+    )
+    assert envelope["provider"] == "openai"
+    assert groq_envelope["provider"] == "groq"
+    assert envelope["model"] == groq_envelope["model"] == "shared-model"
+    assert openai_key != groq_key

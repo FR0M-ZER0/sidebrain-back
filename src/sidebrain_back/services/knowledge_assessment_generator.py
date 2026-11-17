@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 
-from sidebrain_back.core.constants import Env
-from sidebrain_back.core.groq_client import get_groq_client
+from sidebrain_back.core.llm_client import get_llm_client, get_llm_model
 from sidebrain_back.schemas.knowledge_assessment_schema import (
     GeneratedAssessmentPayload,
 )
@@ -11,7 +10,7 @@ from sidebrain_back.schemas.knowledge_assessment_schema import (
 
 class KnowledgeAssessmentGenerator:
     def __init__(self, client: object | None = None) -> None:
-        self.client = client or get_groq_client()
+        self.client = client or get_llm_client()
 
     def _build_prompt(self, subject: str, objective: str | None) -> str:
         objective_text = f" Objetivo: {objective}." if objective else ""
@@ -36,7 +35,7 @@ class KnowledgeAssessmentGenerator:
             raise ValueError("Assunto obrigatório para gerar a avaliação.")
 
         response = self.client.chat.completions.create(
-            model=Env.GROQ_MODEL,
+            model=get_llm_model(),
             messages=[
                 {
                     "role": "system",
@@ -51,7 +50,6 @@ class KnowledgeAssessmentGenerator:
                 },
             ],
             response_format={"type": "json_object"},
-            temperature=0.2,
             timeout=30,
         )
 

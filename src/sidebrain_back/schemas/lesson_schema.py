@@ -40,6 +40,7 @@ class LessonAnswerResponse(LessonPublicResponse):
     user_id: UUID = Field(validation_alias="ans_user_id")
     text: str = Field(validation_alias="ans_text")
     rate: AnswerRateEnum = Field(validation_alias="ans_rate")
+    reason: str | None = Field(default=None, validation_alias="ans_reason")
     created_at: datetime = Field(validation_alias="ans_created_at")
     updated_at: datetime = Field(validation_alias="ans_updated_at")
 

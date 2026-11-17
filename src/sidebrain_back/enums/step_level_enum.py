@@ -6,3 +6,11 @@ class StepLevelEnum(enum.StrEnum):
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
     PRO = "pro"
+
+
+STEP_LEVEL_RANK = {
+    StepLevelEnum.BEGINNER: 0,
+    StepLevelEnum.INTERMEDIATE: 1,
+    StepLevelEnum.ADVANCED: 2,
+    StepLevelEnum.PRO: 3,
+}

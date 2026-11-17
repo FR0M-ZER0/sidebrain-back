@@ -6,8 +6,9 @@ import pytest
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sidebrain_back.core.auth import get_current_user
 from sidebrain_back.core.database import engine, get_db
+from sidebrain_back.core.security import create_access_token
+from sidebrain_back.routers.v1.auth_router import get_current_user
 
 SC007_WARMUP_REQUESTS = 5
 SC007_SAMPLE_REQUESTS = 100
@@ -38,7 +39,11 @@ async def test_lesson_list_sc007_latency_and_sc008_constant_query_count(
     test_app.dependency_overrides[get_db] = override_db
     test_app.dependency_overrides.pop(get_current_user, None)
     path = f"/api/v1/steps/{hierarchy.step.stp_id}/lessons?page=1&page_size=50"
-    headers = {"Authorization": f"Bearer {hierarchy.user.usr_id}"}
+    token = create_access_token(
+        hierarchy.user.usr_id,
+        hierarchy.user.usr_token_version,
+    )
+    headers = {"Authorization": f"Bearer {token}"}
     transport = httpx.ASGITransport(app=test_app)
     async with httpx.AsyncClient(
         transport=transport,
