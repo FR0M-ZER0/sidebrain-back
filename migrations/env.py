@@ -13,6 +13,7 @@ from sidebrain_back.models.badge_model import Badge
 from sidebrain_back.models.badge_progress_model import BadgeProgress
 from sidebrain_back.models.day_streak_model import DayStreak
 from sidebrain_back.models.feedback_model import Feedback
+from sidebrain_back.models.generation_cache_model import GenerationCache
 from sidebrain_back.models.generation_request_model import GenerationRequest
 from sidebrain_back.models.knowledge_assessment_alternative_model import (
     KnowledgeAssessmentAlternative,
@@ -41,6 +42,7 @@ from sidebrain_back.models.rag_chunk_embedding_model import (
 from sidebrain_back.models.rag_chunk_model import RagChunkModel
 from sidebrain_back.models.rag_document_model import RagDocumentModel
 from sidebrain_back.models.step_model import Step
+from sidebrain_back.models.topic_alias_model import TopicAlias
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.models.user_model import User
 

@@ -19,6 +19,9 @@ from sidebrain_back.core.database import async_session, engine
 from sidebrain_back.repositories.badge_progress_repository import (
     BadgeProgressRepository,
 )
+from sidebrain_back.repositories.generation_cache_repository import (
+    GenerationCacheRepository,
+)
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
@@ -148,6 +151,7 @@ async def _run_generation(
             db,
             GenerationRequestRepository(db),
             BadgeProgressService(BadgeProgressRepository(db), db),
+            GenerationCacheRepository(db),
         )
         references = []
         existing = await repository.get_by_request_id(payload.request_id)
