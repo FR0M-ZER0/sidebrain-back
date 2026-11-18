@@ -8,6 +8,10 @@ from sidebrain_back.routers.v1.knowledge_assessment_router import (
     router as knowledge_assessment_router,
 )
 from sidebrain_back.routers.v1.lesson_router import router as lesson_router
+from sidebrain_back.routers.v1.mentor_consent_router import (
+    router as mentor_consent_router,
+)
+from sidebrain_back.routers.v1.mentor_router import router as mentor_router
 from sidebrain_back.routers.v1.mission_router import router as mission_router
 from sidebrain_back.routers.v1.quiz_router import router as quiz_router
 from sidebrain_back.routers.v1.ranking_router import router as ranking_router
@@ -22,6 +26,8 @@ router.include_router(feedback_router)
 router.include_router(badge_router)
 router.include_router(health_router)
 router.include_router(lesson_router)
+router.include_router(mentor_consent_router)
+router.include_router(mentor_router)
 router.include_router(mission_router)
 router.include_router(knowledge_assessment_router)
 router.include_router(quiz_router)

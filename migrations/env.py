@@ -30,6 +30,15 @@ from sidebrain_back.models.knowledge_assessment_question_model import (
 from sidebrain_back.models.lesson_file_model import LessonFile
 from sidebrain_back.models.lesson_model import Lesson
 from sidebrain_back.models.login_model import Login
+from sidebrain_back.models.mentor_consent_model import MentorConsent
+from sidebrain_back.models.mentor_conversation_model import MentorConversation
+from sidebrain_back.models.mentor_generation_model import (
+    MentorDispatch,
+    MentorGeneration,
+    MentorPrivacyBlock,
+    MentorSendReservation,
+)
+from sidebrain_back.models.mentor_message_model import MentorMessage
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.mission_progress_model import MissionProgress
 from sidebrain_back.models.quiz_model import Quiz

@@ -16,6 +16,10 @@ from sidebrain_back.repositories.generation_request_repository import (
 from sidebrain_back.repositories.knowledge_assessment_repository import (
     KnowledgeAssessmentRepository,
 )
+from sidebrain_back.repositories.mentor_conversation_repository import (
+    MentorConversationRepository,
+    get_mentor_conversation_repository,
+)
 from sidebrain_back.repositories.track_repository import (
     StepProgressContext,
     TrackRepository,
@@ -42,6 +46,13 @@ from sidebrain_back.services.badge_progress_service import (
 from sidebrain_back.services.generation_request_service import (
     GenerationRequestService,
 )
+from sidebrain_back.services.mentor_consent_service import (
+    MentorConsentUnavailable,
+)
+from sidebrain_back.services.mentor_privacy_service import (
+    MentorPrivacyService,
+    get_mentor_privacy_service,
+)
 
 
 class TrackService:
@@ -54,6 +65,8 @@ class TrackService:
         generation_requests: GenerationRequestRepository | None = None,
         assessments: KnowledgeAssessmentRepository | None = None,
         badge_progress_service: BadgeProgressService | None = None,
+        mentor_privacy_service: MentorPrivacyService | None = None,
+        mentor_conversations: MentorConversationRepository | None = None,
     ):
         self.repository = repository
         self.db = db
@@ -62,6 +75,8 @@ class TrackService:
         )
         self.assessments = assessments or KnowledgeAssessmentRepository(db)
         self.badge_progress_service = badge_progress_service
+        self.mentor_privacy_service = mentor_privacy_service
+        self.mentor_conversations = mentor_conversations
 
     @classmethod
     def completion_ratio(
@@ -325,9 +340,27 @@ class TrackService:
             raise ProblemDetailError(
                 404, "Não encontrado", "Trilha não encontrada"
             )
+        if (
+            self.mentor_privacy_service is None
+            or self.mentor_conversations is None
+        ):
+            raise RuntimeError("Serviço de privacidade não configurado.")
         try:
+            block = await self.mentor_privacy_service.lock_for_deletion(
+                user.usr_id
+            )
+            await self.mentor_conversations.delete_by_track_id(
+                user.usr_id, track_id
+            )
             await self.repository.soft_delete(track)
+            block.blocked = False
+            block.reason = None
             await self.db.commit()
+        except MentorConsentUnavailable as error:
+            await self.db.rollback()
+            raise ProblemDetailError(
+                503, "Serviço indisponível", str(error)
+            ) from error
         except Exception as error:
             await self.db.rollback()
             raise ProblemDetailError(
@@ -341,6 +374,12 @@ def get_track_service(
     badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
         get_badge_progress_service
     ),
+    mentor_privacy_service: MentorPrivacyService = Depends(  # noqa: B008
+        get_mentor_privacy_service
+    ),
+    mentor_conversations: MentorConversationRepository = Depends(  # noqa: B008
+        get_mentor_conversation_repository
+    ),
 ) -> TrackService:
     return TrackService(
         repository,
@@ -348,4 +387,6 @@ def get_track_service(
         GenerationRequestRepository(db),
         KnowledgeAssessmentRepository(db),
         badge_progress_service,
+        mentor_privacy_service,
+        mentor_conversations,
     )
