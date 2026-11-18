@@ -72,6 +72,12 @@ def assert_public_ranking_entry(entry: dict):
     assert "password_hash" not in entry
 
 
+def test_ranking_openapi_tag():
+    paths = app.openapi()["paths"]
+    assert paths["/api/v1/rankings"]["get"]["tags"] == ["Rankings"]
+    assert paths["/api/v1/rankings/me"]["get"]["tags"] == ["Rankings"]
+
+
 def test_list_rankings_rejects_unauthenticated():
     client = TestClient(app)
     response = client.get("/api/v1/rankings")
