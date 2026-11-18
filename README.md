@@ -129,6 +129,32 @@ Rode o comando abaixo para abrir a interface do flower e monitorar o andamento d
 uv run celery -A sidebrain_back.core.celery_app flower
 ```
 
+## Acompanhamento de jobs por WebSocket
+
+Os jobs de geração de trilha, diagnóstico, preparação da próxima etapa
+e resumo podem ser acompanhados em `/api/v1/ws`. O cliente autenticado deve:
+
+1. iniciar a operação HTTP e obter seu identificador;
+2. emitir uma credencial descartável em `POST /api/v1/auth/ws-ticket`;
+3. abrir `ws://localhost:8080/api/v1/ws?ticket=<ticket>` em até 60 segundos;
+4. enviar `{"type":"subscribe","channel":"...","resource_id":"..."}`.
+
+O ticket autoriza uma única abertura e nunca deve ser reutilizado. Em produção,
+configure o cliente com `VITE_WS_URL=wss://<host>/api/v1/ws`. O proxy deve
+encaminhar o upgrade WebSocket, ter timeout compatível com conexões ociosas e
+omitir a query dos logs de acesso. O filtro da aplicação também remove ticket,
+Bearer e `access_token`, mas a proteção do proxy continua obrigatória.
+
+Todas as réplicas da API precisam compartilhar Redis e PostgreSQL. A conexão
+PostgreSQL usada por `LISTEN` deve ser direta ou usar pooling por sessão. No
+deploy, aplique primeiro as migrations, depois publique API/workers produtores
+e, por último, habilite o cliente WebSocket. Mensagens antigas de preparação,
+sem `tracking_task_id`, continuam aceitas durante a janela de transição, mas
+não podem ser acompanhadas pelo novo canal.
+
+Consulte o [contrato completo](./specs/SDB-109-websocket-job-updates/contracts/job-updates.md)
+e o [guia de validação](./specs/SDB-109-websocket-job-updates/quickstart.md).
+
 ## Avaliações de conhecimento
 
 A base autenticada é `/api/v1/assessments`:

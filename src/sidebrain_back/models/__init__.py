@@ -31,6 +31,10 @@ from sidebrain_back.models.rag_chunk_embedding_model import (
 from sidebrain_back.models.rag_chunk_model import RagChunkModel
 from sidebrain_back.models.rag_document_model import RagDocumentModel
 from sidebrain_back.models.step_model import Step
+from sidebrain_back.models.step_preparation_model import StepPreparation
+from sidebrain_back.models.step_summary_generation_model import (
+    StepSummaryGeneration,
+)
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.models.user_model import User
 
@@ -38,6 +42,8 @@ __all__ = [
     "User",
     "Track",
     "Step",
+    "StepPreparation",
+    "StepSummaryGeneration",
     "Lesson",
     "LessonFile",
     "Quiz",

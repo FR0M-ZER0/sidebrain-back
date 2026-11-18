@@ -10,6 +10,14 @@
 
 A pessoa que aguarda a geração de uma trilha, perguntas de diagnóstico, preparação da próxima etapa ou sumário do quiz precisa conhecer o andamento e o resultado da operação pela conexão de acompanhamento. A entrega abrange a emissão de credenciais temporárias, inscrição autorizada, comunicação dos quatro fluxos e documentação para integração do cliente. A descrição e os critérios de aceite da tarefa orientam esta especificação. [SDB-109](https://fromzero-api.atlassian.net/browse/SDB-109)
 
+## Clarifications
+
+### Session 2026-11-18
+
+- Q: Qual geração do sumário acompanhar quando dois pedidos para a mesma etapa se sobrepõem? → A: A solicitação iniciada mais recentemente prevalece, independentemente da ordem de conclusão.
+- Q: Por quanto tempo o resultado da preparação pode ser consultado pelo `task_id`? → A: Por 24 horas após a conclusão ou falha. Ao completar esse prazo, o recurso fica indisponível para acompanhamento.
+- Q: Quando encerrar o acompanhamento se o usuário perder acesso durante a conexão? → A: Na próxima tentativa de envio de uma atualização, verificar a permissão, enviar o erro genérico de recurso indisponível e fechar a conexão.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Autorizar o acompanhamento de uma operação (Priority P1)
@@ -66,6 +74,8 @@ Como usuário que aguarda uma operação de aprendizagem, quero receber as pergu
 5. **Given** uma geração de sumário para uma etapa acessível, **When** o cliente acompanha `step_summary` com a chave `{track_id}:{step_id}`, **Then** recebe o estado atual e uma atualização terminal com `step_id`, estado `completed` e `summary`, ou estado `failed` e `error` público.
 6. **Given** um resultado desses três fluxos disponível antes da conexão, **When** o cliente realiza a inscrição autorizada, **Then** o primeiro estado recebido já permite reconhecer sua conclusão ou falha.
 7. **Given** um diagnóstico cujas perguntas possuem gabarito privado e uma operação com detalhes internos de falha, **When** as atualizações são enviadas, **Then** o cliente recebe somente perguntas, alternativas, códigos e mensagens públicos previstos para seu recurso.
+8. **Given** duas gerações de sumário iniciadas nessa ordem para a mesma etapa, com a primeira ainda em andamento ao iniciar a segunda, **When** a segunda termina e depois a primeira conclui ou falha, **Then** quem acompanha a etapa recebe o resultado da segunda, e quem se reconecta encontra esse mesmo resultado no estado inicial.
+9. **Given** uma preparação concluída ou falha há 23h59min59s, **When** o usuário autorizado se reconecta com um novo ticket, **Then** recebe o resultado terminal no estado inicial. Ao completar 24 horas, tanto um novo pedido de ticket quanto uma inscrição com ticket ainda válido recebem a resposta de recurso indisponível aplicável à respectiva operação.
 
 ---
 
@@ -84,6 +94,7 @@ Como usuário que pode perder a conexão ou sair de uma tela, quero retomar o ac
 3. **Given** uma conexão ativa, **When** o cliente a fecha por conclusão, falha, tempo limite, cancelamento do acompanhamento ou saída da tela, **Then** o sistema remove a inscrição e libera os consumidores e recursos associados à conexão.
 4. **Given** usuários acompanhando recursos diferentes, inclusive no mesmo canal, **When** qualquer operação muda de estado, **Then** cada conexão recebe exclusivamente os eventos do usuário, canal e recurso autorizados.
 5. **Given** uma indisponibilidade que impede obter o estado atual ou continuar o acompanhamento, **When** o sistema identifica a falha, **Then** informa um erro público correlacionado ao escopo autorizado, encerra a conexão e libera seus recursos.
+6. **Given** uma inscrição ativa e acesso à trilha ou à etapa revogado antes da conclusão do job, **When** o resultado fica pronto para envio, **Then** o cliente recebe apenas `job.error` com a mensagem genérica de recurso indisponível, e o servidor fecha a conexão e libera os recursos da inscrição.
 
 ---
 
@@ -105,7 +116,7 @@ Como responsável pela integração do cliente, quero consultar o contrato de ac
 - Credenciais de sessão ausentes ou inválidas na emissão de ticket resultam em recusa de autenticação.
 - Canal desconhecido, identificador vazio e chave composta de sumário malformada resultam em erro de validação.
 - Uma etapa indicada em `step_summary` deve pertencer à trilha da chave e ao usuário autorizado.
-- Um identificador de tarefa de preparação precisa estar associado a uma operação acompanhável daquele usuário. Uma tarefa desconhecida recebe a resposta genérica de recurso indisponível.
+- Uma tarefa de preparação desconhecida ou cujo resultado atingiu o limite de 24 horas recebe a mesma resposta genérica de recurso indisponível. Cada reconexão usa o instante original de conclusão ou falha para calcular o prazo.
 - Um recurso removido ou uma permissão perdida entre a emissão do ticket e a inscrição deve resultar em recusa do acompanhamento.
 - A expiração do ticket é avaliada no consumo para abrir a conexão. Uma conexão já autorizada pode acompanhar a operação até seu encerramento.
 - Uma atualização emitida entre a leitura do estado inicial e a ativação do acompanhamento deve chegar ao cliente ou estar refletida no estado entregue. Um estado terminal deve prevalecer sobre atualizações anteriores recebidas com atraso.
@@ -114,7 +125,7 @@ Como responsável pela integração do cliente, quero consultar o contrato de ac
 - Repetir a mesma inscrição na mesma conexão deve resultar em um único acompanhamento lógico do recurso.
 - Desconexão durante o envio ou falha no produtor de eventos deve acionar a liberação dos recursos da conexão afetada.
 - Resultados emitidos por processamentos em execução separada precisam alcançar as conexões autorizadas da aplicação.
-- O sumário pode estar pronto na própria resposta da chamada de geração. A inscrição posterior deve reconhecer esse resultado concluído.
+- O sumário pode estar pronto na própria resposta da chamada de geração. A inscrição posterior deve refletir o estado da solicitação iniciada mais recentemente para a etapa, inclusive quando ela já terminou.
 - Uma preparação dispensada pelo fluxo de início, cuja resposta possui `status` igual a `skipped` e carece de `task_id`, é concluída pelo próprio retorno dessa operação. O canal de preparação acompanha as tarefas efetivamente aceitas.
 
 ## Requirements *(mandatory)*
@@ -123,7 +134,7 @@ Como responsável pela integração do cliente, quero consultar o contrato de ac
 
 - **FR-001** O sistema MUST disponibilizar `POST /api/v1/auth/ws-ticket` com autenticação Bearer vigente, receber `channel` e `resource_id` e devolver a credencial temporária no campo `ticket` ao usuário autorizado a acompanhar o recurso.
 - **FR-002** Cada ticket MUST estar vinculado ao usuário autenticado e a uma única combinação de canal e recurso, com validade de 60 segundos a partir da emissão e consumo de uso único na autorização da conexão.
-- **FR-003** O sistema MUST verificar a permissão de acompanhamento na emissão do ticket e na inscrição, respeitando o vínculo do recurso ao usuário e a disponibilidade dos recursos relacionados. Recursos alheios, inexistentes e removidos MUST produzir a mesma resposta genérica de indisponibilidade.
+- **FR-003** O sistema MUST verificar a permissão de acompanhamento na emissão do ticket, na inscrição e antes de cada envio de `job.updated`, inclusive o estado inicial. Recursos alheios, inexistentes e removidos MUST produzir a mesma resposta genérica de indisponibilidade. Se a verificação anterior ao envio detectar perda de acesso, o sistema MUST suprimir a atualização, enviar `job.error` no escopo da inscrição com a mensagem genérica de recurso indisponível e fechar a conexão.
 - **FR-004** O sistema MUST disponibilizar a abertura de WebSocket em `GET /api/v1/ws?ticket={ticket}`, autorizar a conexão pelo ticket temporário e recusar tickets ausentes, inválidos, expirados ou consumidos. O uso simultâneo do mesmo ticket MUST autorizar no máximo uma conexão.
 - **FR-005** A credencial de sessão de longa duração MUST ser utilizada somente na autenticação da emissão do ticket. A URL de acompanhamento MUST transportar exclusivamente a credencial temporária exigida pelo contrato de conexão.
 - **FR-006** Após abrir a conexão, o cliente MUST poder enviar uma inscrição com `type` igual a `subscribe`, `channel` e `resource_id`. O sistema MUST aceitar o par autorizado pelo ticket e rejeitar inscrições divergentes ou mensagens inválidas com erro no escopo autorizado e encerramento da conexão.
@@ -134,10 +145,12 @@ Como responsável pela integração do cliente, quero consultar o contrato de ac
 - **FR-011** O canal `assessment` MUST usar `assessment_id` como `resource_id` e entregar `assessment_id`, `status` e `questions`, incluindo `error_code` na falha. Os estados de acompanhamento MUST ser `pending`, `completed` e `failed`, sendo os dois últimos terminais para a geração das perguntas. As perguntas MUST corresponder à representação pública vigente do diagnóstico, com alternativas públicas e proteção do gabarito.
 - **FR-012** Para `assessment`, o estado de domínio `pending` MUST corresponder a `pending`, os estados `generated`, `skipped` e `completed` MUST corresponder a `completed`, e `failed` MUST corresponder a `failed`. `questions` MUST ser uma lista vazia enquanto pendente, em caso de dispensa ou falha, e conter as perguntas disponíveis nos demais casos de sucesso.
 - **FR-013** O canal `step_preparation` MUST usar `task_id` como `resource_id` e entregar `task_id` e `status`. O acompanhamento MUST representar processamento em andamento como `pending` e resultado terminal como `completed` ou `failed`, conforme o resultado efetivo da preparação.
+  O usuário autorizado pode consultar o resultado pelo `task_id` enquanto tiverem transcorrido menos de 24 horas desde a transição para `completed` ou `failed`. Ao completar 24 horas, o recurso passa a ser tratado como indisponível na emissão de ticket e na inscrição.
 - **FR-014** O canal `step_summary` MUST usar a chave `{track_id}:{step_id}` como `resource_id`, validar toda a relação entre usuário, trilha e etapa e entregar `step_id` e `status`. O estado MUST ser `pending` durante o processamento, `completed` com `summary` no sucesso ou `failed` com `error` público na falha.
+  A partir do início de uma nova geração para a mesma etapa, tanto o estado inicial quanto as atualizações das inscrições ativas MUST refletir exclusivamente a geração iniciada mais recentemente. Essa regra também vale quando uma geração anterior termina por último.
 - **FR-015** O sistema MUST publicar resultados dos quatro fluxos a partir das operações existentes, incluindo sucesso anterior à inscrição, falha definitiva e processamento concluído em execução separada. O estado terminal de sucesso MUST indicar um resultado já disponível para uso pelo usuário.
 - **FR-016** Cada conexão MUST receber exclusivamente dados do seu usuário, canal e recurso autorizados. A repetição da mesma inscrição MUST manter um único acompanhamento lógico naquela conexão.
-- **FR-017** O sistema MUST permitir retomar o acompanhamento com um novo ticket e o mesmo canal e recurso, fornecendo o estado atual. Um estado terminal MUST prevalecer sobre estados anteriores da mesma execução.
+- **FR-017** Enquanto o recurso estiver disponível para acompanhamento, o sistema MUST permitir a retomada com um novo ticket e o mesmo canal e recurso, fornecendo o estado atual. Um estado terminal MUST prevalecer sobre estados anteriores da mesma execução.
 - **FR-018** O fechamento normal ou inesperado da conexão e as falhas de envio ou acompanhamento MUST remover a inscrição e liberar seus consumidores e recursos associados. O encerramento do acompanhamento MUST permitir que a operação de aprendizagem continue até o resultado previsto pelo seu fluxo.
 - **FR-019** As operações de início de geração de trilha, diagnóstico, preparação de etapa e sumário MUST manter compatibilidade com os pedidos, identificadores, códigos de resposta e resultados públicos vigentes. O acompanhamento MUST funcionar a partir desses identificadores e resultados.
 - **FR-020** As mensagens públicas MUST utilizar campos semânticos de domínio e mensagens de falha compreensíveis, protegendo credenciais, gabaritos, dados de outros usuários e detalhes internos de processamento.
@@ -159,7 +172,7 @@ Como responsável pela integração do cliente, quero consultar o contrato de ac
 - **SC-001** Em 100% dos cenários de aceite dos quatro fluxos, o usuário recebe o resultado de sucesso ou falha pela conexão de acompanhamento e reconhece se pode continuar a jornada, dispensando consultas periódicas de estado pelo cliente.
 - **SC-002** Em 100% dos cenários em que a operação avança antes ou durante a inscrição, o primeiro estado e as atualizações seguintes permitem conhecer o resultado atual, incluindo conclusões ocorridas antes da conexão.
 - **SC-003** Em 100% das tentativas de acesso com credenciais inválidas, expiradas, consumidas ou direcionadas a recurso sem permissão, o acesso é recusado. A reutilização concorrente da mesma credencial autoriza no máximo uma conexão, e a quantidade de mensagens entregues fora do escopo autorizado é zero.
-- **SC-004** Em 100% dos cenários de retomada com nova credencial válida, o usuário consegue identificar o estado atual da mesma operação, inclusive quando ela terminou durante a desconexão.
+- **SC-004** Em 100% dos cenários de retomada com recurso disponível e nova credencial válida, o usuário consegue identificar o estado atual da mesma operação, inclusive quando ela terminou durante a desconexão. Para a preparação, verificar a disponibilidade imediatamente antes e a indisponibilidade no instante em que o resultado completa 24 horas, tanto no sucesso quanto na falha.
 - **SC-005** Após cada cenário de fechamento normal, fechamento inesperado e falha de acompanhamento, a quantidade de inscrições, consumidores e recursos de acompanhamento associados à conexão encerrada é zero.
 - **SC-006** Em condições controladas de validação, pelo menos 95% dos estados iniciais e resultados terminais ficam disponíveis ao cliente em até 2 segundos da aceitação da inscrição ou da disponibilização do resultado, respectivamente.
 - **SC-007** Todos os cenários de compatibilidade das quatro operações de início continuam aprovados, cobrindo seus resultados imediatos e os identificadores usados no acompanhamento.

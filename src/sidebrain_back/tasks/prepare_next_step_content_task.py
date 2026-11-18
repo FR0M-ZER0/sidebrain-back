@@ -365,7 +365,11 @@ async def _prepare_step_content(
     retry_backoff_max=60,
     autoretry_for=(),
 )
-def prepare_next_step_content_task(self: Task, step_id: str) -> dict[str, Any]:
+def prepare_next_step_content_task(
+    self: Task,
+    step_id: str,
+    tracking_task_id: str | None = None,
+) -> dict[str, Any]:
     async def run_and_dispose() -> dict[str, Any]:
         try:
             return await _prepare_step_content(UUID(step_id))
@@ -376,6 +380,8 @@ def prepare_next_step_content_task(self: Task, step_id: str) -> dict[str, Any]:
         result = asyncio.run(run_and_dispose())
     except (APIConnectionError, APITimeoutError, RateLimitError) as exc:
         if self.request.retries >= self.max_retries:
+            if tracking_task_id is not None:
+                asyncio.run(_finish_preparation(tracking_task_id, "failed"))
             logger.error(
                 "Incremental step content failed after retries.",
                 extra=_task_context(self, "step_content_failed", exc),
@@ -387,20 +393,35 @@ def prepare_next_step_content_task(self: Task, step_id: str) -> dict[str, Any]:
         )
         raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
     except (ValueError, ValidationError, json.JSONDecodeError) as exc:
+        if tracking_task_id is not None:
+            asyncio.run(_finish_preparation(tracking_task_id, "failed"))
         logger.error(
             "Incremental step content rejected.",
             extra=_task_context(self, "step_content_invalid", exc),
         )
         raise
     except Exception as exc:
+        if tracking_task_id is not None:
+            asyncio.run(_finish_preparation(tracking_task_id, "failed"))
         logger.error(
             "Incremental step content failed.",
             extra=_task_context(self, "step_content_failed", exc),
         )
         raise
 
+    if tracking_task_id is not None:
+        asyncio.run(_finish_preparation(tracking_task_id, "completed"))
     logger.info(
         "Incremental step content finished.",
         extra=_task_context(self, "step_content_finished"),
     )
     return result
+
+
+async def _finish_preparation(task_id: str, status: str) -> None:
+    from sidebrain_back.services.step_preparation_service import (
+        StepPreparationService,
+    )
+
+    async with async_session() as db:
+        await StepPreparationService(db).finish(task_id, status)
