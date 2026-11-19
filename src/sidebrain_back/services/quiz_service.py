@@ -205,9 +205,13 @@ class QuizService:
             return response
         except ProblemDetailError:
             await self.db.rollback()
+            if isinstance(self.step_summary_service, StepSummaryService):
+                await self.step_summary_service.fail_last_generation()
             raise
         except Exception as error:
             await self.db.rollback()
+            if isinstance(self.step_summary_service, StepSummaryService):
+                await self.step_summary_service.fail_last_generation()
             logger.exception(
                 "Quiz answer evaluation or persistence failed",
                 extra={
