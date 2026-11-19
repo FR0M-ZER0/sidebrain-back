@@ -9,6 +9,7 @@ from sidebrain_back.core.rate_limit import (
 )
 from sidebrain_back.core.security import hash_password, verify_password
 from sidebrain_back.models.user_model import User
+from sidebrain_back.repositories.avatar_repository import AvatarRepository
 from sidebrain_back.repositories.ranking_repository import (
     RankingRepository,
     get_ranking_repository,
@@ -29,6 +30,10 @@ from sidebrain_back.services.auth_errors import (
     ResourceNotFoundError,
 )
 from sidebrain_back.services.auth_service import _is_email_unique_violation
+from sidebrain_back.services.avatar_service import (
+    AvatarService,
+    get_avatar_service,
+)
 
 
 class UserService:
@@ -38,11 +43,15 @@ class UserService:
         db: AsyncSession,
         rate_limiter: AuthRateLimiter | None = None,
         ranking_repository: RankingRepository | None = None,
+        avatar_service: AvatarService | None = None,
     ) -> None:
         self.repository = repository
         self.db = db
         self.rate_limiter = rate_limiter
         self.ranking_repository = ranking_repository or RankingRepository(db)
+        self.avatar_service = avatar_service or AvatarService(
+            AvatarRepository(db), db
+        )
 
     async def get_user(self, authenticated_user: User) -> UserMeResponse:
         user = await self.repository.get(authenticated_user.usr_id)
@@ -63,6 +72,7 @@ class UserService:
             created_at=user.usr_created_at,
             xp=ranking.xp,
             missions_completed=ranking.missions_completed,
+            avatar=await self.avatar_service.resolve(user.usr_avatar_slug),
         )
 
     async def update_user(
@@ -86,7 +96,25 @@ class UserService:
             ):
                 raise ConflictError("O e-mail informado já está em uso.")
 
-            await self.repository.update(user, payload.name, email)
+            avatar_slug = None
+            update_avatar = "avatar" in payload.model_fields_set
+            if "avatar" in payload.model_fields_set:
+                if payload.avatar is None:
+                    avatar_slug = None
+                elif await self.avatar_service.get_active(payload.avatar):
+                    avatar_slug = payload.avatar
+                else:
+                    raise DomainValidationError(
+                        "O avatar informado não está disponível."
+                    )
+
+            await self.repository.update(
+                user,
+                payload.name,
+                email,
+                avatar_slug=avatar_slug,
+                update_avatar=update_avatar,
+            )
             response = await self._build_user_me_response(user)
             await self.db.commit()
             return response
@@ -177,5 +205,12 @@ def get_user_service(
     ranking_repository: RankingRepository = Depends(  # noqa: B008
         get_ranking_repository
     ),
+    avatar_service: AvatarService = Depends(get_avatar_service),  # noqa: B008
 ) -> UserService:
-    return UserService(repository, db, rate_limiter, ranking_repository)
+    return UserService(
+        repository,
+        db,
+        rate_limiter,
+        ranking_repository,
+        avatar_service,
+    )

@@ -53,6 +53,12 @@ async def update_user(
             "Conflito",
             "O e-mail informado já está em uso.",
         ) from error
+    except DomainValidationError as error:
+        raise ProblemDetailError(
+            422,
+            "Erro de validação",
+            str(error),
+        ) from error
 
 
 @router.put("/me/password", status_code=status.HTTP_204_NO_CONTENT)
