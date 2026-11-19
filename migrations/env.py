@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sidebrain_back.core.constants import Env
 from sidebrain_back.core.database import Base
 from sidebrain_back.models.answer_model import Answer
+from sidebrain_back.models.avatar_model import Avatar
 from sidebrain_back.models.badge_model import Badge
 from sidebrain_back.models.badge_progress_model import BadgeProgress
 from sidebrain_back.models.day_streak_model import DayStreak
