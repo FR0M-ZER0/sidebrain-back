@@ -27,9 +27,7 @@ class UserStatisticsService:
         self.ranking_repository = ranking_repository
         self.repository = repository
 
-    async def get_user_statistics(
-        self, user: User
-    ) -> UserStatisticsResponse:
+    async def get_user_statistics(self, user: User) -> UserStatisticsResponse:
         ranking = await self.ranking_repository.get_user_ranking(user.usr_id)
         if ranking is None:
             raise ProblemDetailError(

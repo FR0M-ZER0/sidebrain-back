@@ -30,9 +30,7 @@ class UserStatisticsRepository:
         return (await self.db.scalar(statement)) or 0
 
     async def get_day_streak(self, user_id: UUID) -> DayStreak | None:
-        statement = select(DayStreak).where(
-            DayStreak.dst_user_id == user_id
-        )
+        statement = select(DayStreak).where(DayStreak.dst_user_id == user_id)
         return await self.db.scalar(statement)
 
 

@@ -101,8 +101,6 @@ def test_current_day_streak_uses_today_and_yesterday_in_utc(
 
 def test_current_day_streak_is_zero_without_a_record():
     assert (
-        UserStatisticsService._get_current_day_streak(
-            None, date(2026, 11, 18)
-        )
+        UserStatisticsService._get_current_day_streak(None, date(2026, 11, 18))
         == 0
     )
