@@ -49,9 +49,12 @@ class MentorProcessingService:
                     user_id, generation_id, version
                 )
                 attempt_id = reservation.attempt_id
-                context = await MentorContextService(
+                context_service = MentorContextService(
                     self.generations, MentorContextRepository(self.db)
-                ).build(user_id, generation_id)
+                )
+                context = await context_service.get_mentor_message(
+                    user_id, generation_id
+                )
                 await self.db.commit()
             except MentorGenerationConsentRequired:
                 await self.db.rollback()
@@ -73,10 +76,23 @@ class MentorProcessingService:
 
             try:
                 await self._check_lock_connection(connection)
-                result = self.generator.generate(context)
+
+                async def get_tool_data(name: str) -> dict:
+                    await self._check_lock_connection(connection)
+                    try:
+                        data = await context_service.get_mentor_tool_data(
+                            user_id, context, name
+                        )
+                    finally:
+                        await self.db.rollback()
+                    await self._check_lock_connection(connection)
+                    return data
+
+                result = await self.generator.generate_mentor_response(
+                    context["mensagem"], get_tool_data
+                )
                 await self._check_lock_connection(connection)
             except Exception as error:
-                # A lost connection cannot establish that the sender stopped.
                 await self._check_lock_connection(connection)
                 await self.generations.fail_attempt(
                     user_id,

@@ -1,4 +1,5 @@
 import json
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -30,8 +31,30 @@ async def test_context_budget_preserves_current_message():
     service = MentorContextService(
         GenerationRepository(), ContextRepository(), max_context_chars=3000
     )
-    result = await service.build("user", "generation")
-    assert result["mensagem"] == "Mensagem atual"
+    base = await service.get_mentor_message("user", "generation")
+    result = await service.get_mentor_tool_data(
+        "user", base, "consultar_trilha"
+    )
+    assert base["mensagem"] == "Mensagem atual"
     assert result["trilha"] == "Python"
     assert "track_id" not in result
     assert len(json.dumps(result, ensure_ascii=False)) <= 3000
+
+
+@pytest.mark.anyio
+async def test_tools_filter_data_and_reject_unknown_names():
+    generations = AsyncMock()
+    contexts = AsyncMock()
+    contexts.get.return_value = {
+        "trilha": "Python",
+        "progresso": {"aulas": 2},
+        "respostas_recentes": [{"justificativa": "privado"}],
+    }
+    service = MentorContextService(generations, contexts)
+    base = {"track_id": "00000000-0000-0000-0000-000000000001"}
+    result = await service.get_mentor_tool_data(
+        "usuario", base, "consultar_progresso"
+    )
+    assert result == {"progresso": {"aulas": 2}}
+    with pytest.raises(ValueError):
+        await service.get_mentor_tool_data("usuario", base, "desconhecida")

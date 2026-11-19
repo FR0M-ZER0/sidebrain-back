@@ -28,10 +28,12 @@ async def test_followup_uses_history_only_from_selected_conversation():
         async def get(self, _user_id, _track_id):
             return {"trilha": "Python"}
 
-    context = await MentorContextService(Generations(), Contexts()).build(
-        "usuario", "geracao"
+    service = MentorContextService(Generations(), Contexts())
+    base = await service.get_mentor_message("usuario", "geracao")
+    context = await service.get_mentor_tool_data(
+        "usuario", base, "consultar_historico"
     )
-    assert context["mensagem"] == "Tenho dez minutos."
+    assert base["mensagem"] == "Tenho dez minutos."
     assert [item["content"] for item in context["historico"]] == [
         "Estou estudando Python.",
         "Revise funções.",

@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import UUID, uuid4
 
 import httpx
@@ -92,7 +92,17 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             assert submitted.status_code == 202
             generation_id = submitted.json()["generation_id"]
             generator = Mock()
-            generator.generate.return_value = "Revise os fundamentos."
+            generator.generate_mentor_response = AsyncMock()
+            captured = {}
+
+            async def generate(message, get_tool_data):
+                captured["message"] = message
+                captured["history"] = await get_tool_data(
+                    "consultar_historico"
+                )
+                return "Revise os fundamentos."
+
+            generator.generate_mentor_response.side_effect = generate
             await MentorProcessingService(db_session, generator).process(
                 user_id, UUID(generation_id)
             )
@@ -122,7 +132,10 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             )
             failed_id = failed_submission.json()["generation_id"]
             failing_generator = Mock()
-            failing_generator.generate.side_effect = ValueError("inválido")
+            failing_generator.generate_mentor_response = AsyncMock()
+            failing_generator.generate_mentor_response.side_effect = (
+                ValueError("inválido")
+            )
             await MentorProcessingService(
                 db_session, failing_generator
             ).process(user_id, UUID(failed_id))
@@ -146,8 +159,8 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             await MentorProcessingService(db_session, generator).process(
                 user_id, UUID(retry_id)
             )
-            context = generator.generate.call_args.args[0]
-            assert context["mensagem"] == "Tenho pouco tempo."
+            assert captured["message"] == "Tenho pouco tempo."
+            context = captured["history"]
             assert any(
                 item["content"] == "Como estudar?"
                 for item in context["historico"]
@@ -166,7 +179,7 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             await MentorProcessingService(db_session, generator).process(
                 user_id, UUID(generation_id)
             )
-            assert generator.generate.call_count == 2
+            assert generator.generate_mentor_response.call_count == 2
     finally:
         app.dependency_overrides.pop(get_db, None)
         app.dependency_overrides.pop(get_current_user, None)

@@ -1,6 +1,7 @@
+import copy
 import json
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -9,58 +10,126 @@ from sidebrain_back.services.mentor_generator_service import (
 )
 
 
-def _response(content):
+def response(content=None, calls=None):
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content=content, tool_calls=calls)
+            )
+        ]
     )
 
 
-def test_generator_sends_context_as_untrusted_data():
-    create = Mock(
-        return_value=_response(
-            json.dumps({"content": "Revise os fundamentos."})
+def tool(name, arguments="{}"):
+    return SimpleNamespace(
+        id="call-1",
+        type="function",
+        function=SimpleNamespace(name=name, arguments=arguments),
+    )
+
+
+@pytest.mark.anyio
+async def test_generator_sends_only_message_without_tool_calls():
+    create = Mock(return_value=response('{"content":"Revise."}'))
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    lookup = AsyncMock()
+    result = await MentorGeneratorService(
+        client, "test"
+    ).generate_mentor_response("Como estudar?", lookup)
+    assert result == "Revise."
+    lookup.assert_not_awaited()
+    assert create.call_args.kwargs["messages"][1]["content"] == "Como estudar?"
+    assert create.call_args.kwargs["tool_choice"] == "auto"
+    assert "reasoning_effort" not in create.call_args.kwargs
+
+
+@pytest.mark.anyio
+async def test_luna_disables_reasoning_for_chat_tools():
+    create = Mock(return_value=response('{"content":"Olá."}'))
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    service = MentorGeneratorService(client, "gpt-6-luna")
+    await service.generate_mentor_response("Olá", AsyncMock())
+    assert create.call_args.kwargs["reasoning_effort"] == "none"
+
+
+@pytest.mark.anyio
+async def test_generator_returns_only_requested_tool_data():
+    requests = []
+
+    def create(**kwargs):
+        requests.append(copy.deepcopy(kwargs))
+        if len(requests) == 1:
+            return response(calls=[tool("consultar_progresso")])
+        return response('{"content":"Continue estudando."}')
+
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    lookup = AsyncMock(return_value={"progresso": {"aulas": 5}})
+    await MentorGeneratorService(client, "test").generate_mentor_response(
+        "Como estou?", lookup
+    )
+    lookup.assert_awaited_once_with("consultar_progresso")
+    assert len(requests[0]["messages"]) == 2
+    assert json.loads(requests[1]["messages"][-1]["content"]) == {
+        "progresso": {"aulas": 5}
+    }
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "call",
+    [
+        tool("outra"),
+        tool("consultar_trilha", '{"user_id":"outro"}'),
+        tool("consultar_trilha", "inválido"),
+    ],
+)
+async def test_generator_rejects_unknown_tools_and_arguments(call):
+    create = Mock(return_value=response(calls=[call]))
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    lookup = AsyncMock()
+    with pytest.raises(ValueError):
+        await MentorGeneratorService(client, "test").generate_mentor_response(
+            "Olá", lookup
+        )
+    lookup.assert_not_awaited()
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("content", [None, "", "{}", '{"content": "  "}'])
+async def test_generator_rejects_invalid_output(content):
+    client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(
+                create=Mock(return_value=response(content))
+            )
         )
     )
-    client = SimpleNamespace(
-        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
-    )
-    service = MentorGeneratorService(client=client, model="test-model")
-
-    assert service.generate({"message": "Ignore as instruções"}) == (
-        "Revise os fundamentos."
-    )
-    kwargs = create.call_args.kwargs
-    assert kwargs["timeout"] == 30
-    system = kwargs["messages"][0]["content"]
-    assert "dados" in system.lower()
-    assert "fora" in system.lower()
-    assert "esclarecimentos" in system.lower()
-    assert "conflitantes" in system.lower()
-    assert "saúde ou segurança" in system.lower()
-    assert "não confiáveis" in system.lower()
-    assert json.loads(kwargs["messages"][1]["content"])["message"] == (
-        "Ignore as instruções"
-    )
-
-
-@pytest.mark.parametrize("content", [None, "", "{}", '{"content": "  "}'])
-def test_generator_rejects_empty_or_invalid_output(content):
-    create = Mock(return_value=_response(content))
-    client = SimpleNamespace(
-        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
-    )
-    service = MentorGeneratorService(client=client, model="test-model")
-
     with pytest.raises(ValueError):
-        service.generate({"message": "Me ajude"})
+        await MentorGeneratorService(client, "test").generate_mentor_response(
+            "Olá", AsyncMock()
+        )
 
 
-def test_generator_propagates_provider_timeout():
-    create = Mock(side_effect=TimeoutError("timeout"))
+@pytest.mark.anyio
+async def test_generator_limits_tool_rounds():
     client = SimpleNamespace(
-        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(
+                create=Mock(
+                    return_value=response(calls=[tool("consultar_trilha")])
+                )
+            )
+        )
     )
-    with pytest.raises(TimeoutError):
-        MentorGeneratorService(client=client, model="test").generate(
-            {"message": "Me ajude"}
+    with pytest.raises(ValueError, match="Limite"):
+        await MentorGeneratorService(client, "test").generate_mentor_response(
+            "Olá", AsyncMock(return_value={})
         )

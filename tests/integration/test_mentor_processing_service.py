@@ -40,12 +40,13 @@ async def test_processing_reserves_and_publishes_once(
     await consent.accept_mentor_consent(user_id, notice.notice_version)
 
     generator = Mock()
-    generator.generate.return_value = "Revise os fundamentos."
+    generator.generate_mentor_response = AsyncMock()
+    generator.generate_mentor_response.return_value = "Revise os fundamentos."
     service = MentorProcessingService(db_session, generator)
     await service.process(user_id, generation_id)
     await service.process(user_id, generation_id)
 
-    assert generator.generate.call_count == 1
+    assert generator.generate_mentor_response.call_count == 1
     result = await generations.get(user_id, conversation_id, generation_id)
     assert result.status == "completed"
     assert await generations.get_response_id(generation_id)
@@ -72,7 +73,8 @@ async def test_provider_timeout_requeues_without_partial_response(
     notice = await consent.get_mentor_consent(user_id)
     await consent.accept_mentor_consent(user_id, notice.notice_version)
     generator = Mock()
-    generator.generate.side_effect = TimeoutError()
+    generator.generate_mentor_response = AsyncMock()
+    generator.generate_mentor_response.side_effect = TimeoutError()
 
     service = MentorProcessingService(db_session, generator)
     await service.process(user_id, generation_id)
@@ -89,7 +91,7 @@ async def test_provider_timeout_requeues_without_partial_response(
     result = await generations.get(user_id, conversation_id, generation_id)
     assert result.status == "failed"
     assert result.attempt_count == 3
-    assert generator.generate.call_count == 3
+    assert generator.generate_mentor_response.call_count == 3
 
 
 @pytest.mark.anyio
@@ -114,12 +116,13 @@ async def test_revoked_consent_prevents_queued_provider_call(
     await consent.accept_mentor_consent(user_id, notice.notice_version)
     await consent.revoke_mentor_consent(user_id)
     generator = Mock()
+    generator.generate_mentor_response = AsyncMock()
 
     await MentorProcessingService(db_session, generator).process(
         user_id, generation_id
     )
 
-    generator.generate.assert_not_called()
+    generator.generate_mentor_response.assert_not_called()
     result = await generations.get(user_id, conversation_id, generation_id)
     assert result.status == "failed"
     assert result.error_code == "consent_required"
@@ -157,13 +160,22 @@ async def test_provider_context_excludes_other_users_and_tracks(
     notice = await consent.get_mentor_consent(user_id)
     await consent.accept_mentor_consent(user_id, notice.notice_version)
     generator = Mock()
-    generator.generate.return_value = "Pratique os fundamentos."
+    generator.generate_mentor_response = AsyncMock()
+    captured = {}
+
+    async def generate(message, get_tool_data):
+        captured["message"] = message
+        captured["context"] = await get_tool_data("consultar_avaliacoes")
+        return "Pratique os fundamentos."
+
+    generator.generate_mentor_response.side_effect = generate
 
     await MentorProcessingService(db_session, generator).process(
         user_id, generation_id
     )
 
-    context = str(generator.generate.call_args.args[0])
+    assert captured["message"] == "Como melhorar?"
+    context = str(captured["context"])
     assert "Dados próprios" in context
     assert "Dados de terceiro" not in context
     assert "Outra trilha" not in context
@@ -189,7 +201,8 @@ async def test_lost_lock_after_send_keeps_reservation_inconclusive(
     notice = await consent.get_mentor_consent(user_id)
     await consent.accept_mentor_consent(user_id, notice.notice_version)
     generator = Mock()
-    generator.generate.return_value = "Uma orientação."
+    generator.generate_mentor_response = AsyncMock()
+    generator.generate_mentor_response.return_value = "Uma orientação."
     service = MentorProcessingService(db_session, generator)
     monkeypatch.setattr(
         service,
@@ -224,7 +237,8 @@ async def test_provider_exception_does_not_leak_content_to_logs(
     notice = await consent.get_mentor_consent(user_id)
     await consent.accept_mentor_consent(user_id, notice.notice_version)
     generator = Mock()
-    generator.generate.side_effect = ValueError(secret)
+    generator.generate_mentor_response = AsyncMock()
+    generator.generate_mentor_response.side_effect = ValueError(secret)
 
     with caplog.at_level("INFO"):
         await MentorProcessingService(db_session, generator).process(
