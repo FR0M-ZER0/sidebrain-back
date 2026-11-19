@@ -1,7 +1,12 @@
 import logging
 from uuid import UUID
 
-from openai import APIConnectionError, APITimeoutError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    APITimeoutError,
+    RateLimitError,
+)
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 
@@ -102,8 +107,17 @@ class MentorProcessingService:
                     notice_version=version,
                 )
                 await self.db.commit()
+                status_code = (
+                    error.status_code
+                    if isinstance(error, APIStatusError)
+                    else None
+                )
                 logger.warning(
-                    "Falha na geração de mentoria.",
+                    "Falha na geração de mentoria. "
+                    "generation_id=%s error_type=%s provider_status=%s",
+                    generation_id,
+                    type(error).__name__,
+                    status_code,
                     extra={
                         "generation_id": str(generation_id),
                         "error_type": type(error).__name__,

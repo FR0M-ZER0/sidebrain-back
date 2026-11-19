@@ -246,3 +246,5 @@ async def test_provider_exception_does_not_leak_content_to_logs(
         )
 
     assert secret not in caplog.text
+    assert "error_type=ValueError" in caplog.text
+    assert f"generation_id={generation_id}" in caplog.text
