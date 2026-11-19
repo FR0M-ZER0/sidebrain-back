@@ -46,9 +46,7 @@ class JobUpdateService:
             }
         )
 
-    async def get_snapshot(
-        self, user_id: UUID, scope: JobScope
-    ) -> JobUpdated:
+    async def get_snapshot(self, user_id: UUID, scope: JobScope) -> JobUpdated:
         if not await self.repository.active_user(user_id):
             self._unavailable()
         if scope.channel == "track_generation":
@@ -120,9 +118,7 @@ class JobUpdateService:
                 self._unavailable()
             step, generation = result
             status = (
-                generation.status
-                if generation is not None
-                else "completed"
+                generation.status if generation is not None else "completed"
             )
             payload = StepSummaryPayload(
                 step_id=step.stp_id,

@@ -30,9 +30,7 @@ class StepSummaryGenerationRepository:
         )
         return int(await self.db.scalar(statement))
 
-    async def get(
-        self, step_id: UUID
-    ) -> StepSummaryGeneration | None:
+    async def get(self, step_id: UUID) -> StepSummaryGeneration | None:
         return await self.db.get(StepSummaryGeneration, step_id)
 
     async def finish(

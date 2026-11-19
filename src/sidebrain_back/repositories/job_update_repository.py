@@ -93,8 +93,7 @@ class JobUpdateRepository:
                     StepPreparation.finished_at.is_(None)
                     | (
                         StepPreparation.finished_at
-                        > func.clock_timestamp()
-                        - text("interval '24 hours'")
+                        > func.clock_timestamp() - text("interval '24 hours'")
                     )
                 ),
             )

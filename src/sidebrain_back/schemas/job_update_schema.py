@@ -21,7 +21,6 @@ class PublicJobModel(BaseModel):
 
 
 class JobScope(PublicJobModel):
-
     channel: JobChannel
     resource_id: str = Field(min_length=1, max_length=511)
 
@@ -89,9 +88,9 @@ class AssessmentPayload(PublicJobModel):
     assessment_id: UUID
     status: Literal["pending", "completed", "failed"]
     questions: list[AssessmentQuestionPayload] = Field(default_factory=list)
-    error_code: Literal[
-        "generation_failed", "invalid_generation_result"
-    ] | None = None
+    error_code: (
+        Literal["generation_failed", "invalid_generation_result"] | None
+    ) = None
 
     @model_validator(mode="after")
     def validate_failure(self):

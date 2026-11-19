@@ -24,12 +24,14 @@ async def test_latest_summary_generation_wins(
     second = await repository.reserve(hierarchy.step.stp_id)
 
     assert second == first + 1
-    assert await repository.finish(
-        hierarchy.step.stp_id, first, "completed"
-    ) is False
-    assert await repository.finish(
-        hierarchy.step.stp_id, second, "completed"
-    ) is True
+    assert (
+        await repository.finish(hierarchy.step.stp_id, first, "completed")
+        is False
+    )
+    assert (
+        await repository.finish(hierarchy.step.stp_id, second, "completed")
+        is True
+    )
 
 
 @pytest.mark.anyio

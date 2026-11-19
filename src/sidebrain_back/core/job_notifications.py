@@ -19,8 +19,7 @@ class JobNotificationListener:
     @property
     def available(self) -> bool:
         return (
-            self._connection is not None
-            and not self._connection.is_closed()
+            self._connection is not None and not self._connection.is_closed()
         )
 
     async def start(self) -> None:
