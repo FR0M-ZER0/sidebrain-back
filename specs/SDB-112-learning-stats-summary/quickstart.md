@@ -68,3 +68,16 @@ uv run --no-sync pytest
 
 O fluxo só está validado quando lint e testes aplicáveis passam. A consulta não
 deve criar migrations nem alterar dados de progresso, atividade ou conquistas.
+
+## Resultados observados nesta implementação
+
+- `uv run --no-sync pytest tests/unit/test_user_statistics_schema.py tests/unit/test_user_statistics_service.py tests/contract/test_user_statistics_contract.py tests/performance/test_user_statistics_performance.py`
+  — 16 passaram; o teste de desempenho foi ignorado porque
+  `AUTH_PERFORMANCE_BASE_URL` não está configurada.
+- `uv run --no-sync pytest tests/integration/test_user_statistics.py`
+  — falhou no setup antes dos casos de teste: a preparação do schema não
+  conseguiu conectar ao PostgreSQL de testes em `127.0.0.1:5434`.
+- `uv run --no-sync ruff check .` — aprovado.
+- `uv run --no-sync pytest` — 670 passaram, 8 ignorados e 94 erros de setup;
+  os testes de integração não conseguiram conectar ao PostgreSQL de testes em
+  `127.0.0.1:5434`.

@@ -43,16 +43,16 @@ streak against their recorded data.
 
 ### Tests for User Story 1
 
-- [ ] T001 [P] [US1] Add response-schema unit tests for `xp >= 0`, `missionsCompleted >= 0`, `position >= 1`, `badgesUnlocked >= 0`, and `currentDayStreak >= 0` in `tests/unit/test_user_statistics_schema.py`
-- [ ] T002 [P] [US1] Add a contract test for `GET /api/v1/users/me/statistics` verifying the exact five public fields and camelCase names in `tests/contract/test_user_statistics_contract.py`
-- [ ] T003 [P] [US1] Add a PostgreSQL integration test comparing summary XP, missions, and position with the profile and ranking endpoints for the same user in `tests/integration/test_user_statistics.py`
+- [X] T001 [P] [US1] Add response-schema unit tests for `xp >= 0`, `missionsCompleted >= 0`, `position >= 1`, `badgesUnlocked >= 0`, and `currentDayStreak >= 0` in `tests/unit/test_user_statistics_schema.py`
+- [X] T002 [P] [US1] Add a contract test for `GET /api/v1/users/me/statistics` verifying the exact five public fields and camelCase names in `tests/contract/test_user_statistics_contract.py`
+- [X] T003 [P] [US1] Add a PostgreSQL integration test comparing summary XP, missions, and position with the profile and ranking endpoints for the same user in `tests/integration/test_user_statistics.py`
 
 ### Implementation for User Story 1
 
-- [ ] T004 [P] [US1] Define the `UserStatisticsResponse` schema with exactly `xp`, `missionsCompleted`, `position`, `badgesUnlocked`, and `currentDayStreak` in `src/sidebrain_back/schemas/user_statistics_schema.py`
-- [ ] T005 [P] [US1] Add read-only queries for the authenticated user's active unlocked-badge count and day-streak record in `src/sidebrain_back/repositories/user_statistics_repository.py`; count only `BadgeProgress` status `done` joined to non-deleted badges, and do not lock or mutate streak rows
-- [ ] T006 [US1] Implement `UserStatisticsService` in `src/sidebrain_back/services/user_statistics_service.py`; reuse `RankingRepository.get_user_ranking`, return the existing not-found error when no active ranking row exists, and compose the five response values using the UTC streak rule
-- [ ] T007 [US1] Add `GET /api/v1/users/me/statistics` with `get_current_user` and the response schema in `src/sidebrain_back/routers/v1/user_statistics_router.py`, then register it in `src/sidebrain_back/routers/router.py`
+- [X] T004 [P] [US1] Define the `UserStatisticsResponse` schema with exactly `xp`, `missionsCompleted`, `position`, `badgesUnlocked`, and `currentDayStreak` in `src/sidebrain_back/schemas/user_statistics_schema.py`
+- [X] T005 [P] [US1] Add read-only queries for the authenticated user's active unlocked-badge count and day-streak record in `src/sidebrain_back/repositories/user_statistics_repository.py`; count only `BadgeProgress` status `done` joined to non-deleted badges, and do not lock or mutate streak rows
+- [X] T006 [US1] Implement `UserStatisticsService` in `src/sidebrain_back/services/user_statistics_service.py`; reuse `RankingRepository.get_user_ranking`, return the existing not-found error when no active ranking row exists, and compose the five response values using the UTC streak rule
+- [X] T007 [US1] Add `GET /api/v1/users/me/statistics` with `get_current_user` and the response schema in `src/sidebrain_back/routers/v1/user_statistics_router.py`, then register it in `src/sidebrain_back/routers/router.py`
 
 **Checkpoint**: The authenticated endpoint returns all five values consistently
 with existing ranking rules and does not write progress data.
@@ -71,8 +71,8 @@ rejected in Problem Details format.
 
 ### Tests for User Story 2
 
-- [ ] T008 [P] [US2] Add contract tests for unauthenticated `401` Problem Details, absence of user-selecting inputs, and a response containing no identity or private fields in `tests/contract/test_user_statistics_contract.py`
-- [ ] T009 [P] [US2] Add an integration test verifying zero counts for an active user without progress, ranking position consistency, and isolation from another user's nonzero statistics in `tests/integration/test_user_statistics.py`
+- [X] T008 [P] [US2] Add contract tests for unauthenticated `401` Problem Details, absence of user-selecting inputs, and a response containing no identity or private fields in `tests/contract/test_user_statistics_contract.py`
+- [X] T009 [P] [US2] Add an integration test verifying zero counts for an active user without progress, ranking position consistency, and isolation from another user's nonzero statistics in `tests/integration/test_user_statistics.py`
 
 **Checkpoint**: Empty-state and privacy scenarios pass without changing
 authentication behavior or existing profile and ranking contracts.
@@ -90,8 +90,8 @@ after each read.
 
 ### Tests for User Story 3
 
-- [ ] T010 [P] [US3] Add service unit tests for a streak updated today, yesterday, earlier than yesterday, and no streak record using a controlled UTC date in `tests/unit/test_user_statistics_service.py`
-- [ ] T011 [P] [US3] Add an integration test proving that querying an expired streak leaves `DayStreak` and badge-progress records unchanged in `tests/integration/test_user_statistics.py`
+- [X] T010 [P] [US3] Add service unit tests for a streak updated today, yesterday, earlier than yesterday, and no streak record using a controlled UTC date in `tests/unit/test_user_statistics_service.py`
+- [X] T011 [P] [US3] Add an integration test proving that querying an expired streak leaves `DayStreak` and badge-progress records unchanged in `tests/integration/test_user_statistics.py`
 
 **Checkpoint**: Current streak is valid through the prior UTC day, expires after
 that boundary, and reads never reset persisted progress.
@@ -102,8 +102,8 @@ that boundary, and reads never reset persisted progress.
 
 **Purpose**: Performance, regression, and final verification.
 
-- [ ] T012 [P] Add a 20-client performance test measuring the endpoint's P95 against the 2-second target in `tests/performance/test_user_statistics_performance.py`, following the `AUTH_PERFORMANCE_BASE_URL` convention
-- [ ] T013 Run focused tests, `uv run --no-sync ruff check .`, and `uv run --no-sync pytest`; record actual results and any external performance-test prerequisite in `specs/SDB-112-learning-stats-summary/quickstart.md`
+- [X] T012 [P] Add a 20-client performance test measuring the endpoint's P95 against the 2-second target in `tests/performance/test_user_statistics_performance.py`, following the `AUTH_PERFORMANCE_BASE_URL` convention
+- [X] T013 Run focused tests, `uv run --no-sync ruff check .`, and `uv run --no-sync pytest`; record actual results and any external performance-test prerequisite in `specs/SDB-112-learning-stats-summary/quickstart.md`
 
 ---
 

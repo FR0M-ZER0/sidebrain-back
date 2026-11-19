@@ -14,6 +14,9 @@ from sidebrain_back.routers.v1.ranking_router import router as ranking_router
 from sidebrain_back.routers.v1.step_router import router as step_router
 from sidebrain_back.routers.v1.track_router import router as track_router
 from sidebrain_back.routers.v1.user_router import router as user_router
+from sidebrain_back.routers.v1.user_statistics_router import (
+    router as user_statistics_router,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -28,4 +31,5 @@ router.include_router(quiz_router)
 router.include_router(ranking_router)
 router.include_router(step_router)
 router.include_router(track_router)
+router.include_router(user_statistics_router)
 router.include_router(user_router)
