@@ -122,6 +122,12 @@ O token expira em 60 minutos. O perfil autenticado fica em
 [a orientação de migração](./docs/auth_migration.md) antes de atualizar um
 ambiente com consumidores existentes ou hashes legados.
 
+O catálogo autenticado de avatares fica em `GET /api/v1/avatars`. A seleção é
+feita com `PUT /api/v1/users/me` usando `{"avatar":"cat"}`; `{"avatar":null}`
+remove a seleção e um campo ausente mantém o avatar atual. As imagens são
+servidas em `/static/avatars/`, e perfis sem avatar ou com uma opção desativada
+retornam `default.png`. Consulte [a manutenção do catálogo](./docs/avatar_catalog.md).
+
 ## Monitoramento das tasks
 
 Rode o comando abaixo para abrir a interface do flower e monitorar o andamento das tasks:
