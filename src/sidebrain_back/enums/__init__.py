@@ -4,6 +4,10 @@ from sidebrain_back.enums.badge_progress_status_enum import (
     BadgeProgressStatusEnum,
 )
 from sidebrain_back.enums.badge_rarity_enum import BadgeRarityEnum
+from sidebrain_back.enums.generation_cache_enum import (
+    GenerationCacheContentTypeEnum,
+    GenerationCacheStatusEnum,
+)
 from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.knowledge_assessment_status_enum import (
     KnowledgeAssessmentStatusEnum,
@@ -23,6 +27,8 @@ __all__ = [
     "StepStatusEnum",
     "LessonStatusEnum",
     "GenerationStatusEnum",
+    "GenerationCacheContentTypeEnum",
+    "GenerationCacheStatusEnum",
     "KnowledgeAssessmentStatusEnum",
     "BadgeProgressStatusEnum",
     "StepLevelEnum",

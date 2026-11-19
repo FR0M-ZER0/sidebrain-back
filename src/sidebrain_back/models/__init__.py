@@ -3,6 +3,7 @@ from sidebrain_back.models.badge_model import Badge
 from sidebrain_back.models.badge_progress_model import BadgeProgress
 from sidebrain_back.models.day_streak_model import DayStreak
 from sidebrain_back.models.feedback_model import Feedback
+from sidebrain_back.models.generation_cache_model import GenerationCache
 from sidebrain_back.models.generation_request_model import GenerationRequest
 from sidebrain_back.models.knowledge_assessment_alternative_model import (
     KnowledgeAssessmentAlternative,
@@ -35,6 +36,7 @@ from sidebrain_back.models.step_preparation_model import StepPreparation
 from sidebrain_back.models.step_summary_generation_model import (
     StepSummaryGeneration,
 )
+from sidebrain_back.models.topic_alias_model import TopicAlias
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.models.user_model import User
 
@@ -50,6 +52,8 @@ __all__ = [
     "Answer",
     "Feedback",
     "GenerationRequest",
+    "GenerationCache",
+    "TopicAlias",
     "KnowledgeAssessment",
     "KnowledgeAssessmentQuestion",
     "KnowledgeAssessmentAlternative",
