@@ -46,6 +46,9 @@ from sidebrain_back.services.rag_generation_context_service import (
     RagGenerationContextService,
     build_rag_generation_context_service,
 )
+from sidebrain_back.services.step_preparation_service import (
+    StepPreparationService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +238,7 @@ async def _prepare_step_content(
     step_id: UUID,
     generator: StepContentGenerator | None = None,
     rag_context_service: RagGenerationContextService | None = None,
+    tracking_task_id: str | None = None,
 ) -> dict[str, Any]:
     reference_context = []
     context_service = rag_context_service
@@ -271,6 +275,15 @@ async def _prepare_step_content(
 
     async with async_session() as db:
         try:
+            if tracking_task_id is not None:
+                acquired = await StepPreparationService(
+                    db
+                ).acquire_step_preparation(tracking_task_id, step_id)
+                if not acquired:
+                    return {
+                        "status": "skipped",
+                        "reason": "preparation_not_pending",
+                    }
             repository = TrackRepository(db)
             step = await repository.get_step_for_generation(step_id)
             if step is None:
@@ -345,7 +358,12 @@ async def _prepare_step_content(
                         msn_criteria_value=generated_mission.criteria_value,
                     )
                 )
-            await db.commit()
+            if tracking_task_id is not None:
+                await StepPreparationService(db).finish(
+                    tracking_task_id, "completed"
+                )
+            else:
+                await db.commit()
             return {
                 "status": "generated",
                 "step_id": str(step_id),
@@ -372,7 +390,11 @@ def prepare_next_step_content_task(
 ) -> dict[str, Any]:
     async def run_and_dispose() -> dict[str, Any]:
         try:
-            return await _prepare_step_content(UUID(step_id))
+            if tracking_task_id is None:
+                return await _prepare_step_content(UUID(step_id))
+            return await _prepare_step_content(
+                UUID(step_id), tracking_task_id=tracking_task_id
+            )
         finally:
             await engine.dispose()
 
@@ -425,9 +447,5 @@ def prepare_next_step_content_task(
 
 
 async def _finish_preparation(task_id: str, status: str) -> None:
-    from sidebrain_back.services.step_preparation_service import (
-        StepPreparationService,
-    )
-
     async with async_session() as db:
         await StepPreparationService(db).finish(task_id, status)

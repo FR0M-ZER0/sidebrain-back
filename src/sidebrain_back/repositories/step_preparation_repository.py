@@ -40,6 +40,13 @@ class StepPreparationRepository:
     async def get(self, task_id: str) -> StepPreparation | None:
         return await self.db.get(StepPreparation, task_id)
 
+    async def get_for_update(self, task_id: str) -> StepPreparation | None:
+        return await self.db.scalar(
+            select(StepPreparation)
+            .where(StepPreparation.task_id == task_id)
+            .with_for_update()
+        )
+
     async def get_accessible(
         self, task_id: str, user_id: UUID
     ) -> StepPreparation | None:

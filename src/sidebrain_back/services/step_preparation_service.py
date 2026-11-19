@@ -50,6 +50,17 @@ class StepPreparationService:
         await self.db.commit()
         return task_id
 
+    async def acquire_step_preparation(
+        self, task_id: str, target_step_id: UUID
+    ) -> bool:
+        # O lock dura até o commit/rollback da transação que gera o conteúdo.
+        preparation = await self.repository.get_for_update(task_id)
+        return (
+            preparation is not None
+            and preparation.target_step_id == target_step_id
+            and preparation.status == "pending"
+        )
+
     async def finish(self, task_id: str, status: str) -> bool:
         changed = await self.repository.finish(task_id, status)
         if changed:

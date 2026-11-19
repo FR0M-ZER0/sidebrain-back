@@ -2,7 +2,10 @@ import asyncio
 import importlib
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
+
+import pytest
 
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 from sidebrain_back.enums.step_status_enum import StepStatusEnum
@@ -175,6 +178,93 @@ class FakeStepGenerator:
                 for _ in range(2)
             ],
         }
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("initial_status", ["pending", "failed", "completed"])
+async def test_tracked_generation_serializes_duplicate_deliveries(
+    monkeypatch, initial_status
+):
+    step = _step_with_track()
+    generator = FakeStepGenerator()
+    lock = asyncio.Lock()
+    preparation = SimpleNamespace(
+        task_id="reserved",
+        target_step_id=step.stp_id,
+        status=initial_status,
+        finished_at=None,
+    )
+    committed_content = []
+    contention = []
+
+    class LockingSession(FakeDbSession):
+        def __init__(self):
+            super().__init__()
+            self.locked = False
+
+        async def scalar(self, statement):
+            assert statement._for_update_arg is not None
+            assert "reserved" in statement.compile().params.values()
+            if not self.locked:
+                if lock.locked():
+                    contention.append(True)
+                await lock.acquire()
+                self.locked = True
+            return preparation
+
+        async def flush(self):
+            # Dê tempo à outra entrega para tentar adquirir a mesma reserva.
+            await asyncio.sleep(0)
+
+        async def commit(self):
+            committed_content.extend(self.added)
+            assert preparation.status == "completed"
+            await self.__aexit__()
+
+        async def __aexit__(self, *_args):
+            if self.locked:
+                lock.release()
+                self.locked = False
+
+    monkeypatch.setattr(step_task_module, "async_session", LockingSession)
+    monkeypatch.setattr(
+        step_task_module,
+        "GenerationRequestRepository",
+        lambda _db: SimpleNamespace(
+            get_rag_context_by_step_id=AsyncMock(return_value=None)
+        ),
+    )
+    monkeypatch.setattr(
+        step_task_module,
+        "TrackRepository",
+        lambda _db: FakeStepRepository(step),
+    )
+    results = await asyncio.gather(
+        *(
+            step_task_module._prepare_step_content(
+                step.stp_id,
+                generator=generator,
+                tracking_task_id="reserved",
+            )
+            for _ in range(2)
+        )
+    )
+    if initial_status == "pending":
+        assert [result["status"] for result in results] == [
+            "generated",
+            "skipped",
+        ]
+        assert len(generator.contexts) == 1
+        assert len(committed_content) == 21
+        assert preparation.status == "completed"
+        assert preparation.finished_at is not None
+        assert contention == [True]
+    else:
+        assert all(result["status"] == "skipped" for result in results)
+        assert generator.contexts == []
+        assert committed_content == []
+        assert preparation.status == initial_status
+    assert not lock.locked()
 
 
 class FakeStepRagContext:

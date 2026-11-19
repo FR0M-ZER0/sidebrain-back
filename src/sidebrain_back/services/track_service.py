@@ -110,14 +110,12 @@ class TrackService:
         task_id = await self.step_preparation_service.reserve(
             step_id, next_step.stp_id
         )
-        return self._dispatch_preparation(
+        return await self._dispatch_preparation(
             prepare_next_step_content_task, next_step.stp_id, task_id
         )
 
-    @staticmethod
-    def _dispatch_preparation(task, step_id: UUID, task_id: str):
-        # O broker pode aceitar antes do erro: repita com a mesma identidade.
-        # Se ambos os envios falharem, o registro continua pendente.
+    async def _dispatch_preparation(self, task, step_id: UUID, task_id: str):
+        # O worker serializa mensagens duplicadas pela reserva transacional.
         for attempt in range(2):
             try:
                 return task.apply_async(
@@ -127,6 +125,9 @@ class TrackService:
                 )
             except Exception:
                 if attempt == 1:
+                    await self.step_preparation_service.finish(
+                        task_id, "failed"
+                    )
                     raise
 
     async def prepare_next_step(
@@ -154,7 +155,7 @@ class TrackService:
             task_id = await self.step_preparation_service.reserve(
                 step_id, next_step.stp_id, user.usr_id
             )
-            result = self._dispatch_preparation(
+            result = await self._dispatch_preparation(
                 prepare_next_step_content_task, next_step.stp_id, task_id
             )
         return PrepareNextAccepted(

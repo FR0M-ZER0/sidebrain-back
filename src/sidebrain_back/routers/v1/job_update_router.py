@@ -130,6 +130,11 @@ async def job_updates(
             event.clear()
             try:
                 snapshot = await load_job_snapshot(user_id, scope)
+                serialized = snapshot.model_dump_json()
+                if serialized != previous:
+                    # Revalide a posse em uma nova sessão antes do envio.
+                    snapshot = await load_job_snapshot(user_id, scope)
+                    serialized = snapshot.model_dump_json()
             except ProblemDetailError:
                 await _send_error(websocket, scope, RESOURCE_UNAVAILABLE, 1008)
                 return
@@ -138,7 +143,6 @@ async def job_updates(
                     websocket, scope, "Acompanhamento indisponível.", 1011
                 )
                 return
-            serialized = snapshot.model_dump_json()
             if not job_notification_listener.available:
                 await _send_error(
                     websocket, scope, "Acompanhamento indisponível.", 1011

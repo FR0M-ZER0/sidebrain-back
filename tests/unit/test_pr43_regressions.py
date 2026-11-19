@@ -1,7 +1,7 @@
 import asyncio
 from importlib import import_module
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -60,18 +60,39 @@ def test_summary_scope_canonicalizes_both_uuids():
     )
 
 
-def test_ambiguous_dispatch_retries_same_identity():
+@pytest.mark.anyio
+async def test_ambiguous_dispatch_retries_same_identity():
+    preparation_service = SimpleNamespace(finish=AsyncMock())
+    service = TrackService(
+        Mock(), Mock(), step_preparation_service=preparation_service
+    )
     task = SimpleNamespace(
         apply_async=Mock(
             side_effect=[TimeoutError(), SimpleNamespace(id="reserved")]
         )
     )
-    result = TrackService._dispatch_preparation(task, uuid4(), "reserved")
+    result = await service._dispatch_preparation(task, uuid4(), "reserved")
     assert result.id == "reserved"
     assert (
         task.apply_async.call_args_list[0]
         == (task.apply_async.call_args_list[1])
     )
+    preparation_service.finish.assert_not_awaited()
+
+
+@pytest.mark.anyio
+async def test_dispatch_failure_finishes_reservation_before_raising():
+    error = TimeoutError("broker unavailable")
+    task = SimpleNamespace(apply_async=Mock(side_effect=error))
+    preparation_service = SimpleNamespace(finish=AsyncMock())
+    service = TrackService(
+        Mock(), Mock(), step_preparation_service=preparation_service
+    )
+    with pytest.raises(TimeoutError) as raised:
+        await service._dispatch_preparation(task, uuid4(), "reserved")
+    assert raised.value is error
+    assert task.apply_async.call_count == 2
+    preparation_service.finish.assert_awaited_once_with("reserved", "failed")
 
 
 @pytest.mark.parametrize(
@@ -87,7 +108,8 @@ def test_worker_distinguishes_skipped_results(monkeypatch, reason, terminal):
     )
     transitions = []
 
-    async def prepare(_step):
+    async def prepare(_step, *, tracking_task_id):
+        assert tracking_task_id == "reserved"
         return {"status": "skipped", "reason": reason}
 
     async def dispose():
