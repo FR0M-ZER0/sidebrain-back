@@ -30,13 +30,12 @@ class JobScope(PublicJobModel):
         value = value.strip()
         channel = info.data.get("channel")
         if channel in {"track_generation", "assessment"}:
-            UUID(value)
+            value = str(UUID(value))
         elif channel == "step_summary":
             parts = value.split(":")
             if len(parts) != 2:
                 raise ValueError("resource_id de sumário inválido.")
-            UUID(parts[0])
-            UUID(parts[1])
+            value = f"{UUID(parts[0])}:{UUID(parts[1])}"
         if not value:
             raise ValueError("resource_id não pode ser vazio.")
         return value

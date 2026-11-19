@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import Depends
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import aliased, selectinload
 
 from sidebrain_back.core.database import get_db
 from sidebrain_back.models.generation_request_model import GenerationRequest
@@ -79,16 +79,21 @@ class JobUpdateRepository:
     async def step_preparation(
         self, task_id: str, user_id: UUID
     ) -> StepPreparation | None:
+        source = aliased(Step)
         return await self.db.scalar(
             select(StepPreparation)
             .join(Track, Track.trk_id == StepPreparation.track_id)
             .join(Step, Step.stp_id == StepPreparation.target_step_id)
+            .join(source, source.stp_id == StepPreparation.source_step_id)
             .where(
                 StepPreparation.task_id == task_id,
                 StepPreparation.user_id == user_id,
                 Track.trk_user_id == user_id,
                 Track.trk_is_deleted.is_(False),
                 Step.stp_is_deleted.is_(False),
+                Step.stp_track_id == Track.trk_id,
+                source.stp_is_deleted.is_(False),
+                source.stp_track_id == Track.trk_id,
                 (
                     StepPreparation.finished_at.is_(None)
                     | (

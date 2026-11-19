@@ -15,6 +15,7 @@ class JobNotificationListener:
         self._connection: asyncpg.Connection | None = None
         self._subscribers: dict[str, set[asyncio.Event]] = defaultdict(set)
         self._closing = False
+        self._lifecycle_lock = asyncio.Lock()
 
     @property
     def available(self) -> bool:
@@ -23,20 +24,33 @@ class JobNotificationListener:
         )
 
     async def start(self) -> None:
+        async with self._lifecycle_lock:
+            await self._start()
+
+    async def _start(self) -> None:
         if self._connection is not None and not self._connection.is_closed():
             return
         self._closing = False
-        self._connection = await asyncpg.connect(
+        connection = await asyncpg.connect(
             host=Env.POSTGRES_HOST,
             port=Env.POSTGRES_PORT,
             user=Env.POSTGRES_USER,
             password=Env.POSTGRES_PASSWORD,
             database=Env.POSTGRES_DB,
         )
-        await self._connection.add_listener(CHANNEL, self._on_notification)
-        self._connection.add_termination_listener(self._on_termination)
+        try:
+            await connection.add_listener(CHANNEL, self._on_notification)
+            connection.add_termination_listener(self._on_termination)
+        except BaseException:
+            await connection.close()
+            raise
+        self._connection = connection
 
     async def close(self) -> None:
+        async with self._lifecycle_lock:
+            await self._close()
+
+    async def _close(self) -> None:
         self._closing = True
         if self._connection is not None:
             await self._connection.close()

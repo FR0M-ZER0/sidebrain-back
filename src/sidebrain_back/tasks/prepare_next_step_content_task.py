@@ -410,7 +410,13 @@ def prepare_next_step_content_task(
         raise
 
     if tracking_task_id is not None:
-        asyncio.run(_finish_preparation(tracking_task_id, "completed"))
+        status = (
+            "completed"
+            if result.get("status") == "generated"
+            or result.get("reason") == "content_already_exists"
+            else "failed"
+        )
+        asyncio.run(_finish_preparation(tracking_task_id, status))
     logger.info(
         "Incremental step content finished.",
         extra=_task_context(self, "step_content_finished"),

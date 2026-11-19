@@ -110,15 +110,24 @@ class TrackService:
         task_id = await self.step_preparation_service.reserve(
             step_id, next_step.stp_id
         )
-        try:
-            return prepare_next_step_content_task.apply_async(
-                args=[str(next_step.stp_id)],
-                kwargs={"tracking_task_id": task_id},
-                task_id=task_id,
-            )
-        except Exception:
-            await self.step_preparation_service.finish(task_id, "failed")
-            raise
+        return self._dispatch_preparation(
+            prepare_next_step_content_task, next_step.stp_id, task_id
+        )
+
+    @staticmethod
+    def _dispatch_preparation(task, step_id: UUID, task_id: str):
+        # O broker pode aceitar antes do erro: repita com a mesma identidade.
+        # Se ambos os envios falharem, o registro continua pendente.
+        for attempt in range(2):
+            try:
+                return task.apply_async(
+                    args=[str(step_id)],
+                    kwargs={"tracking_task_id": task_id},
+                    task_id=task_id,
+                )
+            except Exception:
+                if attempt == 1:
+                    raise
 
     async def prepare_next_step(
         self, user: User, track_id: UUID, step_id: UUID
@@ -145,15 +154,9 @@ class TrackService:
             task_id = await self.step_preparation_service.reserve(
                 step_id, next_step.stp_id, user.usr_id
             )
-            try:
-                result = prepare_next_step_content_task.apply_async(
-                    args=[str(next_step.stp_id)],
-                    kwargs={"tracking_task_id": task_id},
-                    task_id=task_id,
-                )
-            except Exception:
-                await self.step_preparation_service.finish(task_id, "failed")
-                raise
+            result = self._dispatch_preparation(
+                prepare_next_step_content_task, next_step.stp_id, task_id
+            )
         return PrepareNextAccepted(
             step_id=next_step.stp_id,
             task_id=str(result.id),

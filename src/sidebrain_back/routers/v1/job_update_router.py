@@ -139,6 +139,11 @@ async def job_updates(
                 )
                 return
             serialized = snapshot.model_dump_json()
+            if not job_notification_listener.available:
+                await _send_error(
+                    websocket, scope, "Acompanhamento indisponível.", 1011
+                )
+                return
             if serialized != previous:
                 await websocket.send_text(serialized)
                 previous = serialized

@@ -21,6 +21,42 @@ class FakeTicketStore:
         return dict(self.scope)
 
 
+def test_listener_loss_during_snapshot_closes_socket(
+    monkeypatch, websocket_scope
+):
+    from types import SimpleNamespace
+
+    listener = job_update_router.job_notification_listener
+
+    async def load_snapshot(_user_id, _scope):
+        await listener._connection.close()
+        return SimpleNamespace(model_dump_json=lambda: "{}")
+
+    monkeypatch.setattr(job_update_router, "load_job_snapshot", load_snapshot)
+    request_id, raw_scope = websocket_scope
+    app.dependency_overrides[get_ws_ticket_store] = lambda: FakeTicketStore(
+        raw_scope
+    )
+    try:
+        with TestClient(app) as client:
+            with client.websocket_connect(
+                "/api/v1/ws?ticket=temporary"
+            ) as websocket:
+                websocket.send_json(
+                    {
+                        "type": "subscribe",
+                        "channel": "track_generation",
+                        "resource_id": str(request_id),
+                    }
+                )
+                assert websocket.receive_json()["type"] == "job.error"
+                with pytest.raises(WebSocketDisconnect) as closed:
+                    websocket.receive_json()
+                assert closed.value.code == 1011
+    finally:
+        app.dependency_overrides.clear()
+
+
 @pytest.fixture
 def websocket_scope():
     request_id = uuid4()
