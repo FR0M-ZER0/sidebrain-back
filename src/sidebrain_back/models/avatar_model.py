@@ -15,9 +15,7 @@ class Avatar(Base):
 
     avt_slug: Mapped[str] = mapped_column(String(64), primary_key=True)
     avt_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    avt_image_path: Mapped[str] = mapped_column(
-        String(255), nullable=False
-    )
+    avt_image_path: Mapped[str] = mapped_column(String(255), nullable=False)
     avt_is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default=text("true")
     )
