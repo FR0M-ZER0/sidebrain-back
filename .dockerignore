@@ -11,3 +11,6 @@ __pycache__
 coverage/
 *.log*
 tests
+node_modules/
+Dockerfile*
+.dockerignore
