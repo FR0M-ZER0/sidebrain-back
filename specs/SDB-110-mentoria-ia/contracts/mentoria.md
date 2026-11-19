@@ -4,7 +4,7 @@ Base `/api/v1`, JSON, autenticação `Authorization: Bearer <token>` em todas as
 
 ## Aviso e autorização
 
-- `GET /mentor-consent`: `200` com `{ "notice_version": "2-openai", "purpose": "...", "recipient": "...", "data_categories": ["mensagens", "dados da trilha escolhida", "progresso e avaliações vinculados"], "retention_notice": "...", "authorized": false, "granted_at": null }`. `recipient` e versão refletem o provedor configurado; o aviso explica que a exclusão local não apaga dados já enviados.
+- `GET /mentor-consent`: `200` com aviso versionado (por exemplo `3-openai`), finalidade, provedor, categorias de dados, retenção e estado de autorização. As categorias incluem conteúdo de lições e perguntas de quizzes solicitados. Aceites de versões anteriores não autorizam novos envios; o aviso explica que a exclusão local não apaga dados já enviados.
 - `PUT /mentor-consent`: corpo `{ "notice_version": "<versão recebida>", "accepted": true }`; `200` com estado vigente. Só aceitar versão corrente e aceite explícito; `false`, versão ausente ou obsoleta retornam `422` ou `409` para versão obsoleta.
 - `DELETE /mentor-consent`: `204`, revogação idempotente. Bloqueia novas reservas de envio e aguarda chamadas em andamento; se não for possível confirmar seu término, retorna `503`, mantém o bloqueio e permite nova tentativa. Após `204`, impede novos envios, inclusive de tasks enfileiradas; chamada já iniciada não pode ser desfeita. Histórico permanece disponível até exclusão solicitada.
 

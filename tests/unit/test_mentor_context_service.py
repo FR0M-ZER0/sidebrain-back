@@ -1,5 +1,6 @@
 import json
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import pytest
 
@@ -58,3 +59,42 @@ async def test_tools_filter_data_and_reject_unknown_names():
     assert result == {"progresso": {"aulas": 2}}
     with pytest.raises(ValueError):
         await service.get_mentor_tool_data("usuario", base, "desconhecida")
+
+
+@pytest.mark.anyio
+async def test_lesson_and_quiz_are_scoped_and_ambiguous_titles_fail():
+    generations = AsyncMock()
+    contexts = AsyncMock()
+    contexts.list_lessons_by_title.return_value = [
+        {"id": "lesson", "titulo": "Funções", "texto": "Conteúdo"}
+    ]
+    contexts.list_quiz_questions_by_lesson_id.return_value = ["Pergunta?"]
+    service = MentorContextService(generations, contexts)
+    base = {"track_id": "00000000-0000-0000-0000-000000000001"}
+    result = await service.get_mentor_tool_data(
+        "usuario", base, "consultar_quiz", {"titulo": "Funções"}
+    )
+    assert result == {"titulo": "Funções", "perguntas": ["Pergunta?"]}
+    contexts.list_quiz_questions_by_lesson_id.assert_awaited_once_with(
+        "usuario", UUID(base["track_id"]), "lesson"
+    )
+    contexts.list_lessons_by_title.return_value *= 2
+    result = await service.get_mentor_tool_data(
+        "usuario", base, "consultar_licao", {"titulo": "Funções"}
+    )
+    assert "ambíguo" in result["erro"]
+
+
+@pytest.mark.anyio
+async def test_performance_metrics_do_not_treat_completion_as_mastery():
+    contexts = AsyncMock()
+    contexts.get.return_value = {
+        "progresso": {"aulas": 4, "concluidas": 2},
+        "respostas_recentes": [],
+    }
+    service = MentorContextService(AsyncMock(), contexts)
+    result = await service.get_mentor_tool_data(
+        "usuario", {"track_id": str(UUID(int=1))}, "analisar_desempenho"
+    )
+    assert result["percentual_conclusao"] == 50
+    assert "não mede domínio" in result["limites"]

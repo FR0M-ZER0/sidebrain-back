@@ -82,11 +82,13 @@ class MentorProcessingService:
             try:
                 await self._check_lock_connection(connection)
 
-                async def get_tool_data(name: str) -> dict:
+                async def get_tool_data(
+                    name: str, arguments: dict | None = None
+                ) -> dict:
                     await self._check_lock_connection(connection)
                     try:
                         data = await context_service.get_mentor_tool_data(
-                            user_id, context, name
+                            user_id, context, name, arguments
                         )
                     finally:
                         await self.db.rollback()

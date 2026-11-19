@@ -73,11 +73,32 @@ async def test_generator_returns_only_requested_tool_data():
     await MentorGeneratorService(client, "test").generate_mentor_response(
         "Como estou?", lookup
     )
-    lookup.assert_awaited_once_with("consultar_progresso")
+    lookup.assert_awaited_once_with("consultar_progresso", {})
     assert len(requests[0]["messages"]) == 2
     assert json.loads(requests[1]["messages"][-1]["content"]) == {
         "progresso": {"aulas": 5}
     }
+
+
+@pytest.mark.anyio
+async def test_generator_forwards_lesson_title_and_quiz_policy():
+    create = Mock(
+        side_effect=[
+            response(calls=[tool("consultar_quiz", '{"titulo":"Funções"}')]),
+            response('{"content":"Pense em um exemplo."}'),
+        ]
+    )
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    lookup = AsyncMock(return_value={"perguntas": ["Pergunta?"]})
+    await MentorGeneratorService(client, "test").generate_mentor_response(
+        "Ajude com o quiz de Funções", lookup
+    )
+    lookup.assert_awaited_once_with("consultar_quiz", {"titulo": "Funções"})
+    system = create.call_args_list[0].kwargs["messages"][0]["content"]
+    assert "nunca forneça a resposta" in system
+    assert "peça ao estudante o título" in system
 
 
 @pytest.mark.anyio
@@ -87,6 +108,9 @@ async def test_generator_returns_only_requested_tool_data():
         tool("outra"),
         tool("consultar_trilha", '{"user_id":"outro"}'),
         tool("consultar_trilha", "inválido"),
+        tool("consultar_licao", "{}"),
+        tool("consultar_quiz", '{"titulo":"Funções","user_id":"outro"}'),
+        tool("consultar_quiz", '{"titulo":"  "}'),
     ],
 )
 async def test_generator_rejects_unknown_tools_and_arguments(call):

@@ -21,6 +21,53 @@ class MentorContextRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    async def list_lessons_by_title(
+        self, user_id: UUID, track_id: UUID, title: str
+    ) -> list[dict]:
+        rows = (
+            await self.db.execute(
+                select(Lesson.lsn_id, Lesson.lsn_title, Lesson.lsn_text)
+                .join(Step, Step.stp_id == Lesson.lsn_step_id)
+                .join(Track, Track.trk_id == Step.stp_track_id)
+                .where(
+                    Track.trk_id == track_id,
+                    Track.trk_user_id == user_id,
+                    Track.trk_is_deleted.is_(False),
+                    Step.stp_is_deleted.is_(False),
+                    Lesson.lsn_is_deleted.is_(False),
+                    Lesson.lsn_title.icontains(title, autoescape=True),
+                )
+                .order_by(Lesson.lsn_position, Lesson.lsn_id)
+                .limit(2)
+            )
+        ).all()
+        return [
+            {"id": row.lsn_id, "titulo": row.lsn_title, "texto": row.lsn_text}
+            for row in rows
+        ]
+
+    async def list_quiz_questions_by_lesson_id(
+        self, user_id: UUID, track_id: UUID, lesson_id: UUID
+    ) -> list[str]:
+        rows = await self.db.scalars(
+            select(Quiz.qui_question)
+            .join(Lesson, Lesson.lsn_id == Quiz.qui_lesson_id)
+            .join(Step, Step.stp_id == Lesson.lsn_step_id)
+            .join(Track, Track.trk_id == Step.stp_track_id)
+            .where(
+                Track.trk_id == track_id,
+                Track.trk_user_id == user_id,
+                Track.trk_is_deleted.is_(False),
+                Step.stp_is_deleted.is_(False),
+                Lesson.lsn_id == lesson_id,
+                Lesson.lsn_is_deleted.is_(False),
+                Quiz.qui_is_deleted.is_(False),
+            )
+            .order_by(Quiz.qui_updated_at.desc(), Quiz.qui_id.desc())
+            .limit(10)
+        )
+        return [question[:1000] for question in rows]
+
     async def get(self, user_id: UUID, track_id: UUID) -> dict | None:
         track = await self.db.scalar(
             select(Track).where(
