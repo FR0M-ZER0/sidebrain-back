@@ -53,7 +53,7 @@ uv sync
 cp .env.example .env
 ```
 
-4. Inicie o banco de dados para utilização no ambiente de dev:
+4. Inicie os serviços necessários, incluindo PostgreSQL, Redis e RabbitMQ:
 ```bash
 docker compose up -d
 ```
@@ -73,14 +73,13 @@ uv run alembic upgrade head
 uv run dev
 ```
 
-8. Por fim, em outro terminal, rode o worker das tasks do Celery usando:
+8. Em outro terminal, rode o worker das tasks do Celery usando:
 ```bash
 uv run celery -A sidebrain_back.core.celery_app worker --loglevel=info
 ```
 
-Para iniciar o broker e o worker de notificações separadamente:
+9. Em outro terminal, rode o worker de notificações:
 ```bash
-docker compose up -d rabbitmq
 uv run notifications-worker
 ```
 
@@ -91,7 +90,7 @@ O fluxo de notificações usa as variáveis `RABBITMQ_HOST`, `RABBITMQ_PORT`,
 `RABBITMQ_BACKOFF_FACTOR`, documentadas em `.env.example`. As tasks Celery
 continuam usando Redis.
 
-Para processar e recuperar solicitações de mentoria, inicie também o
+10. Para processar e recuperar solicitações de mentoria, inicie também o
 agendador Celery em outro terminal:
 
 ```bash
