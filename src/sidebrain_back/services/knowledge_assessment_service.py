@@ -308,7 +308,7 @@ class KnowledgeAssessmentService:
                 generator=lambda: self.generator.generate(subject, objective),
             )
         else:
-            await db.rollback()
+            await db.commit()
             payload = GeneratedAssessmentPayload.model_validate(
                 self.generator.generate(subject, objective)
             )
