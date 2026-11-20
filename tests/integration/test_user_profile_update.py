@@ -32,6 +32,14 @@ async def test_profile_update_changes_only_public_profile_fields(db_session):
     assert result.xp == 0
     assert result.missions_completed == 0
     assert owner.usr_password_hash == "hash"
+    selected = await service.update_user(
+        owner, UserUpdateRequest(avatar="cat")
+    )
+    removed = await service.update_user(owner, UserUpdateRequest(avatar=None))
+    assert selected.avatar.slug == "cat"
+    assert removed.avatar.slug == "default"
+    assert owner.usr_name == "Maria Nova"
+    assert owner.usr_email == "maria@example.com"
     with pytest.raises(ConflictError):
         await service.update_user(
             owner, UserUpdateRequest(email="USED@example.com")

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from sidebrain_back.routers.v1.auth_router import router as auth_router
+from sidebrain_back.routers.v1.avatar_router import router as avatar_router
 from sidebrain_back.routers.v1.badge_router import router as badge_router
 from sidebrain_back.routers.v1.feedback_router import router as feedback_router
 from sidebrain_back.routers.v1.health_router import router as health_router
@@ -25,6 +26,7 @@ from sidebrain_back.routers.v1.user_statistics_router import (
 router = APIRouter(prefix="/api")
 
 router.include_router(auth_router)
+router.include_router(avatar_router)
 router.include_router(feedback_router)
 router.include_router(badge_router)
 router.include_router(health_router)

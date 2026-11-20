@@ -67,6 +67,15 @@ def test_profile_update_requires_at_least_one_non_null_field():
             UserUpdateRequest(**payload)
 
 
+def test_profile_update_distinguishes_avatar_removal_from_omission():
+    removed = UserUpdateRequest(avatar=None)
+    omitted = UserUpdateRequest(name="Maria")
+
+    assert removed.avatar is None
+    assert "avatar" in removed.model_fields_set
+    assert "avatar" not in omitted.model_fields_set
+
+
 def test_password_update_uses_public_camel_case_contract():
     payload = PasswordUpdateRequest(
         currentPassword="senha-antiga",

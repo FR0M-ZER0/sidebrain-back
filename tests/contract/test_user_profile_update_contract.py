@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
+from sidebrain_back.schemas.avatar_schema import AvatarResponse
 from sidebrain_back.schemas.user_schema import UserMeResponse
 from sidebrain_back.services.auth_errors import ConflictError
 from sidebrain_back.services.user_service import get_user_service
@@ -15,6 +16,13 @@ class UserUpdateServiceDouble:
             "id": user.usr_id,
             "name": payload.name or user.usr_name,
             "email": payload.email or user.usr_email,
+            "avatar": AvatarResponse(
+                slug=payload.avatar or "default",
+                name="Gato" if payload.avatar else "Avatar padrão",
+                image_url=(
+                    f"/static/avatars/{payload.avatar or 'default'}.png"
+                ),
+            ),
         }
         return UserMeResponse(
             **values,
@@ -68,3 +76,16 @@ def test_update_profile_maps_reserved_email_to_conflict(test_app):
         "/api/v1/users/me", json={"email": "used@example.com"}
     )
     assert response.status_code == 409
+
+
+def test_update_profile_accepts_avatar_selection_and_removal(test_app):
+    test_app.dependency_overrides[get_user_service] = UserUpdateServiceDouble
+    client = TestClient(test_app)
+
+    selected = client.put("/api/v1/users/me", json={"avatar": "cat"})
+    removed = client.put("/api/v1/users/me", json={"avatar": None})
+
+    assert selected.json()["avatar"]["imageUrl"] == "/static/avatars/cat.png"
+    assert (
+        removed.json()["avatar"]["imageUrl"] == "/static/avatars/default.png"
+    )

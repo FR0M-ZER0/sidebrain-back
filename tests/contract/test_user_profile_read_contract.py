@@ -35,6 +35,7 @@ def test_get_profile_returns_user_and_gamification_summary(test_app):
         "createdAt",
         "xp",
         "missionsCompleted",
+        "avatar",
     }
     assert response.json()["xp"] == 125
     assert response.json()["missionsCompleted"] == 3
