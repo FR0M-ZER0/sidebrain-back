@@ -91,6 +91,13 @@ O fluxo de notificações usa as variáveis `RABBITMQ_HOST`, `RABBITMQ_PORT`,
 `RABBITMQ_BACKOFF_FACTOR`, documentadas em `.env.example`. As tasks Celery
 continuam usando Redis.
 
+Para processar e recuperar solicitações de mentoria, inicie também o
+agendador Celery em outro terminal:
+
+```bash
+uv run celery -A sidebrain_back.core.celery_app beat --loglevel=info
+```
+
 Se estiver utilizando os dados padrões no .env para o servidor, ele estará disponível em `http://localhost:8080` e a documentação interativa em [http://localhost:8080/docs](http://localhost:8080/docs).
 
 ## Testes

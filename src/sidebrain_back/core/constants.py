@@ -60,6 +60,11 @@ class _Env(BaseSettings):
     GROQ_MODEL: str | None = None
     OPENAI_CHAT_API_KEY: str | None = None
     OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
+    GROQ_PROMPT_VERSION: str = "v2"
+    AI_MEMORY_ENABLED: bool = True
+    AI_MEMORY_FINGERPRINT_VERSION: str = "v1"
+    AI_MEMORY_LEASE_SECONDS: int = 120
+    AI_MEMORY_REDIS_LOCK_ENABLED: bool = True
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
