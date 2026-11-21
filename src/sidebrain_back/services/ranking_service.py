@@ -14,12 +14,6 @@ from sidebrain_back.schemas.ranking_schema import (
 
 
 class RankingService:
-    """Serviço somente leitura de ranking calculado sob demanda.
-
-    Consulta ``RankingRepository`` diretamente após cada commit, sem filas,
-    workers de XP ou projeções materializadas.
-    """
-
     def __init__(self, repository: RankingRepository):
         self.repository = repository
 
