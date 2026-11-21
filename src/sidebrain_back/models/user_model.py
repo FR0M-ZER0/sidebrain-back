@@ -2,7 +2,16 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, func, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +19,7 @@ from sidebrain_back.core.database import Base
 
 if TYPE_CHECKING:
     from sidebrain_back.models.answer_model import Answer
+    from sidebrain_back.models.avatar_model import Avatar
     from sidebrain_back.models.badge_progress_model import BadgeProgress
     from sidebrain_back.models.day_streak_model import DayStreak
     from sidebrain_back.models.feedback_model import Feedback
@@ -55,6 +65,16 @@ class User(Base):
     )
     usr_deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True
+    )
+    usr_avatar_slug: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("avatar.avt_slug", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    avatar: Mapped[Optional["Avatar"]] = relationship(
+        back_populates="users",
+        foreign_keys=[usr_avatar_slug],
     )
 
     tracks: Mapped[list["Track"]] = relationship(

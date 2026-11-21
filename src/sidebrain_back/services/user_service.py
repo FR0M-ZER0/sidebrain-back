@@ -9,6 +9,11 @@ from sidebrain_back.core.rate_limit import (
 )
 from sidebrain_back.core.security import hash_password, verify_password
 from sidebrain_back.models.user_model import User
+from sidebrain_back.repositories.avatar_repository import AvatarRepository
+from sidebrain_back.repositories.mentor_conversation_repository import (
+    MentorConversationRepository,
+    get_mentor_conversation_repository,
+)
 from sidebrain_back.repositories.ranking_repository import (
     RankingRepository,
     get_ranking_repository,
@@ -29,6 +34,14 @@ from sidebrain_back.services.auth_errors import (
     ResourceNotFoundError,
 )
 from sidebrain_back.services.auth_service import _is_email_unique_violation
+from sidebrain_back.services.avatar_service import (
+    AvatarService,
+    get_avatar_service,
+)
+from sidebrain_back.services.mentor_privacy_service import (
+    MentorPrivacyService,
+    get_mentor_privacy_service,
+)
 
 
 class UserService:
@@ -38,11 +51,19 @@ class UserService:
         db: AsyncSession,
         rate_limiter: AuthRateLimiter | None = None,
         ranking_repository: RankingRepository | None = None,
+        avatar_service: AvatarService | None = None,
+        mentor_privacy_service: MentorPrivacyService | None = None,
+        mentor_conversations: MentorConversationRepository | None = None,
     ) -> None:
         self.repository = repository
         self.db = db
         self.rate_limiter = rate_limiter
         self.ranking_repository = ranking_repository or RankingRepository(db)
+        self.avatar_service = avatar_service or AvatarService(
+            AvatarRepository(db), db
+        )
+        self.mentor_privacy_service = mentor_privacy_service
+        self.mentor_conversations = mentor_conversations
 
     async def get_user(self, authenticated_user: User) -> UserMeResponse:
         user = await self.repository.get(authenticated_user.usr_id)
@@ -63,6 +84,7 @@ class UserService:
             created_at=user.usr_created_at,
             xp=ranking.xp,
             missions_completed=ranking.missions_completed,
+            avatar=await self.avatar_service.resolve(user.usr_avatar_slug),
         )
 
     async def update_user(
@@ -86,7 +108,25 @@ class UserService:
             ):
                 raise ConflictError("O e-mail informado já está em uso.")
 
-            await self.repository.update(user, payload.name, email)
+            avatar_slug = None
+            update_avatar = "avatar" in payload.model_fields_set
+            if "avatar" in payload.model_fields_set:
+                if payload.avatar is None:
+                    avatar_slug = None
+                elif await self.avatar_service.get_active(payload.avatar):
+                    avatar_slug = payload.avatar
+                else:
+                    raise DomainValidationError(
+                        "O avatar informado não está disponível."
+                    )
+
+            await self.repository.update(
+                user,
+                payload.name,
+                email,
+                avatar_slug=avatar_slug,
+                update_avatar=update_avatar,
+            )
             response = await self._build_user_me_response(user)
             await self.db.commit()
             return response
@@ -149,13 +189,25 @@ class UserService:
             raise
 
     async def delete_user(self, authenticated_user: User) -> None:
+        user_id = authenticated_user.usr_id
+        if (
+            self.mentor_privacy_service is None
+            or self.mentor_conversations is None
+        ):
+            raise RuntimeError("Serviço de privacidade não configurado.")
         try:
-            user = await self.repository.get_for_update(
-                authenticated_user.usr_id
+            if await self.repository.get(user_id) is None:
+                raise ResourceNotFoundError("Usuário não encontrado.")
+            block = await self.mentor_privacy_service.lock_for_deletion(
+                user_id
             )
+            user = await self.repository.get_for_update(user_id)
             if user is None:
                 raise ResourceNotFoundError("Usuário não encontrado.")
+            await self.mentor_conversations.delete(user_id)
             await self.repository.delete(user)
+            block.blocked = False
+            block.reason = None
             await self.db.commit()
         except ResourceNotFoundError:
             await self.db.rollback()
@@ -177,5 +229,20 @@ def get_user_service(
     ranking_repository: RankingRepository = Depends(  # noqa: B008
         get_ranking_repository
     ),
+    avatar_service: AvatarService = Depends(get_avatar_service),  # noqa: B008
+    mentor_privacy_service: MentorPrivacyService = Depends(  # noqa: B008
+        get_mentor_privacy_service
+    ),
+    mentor_conversations: MentorConversationRepository = Depends(  # noqa: B008
+        get_mentor_conversation_repository
+    ),
 ) -> UserService:
-    return UserService(repository, db, rate_limiter, ranking_repository)
+    return UserService(
+        repository,
+        db,
+        rate_limiter,
+        ranking_repository,
+        avatar_service=avatar_service,
+        mentor_privacy_service=mentor_privacy_service,
+        mentor_conversations=mentor_conversations,
+    )

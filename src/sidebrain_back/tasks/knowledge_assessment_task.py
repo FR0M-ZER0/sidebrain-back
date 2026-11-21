@@ -9,6 +9,9 @@ from openai import APIConnectionError, APITimeoutError, RateLimitError
 
 from sidebrain_back.core.celery_app import celery_app
 from sidebrain_back.core.database import async_session, engine
+from sidebrain_back.repositories.generation_cache_repository import (
+    GenerationCacheRepository,
+)
 from sidebrain_back.repositories.knowledge_assessment_repository import (
     KnowledgeAssessmentRepository,
 )
@@ -60,6 +63,7 @@ async def _process_v2(
             generator,
             repository=repository,
             db=db,
+            cache_repository=GenerationCacheRepository(db),
         )
         status = await service.process_persisted_assessment(
             assessment_id=UUID(assessment_id),

@@ -11,6 +11,7 @@ from sidebrain_back.enums.generation_status_enum import GenerationStatusEnum
 from sidebrain_back.enums.step_level_enum import StepLevelEnum
 
 if TYPE_CHECKING:
+    from sidebrain_back.models.generation_cache_model import GenerationCache
     from sidebrain_back.models.knowledge_assessment_model import (
         KnowledgeAssessment,
     )
@@ -71,6 +72,13 @@ class GenerationRequest(Base):
         nullable=True,
     )
     error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    cache_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("generation_cache.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
@@ -84,3 +92,4 @@ class GenerationRequest(Base):
     assessment: Mapped["KnowledgeAssessment | None"] = relationship(
         back_populates="generation_requests"
     )
+    cache: Mapped["GenerationCache | None"] = relationship()

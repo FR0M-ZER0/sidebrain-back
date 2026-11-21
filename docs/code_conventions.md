@@ -75,6 +75,11 @@ As tasks devem ser sufixadas com task, exemplo:
 def generate_user_report_task(user_id: int) -> None: ...
 ```
 
+Workers RabbitMQ não são tasks Celery e devem usar nomes descritivos no pacote
+`notifications`; a função de entrada deve ser exposta pelo script
+`notifications-worker`. A configuração de RabbitMQ deve vir do ambiente e
+segredos não podem aparecer em logs.
+
 ## Paginação
 
 Toda resposta de listagem (`list_*`) deve seguir o formato paginado:
@@ -113,3 +118,11 @@ Todo schema deve ocultar os nomes de campos vindos do banco de dados, utilizando
 ```python
 model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 ```
+
+### Memória de geração
+
+Repositórios de memória devem manter operações de lookup, reserva, publicação e
+liberação de lease fora de routers. Fingerprints devem ser calculados a partir
+de envelopes versionados e nunca incluir identidade, tokens ou payload em
+logs. Artefatos `ready` são imutáveis; mudanças de modelo ou prompt produzem
+uma nova chave.

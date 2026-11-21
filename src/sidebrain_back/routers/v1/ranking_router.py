@@ -12,7 +12,7 @@ from sidebrain_back.services.ranking_service import (
     get_ranking_service,
 )
 
-router = APIRouter(prefix="/v1/rankings", tags=["rankings"])
+router = APIRouter(prefix="/v1/rankings", tags=["Rankings"])
 
 
 @router.get("", response_model=PaginatedResponse[RankingEntryResponse])
