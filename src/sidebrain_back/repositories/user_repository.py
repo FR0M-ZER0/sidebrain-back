@@ -75,11 +75,15 @@ class UserRepository:
         user: User,
         name: str | None,
         email: str | None,
+        avatar_slug: str | None = None,
+        update_avatar: bool = False,
     ) -> User:
         if name is not None:
             user.usr_name = name
         if email is not None:
             user.usr_email = email
+        if update_avatar:
+            user.usr_avatar_slug = avatar_slug
         user.usr_updated_at = datetime.now(UTC).replace(tzinfo=None)
         await self.db.flush()
         return user

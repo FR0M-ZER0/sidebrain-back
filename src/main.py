@@ -1,7 +1,9 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from uvicorn import run
 
 from sidebrain_back.core.constants import Env
@@ -38,6 +40,10 @@ def create_app() -> FastAPI:
     configure_cors(application)
     register_error_handlers(application)
 
+    static_dir = Path(__file__).resolve().parent / "sidebrain_back" / "static"
+    application.mount(
+        "/static", StaticFiles(directory=static_dir), name="static"
+    )
     application.include_router(api_router)
 
     return application
