@@ -89,7 +89,10 @@ class GenerationRequestRepository:
 
     async def mark_succeeded(self, request_id: UUID, track_id: UUID) -> None:
         request = await self.get(request_id)
-        if request is None:
+        if (
+            request is None
+            or request.status is not GenerationStatusEnum.PENDING
+        ):
             return
         request.status = GenerationStatusEnum.SUCCEEDED
         request.track_id = track_id
@@ -111,7 +114,10 @@ class GenerationRequestRepository:
 
     async def mark_failed(self, request_id: UUID, error_code: str) -> None:
         request = await self.get(request_id)
-        if request is None:
+        if (
+            request is None
+            or request.status is not GenerationStatusEnum.PENDING
+        ):
             return
         request.status = GenerationStatusEnum.FAILED
         request.track_id = None

@@ -53,6 +53,10 @@ from sidebrain_back.services.mentor_privacy_service import (
     MentorPrivacyService,
     get_mentor_privacy_service,
 )
+from sidebrain_back.services.step_preparation_service import (
+    StepPreparationService,
+    get_step_preparation_service,
+)
 
 
 class TrackService:
@@ -65,6 +69,7 @@ class TrackService:
         generation_requests: GenerationRequestRepository | None = None,
         assessments: KnowledgeAssessmentRepository | None = None,
         badge_progress_service: BadgeProgressService | None = None,
+        step_preparation_service: StepPreparationService | None = None,
         mentor_privacy_service: MentorPrivacyService | None = None,
         mentor_conversations: MentorConversationRepository | None = None,
     ):
@@ -75,6 +80,7 @@ class TrackService:
         )
         self.assessments = assessments or KnowledgeAssessmentRepository(db)
         self.badge_progress_service = badge_progress_service
+        self.step_preparation_service = step_preparation_service
         self.mentor_privacy_service = mentor_privacy_service
         self.mentor_conversations = mentor_conversations
 
@@ -114,7 +120,30 @@ class TrackService:
             prepare_next_step_content_task,
         )
 
-        return prepare_next_step_content_task.delay(str(next_step.stp_id))
+        if self.step_preparation_service is None:
+            return prepare_next_step_content_task.delay(str(next_step.stp_id))
+        task_id = await self.step_preparation_service.reserve(
+            step_id, next_step.stp_id
+        )
+        return await self._dispatch_preparation(
+            prepare_next_step_content_task, next_step.stp_id, task_id
+        )
+
+    async def _dispatch_preparation(self, task, step_id: UUID, task_id: str):
+        # O worker serializa mensagens duplicadas pela reserva transacional.
+        for attempt in range(2):
+            try:
+                return task.apply_async(
+                    args=[str(step_id)],
+                    kwargs={"tracking_task_id": task_id},
+                    task_id=task_id,
+                )
+            except Exception:
+                if attempt == 1:
+                    await self.step_preparation_service.finish(
+                        task_id, "failed"
+                    )
+                    raise
 
     async def prepare_next_step(
         self, user: User, track_id: UUID, step_id: UUID
@@ -133,7 +162,17 @@ class TrackService:
             prepare_next_step_content_task,
         )
 
-        result = prepare_next_step_content_task.delay(str(next_step.stp_id))
+        if self.step_preparation_service is None:
+            result = prepare_next_step_content_task.delay(
+                str(next_step.stp_id)
+            )
+        else:
+            task_id = await self.step_preparation_service.reserve(
+                step_id, next_step.stp_id, user.usr_id
+            )
+            result = await self._dispatch_preparation(
+                prepare_next_step_content_task, next_step.stp_id, task_id
+            )
         return PrepareNextAccepted(
             step_id=next_step.stp_id,
             task_id=str(result.id),
@@ -374,6 +413,9 @@ def get_track_service(
     badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
         get_badge_progress_service
     ),
+    step_preparation_service: StepPreparationService = Depends(  # noqa: B008
+        get_step_preparation_service
+    ),
     mentor_privacy_service: MentorPrivacyService = Depends(  # noqa: B008
         get_mentor_privacy_service
     ),
@@ -387,6 +429,7 @@ def get_track_service(
         GenerationRequestRepository(db),
         KnowledgeAssessmentRepository(db),
         badge_progress_service,
+        step_preparation_service,
         mentor_privacy_service,
         mentor_conversations,
     )

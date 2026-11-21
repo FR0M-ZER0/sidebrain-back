@@ -138,6 +138,21 @@ async def _process_generation(payload: GenerationInput, task) -> dict:
         )
         await _mark_failed(payload.request_id, result.error_code)
         return result.model_dump(mode="json")
+    except Exception as error:
+        logger.exception(
+            "unexpected track generation failure",
+            extra={
+                "request_id": str(payload.request_id),
+                "task_id": task.request.id,
+                "error_category": type(error).__name__,
+            },
+        )
+        result = GenerationFailure(
+            request_id=payload.request_id,
+            error_code="generation_unexpected_failed",
+        )
+        await _mark_failed(payload.request_id, result.error_code)
+        return result.model_dump(mode="json")
 
 
 async def _run_generation(
