@@ -118,24 +118,5 @@ gh auth login
 gh auth status
 ```
 
-## Atualizações de ranking e XP por SSE
-
-As rotas autenticadas abaixo usam `Authorization: Bearer <token>` e retornam
-`text/event-stream`:
-
-- `GET /api/v1/rankings/events?page=1&page_size=20`: evento `ranking` com
-  a mesma página e os mesmos campos de `GET /api/v1/rankings`.
-- `GET /api/v1/rankings/me/events`: evento `xp` com os mesmos campos de
-  `GET /api/v1/rankings/me`, incluindo XP, missões concluídas e posição.
-
-Cada conexão recebe o estado atual imediatamente e novos eventos quando o
-resultado muda. O servidor consulta o banco a cada 5 segundos por conexão,
-inclusive em instalações com múltiplas instâncias, e envia comentários de
-keep-alive. A conexão é encerrada após cerca de 60 segundos: o cliente deve
-reconectar usando uma credencial válida e receberá novamente o estado atual.
-Não há histórico de eventos. O `EventSource` nativo do navegador não permite
-definir o cabeçalho Authorization; use um cliente SSE baseado em `fetch` que
-suporte cabeçalhos e reconexão. O cálculo de XP e ranking não é alterado.
-
 ## 📄 Documentação extra
 Para verificar as padronizações usadas neste projeto, bem como demais documentações, visite o nosso [repositório principal](https://github.com/FR0M-ZER0/Sidebrain)
