@@ -95,8 +95,9 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             generator.generate_mentor_response = AsyncMock()
             captured = {}
 
-            async def generate(message, get_tool_data):
+            async def generate(message, get_tool_data, *, history):
                 captured["message"] = message
+                captured["automatic_history"] = history
                 captured["history"] = await get_tool_data(
                     "consultar_historico"
                 )
@@ -160,6 +161,10 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
                 user_id, UUID(retry_id)
             )
             assert captured["message"] == "Tenho pouco tempo."
+            assert captured["automatic_history"] == [
+                {"role": "student", "content": "Como estudar?"},
+                {"role": "mentor", "content": "Revise os fundamentos."},
+            ]
             context = captured["history"]
             assert any(
                 item["content"] == "Como estudar?"

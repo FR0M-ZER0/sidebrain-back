@@ -60,6 +60,9 @@ class MentorProcessingService:
                 context = await context_service.get_mentor_message(
                     user_id, generation_id
                 )
+                history = await context_service.get_mentor_tool_data(
+                    user_id, context, "consultar_historico"
+                )
                 await self.db.commit()
             except MentorGenerationConsentRequired:
                 await self.db.rollback()
@@ -96,7 +99,9 @@ class MentorProcessingService:
                     return data
 
                 result = await self.generator.generate_mentor_response(
-                    context["mensagem"], get_tool_data
+                    context["mensagem"],
+                    get_tool_data,
+                    history=history["historico"],
                 )
                 await self._check_lock_connection(connection)
             except Exception as error:

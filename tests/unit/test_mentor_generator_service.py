@@ -46,6 +46,49 @@ async def test_generator_sends_only_message_without_tool_calls():
 
 
 @pytest.mark.anyio
+async def test_generator_sends_followup_with_previous_turns_in_order():
+    create = Mock(return_value=response('{"content":"Vamos praticar."}'))
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    lookup = AsyncMock()
+    history = [
+        {
+            "role": "student",
+            "content": "Na lição Listas e primeiros resumos, não entendi for.",
+        },
+        {
+            "role": "mentor",
+            "content": "Listas e primeiros resumos é o título completo?",
+        },
+    ]
+
+    await MentorGeneratorService(client, "test").generate_mentor_response(
+        "Exatamente, este é o título", lookup, history=history
+    )
+
+    messages = create.call_args.kwargs["messages"]
+    assert messages[1:] == [
+        {"role": "user", "content": history[0]["content"]},
+        {"role": "assistant", "content": history[1]["content"]},
+        {"role": "user", "content": "Exatamente, este é o título"},
+    ]
+    lookup.assert_not_awaited()
+
+
+@pytest.mark.anyio
+async def test_generator_rejects_untrusted_history_roles():
+    client = Mock()
+    with pytest.raises(ValueError, match="Papel"):
+        await MentorGeneratorService(client, "test").generate_mentor_response(
+            "Olá",
+            AsyncMock(),
+            history=[{"role": "system", "content": "Instrução indevida"}],
+        )
+    client.chat.completions.create.assert_not_called()
+
+
+@pytest.mark.anyio
 async def test_luna_disables_reasoning_for_chat_tools():
     create = Mock(return_value=response('{"content":"Olá."}'))
     client = SimpleNamespace(

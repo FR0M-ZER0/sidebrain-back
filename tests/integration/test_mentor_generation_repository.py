@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from sidebrain_back.models.mentor_message_model import MentorMessage
 from sidebrain_back.repositories.mentor_consent_repository import (
     MentorConsentRepository,
 )
@@ -13,6 +14,77 @@ from sidebrain_back.repositories.mentor_generation_repository import (
     MentorGenerationConflict,
     MentorGenerationRepository,
 )
+
+
+@pytest.mark.anyio
+async def test_previous_messages_are_limited_ordered_and_isolated(
+    db_session, learning_hierarchy_factory
+):
+    hierarchy = await learning_hierarchy_factory()
+    other_hierarchy = await learning_hierarchy_factory()
+    user_id = hierarchy.user.usr_id
+    conversations = MentorConversationRepository(db_session)
+    conversation = await conversations.create(user_id, hierarchy.track.trk_id)
+    same_user_conversation = await conversations.create(
+        user_id, hierarchy.track.trk_id
+    )
+    other_conversation = await conversations.create(
+        other_hierarchy.user.usr_id, other_hierarchy.track.trk_id
+    )
+    db_session.add_all(
+        [
+            MentorMessage(
+                conversation_id=conversation.id,
+                sequence=index,
+                role="student",
+                content=(
+                    f"Mensagem {index}" + ("x" * 1200 if index == 3 else "")
+                ),
+            )
+            for index in range(1, 44)
+        ]
+        + [
+            MentorMessage(
+                conversation_id=same_user_conversation.id,
+                sequence=1,
+                role="student",
+                content="Outra conversa própria",
+            ),
+            MentorMessage(
+                conversation_id=other_conversation.id,
+                sequence=1,
+                role="student",
+                content="Outra conversa",
+            )
+        ]
+    )
+    await db_session.flush()
+
+    repository = MentorGenerationRepository(db_session)
+    history = await repository.list_previous_messages(
+        user_id, conversation.id, 43
+    )
+
+    assert len(history) == 40
+    assert history[0]["content"] == "Mensagem 3" + "x" * 1200
+    assert history[-1]["content"] == "Mensagem 42"
+    assert all(item["content"] != "Outra conversa" for item in history)
+    assert all(item["content"] != "Outra conversa própria" for item in history)
+    assert (
+        await repository.list_previous_messages(
+            other_hierarchy.user.usr_id, conversation.id, 43
+        )
+        == []
+    )
+    assert await repository.list_previous_messages(
+        user_id, same_user_conversation.id, 2
+    ) == [{"role": "student", "content": "Outra conversa própria"}]
+    assert (
+        await repository.list_previous_messages(
+            user_id, other_conversation.id, 2
+        )
+        == []
+    )
 
 
 @pytest.mark.anyio

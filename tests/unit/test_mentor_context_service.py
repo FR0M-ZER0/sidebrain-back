@@ -43,6 +43,36 @@ async def test_context_budget_preserves_current_message():
 
 
 @pytest.mark.anyio
+async def test_history_budget_removes_oldest_complete_messages():
+    generations = AsyncMock()
+    generations.list_previous_messages.return_value = [
+        {"role": "student", "content": "antiga " + "x" * 100},
+        {"role": "mentor", "content": "recente " + "y" * 100},
+    ]
+    service = MentorContextService(
+        generations, AsyncMock(), max_context_chars=180
+    )
+    base = {
+        "conversation_id": str(UUID(int=2)),
+        "sequence": 3,
+        "mensagem": "Mensagem atual",
+    }
+
+    result = await service.get_mentor_tool_data(
+        "usuario", base, "consultar_historico"
+    )
+
+    assert result["historico"] == [
+        {"role": "mentor", "content": "recente " + "y" * 100}
+    ]
+    assert len(json.dumps(result, ensure_ascii=False)) <= 180
+    assert base["mensagem"] == "Mensagem atual"
+    generations.list_previous_messages.assert_awaited_once_with(
+        "usuario", UUID(int=2), 3
+    )
+
+
+@pytest.mark.anyio
 async def test_tools_filter_data_and_reject_unknown_names():
     generations = AsyncMock()
     contexts = AsyncMock()

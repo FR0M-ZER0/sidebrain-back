@@ -17,6 +17,7 @@ async def test_processing_logs_safe_error_details(monkeypatch, caplog):
     context.get_mentor_message = AsyncMock(
         return_value={"mensagem": "mensagem privada"}
     )
+    context.get_mentor_tool_data = AsyncMock(return_value={"historico": []})
     monkeypatch.setattr(processing, "mentor_user_lock", lock)
     monkeypatch.setattr(
         processing, "MentorContextService", Mock(return_value=context)

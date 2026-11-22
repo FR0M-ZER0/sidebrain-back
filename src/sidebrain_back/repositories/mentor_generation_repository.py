@@ -146,11 +146,11 @@ class MentorGenerationRepository:
                     MentorMessage.sequence < sequence,
                 )
                 .order_by(MentorMessage.sequence.desc())
-                .limit(6)
+                .limit(40)
             )
         ).all()
         return [
-            {"role": row.role, "content": row.content[:1000]}
+            {"role": row.role, "content": row.content}
             for row in reversed(rows)
         ]
 
