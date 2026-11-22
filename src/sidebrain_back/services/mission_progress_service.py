@@ -20,6 +20,9 @@ from sidebrain_back.repositories.mission_progress_repository import (
     MissionProgressRepository,
     get_mission_progress_repository,
 )
+from sidebrain_back.repositories.notification_repository import (
+    NotificationRepository,
+)
 
 
 class MissionProgressService:
@@ -156,6 +159,15 @@ class MissionProgressService:
             progress.mpg_finished_in = (
                 now if status == MissionProgressStatusEnum.DONE else None
             )
+            if status == MissionProgressStatusEnum.DONE:
+                NotificationRepository(self.db).create(
+                    user_id=user_id,
+                    event_key=f"mission_completed:{mission.msn_id}",
+                    type="mission_completed",
+                    title="Missão completada",
+                    message=f"Você completou a missão {mission.msn_title}.",
+                    destination=f"/missions?track_id={track_id}",
+                )
         await self.repository.flush()
 
     async def recalculate_missions_by_step_id(

@@ -15,6 +15,7 @@ from sidebrain_back.models import (
     Lesson,
     Mission,
     MissionProgress,
+    Notification,
     Quiz,
     Step,
     Track,
@@ -143,6 +144,17 @@ async def test_http_answer_updates_progress_and_recalculation_is_idempotent(
         assert (await client.post(recalculation_url)).status_code == 204
         after = (await client.get(f"/api/v1/missions/{mission_id}")).json()
         assert after["missionProgresses"] == completed["missionProgresses"]
+        notifications = list(
+            await db_session.scalars(
+                select(Notification).where(
+                    Notification.user_id == user_id,
+                    Notification.event_key
+                    == f"mission_completed:{mission_id}",
+                )
+            )
+        )
+        assert len(notifications) == 1
+        assert notifications[0].destination == f"/missions?track_id={track_id}"
         track = (await client.get(f"/api/v1/tracks/{track_id}")).json()
         assert (
             track["steps"][0]["missions"][0]["mission_progresses"][0]["score"]

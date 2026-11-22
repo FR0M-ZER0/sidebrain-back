@@ -17,6 +17,9 @@ from sidebrain_back.repositories.generation_repository import (
 from sidebrain_back.repositories.generation_request_repository import (
     GenerationRequestRepository,
 )
+from sidebrain_back.repositories.notification_repository import (
+    NotificationRepository,
+)
 from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
     GenerationInput,
@@ -290,6 +293,16 @@ class GenerationService:
             async with self.db.begin():
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
+                )
+                NotificationRepository(self.db).create(
+                    user_id=payload.user_id,
+                    event_key=f"track_ready:{track.trk_id}",
+                    type="track_ready",
+                    title="Sua trilha está pronta",
+                    message=(
+                        f"A trilha {track.trk_title} está pronta para estudar."
+                    ),
+                    destination=f"/trails/{track.trk_id}",
                 )
                 badge_progress = self.badge_progress_service
                 if badge_progress is not None:
