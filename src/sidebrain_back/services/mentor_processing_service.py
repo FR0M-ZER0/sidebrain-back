@@ -84,6 +84,17 @@ class MentorProcessingService:
 
             try:
                 await self._check_lock_connection(connection)
+                screen_context = None
+                if context.get("context") is not None:
+                    try:
+                        screen_context = (
+                            await context_service.get_mentor_screen_context(
+                                user_id, context
+                            )
+                        )
+                    finally:
+                        await self.db.rollback()
+                    await self._check_lock_connection(connection)
 
                 async def get_tool_data(
                     name: str, arguments: dict | None = None
@@ -98,10 +109,11 @@ class MentorProcessingService:
                     await self._check_lock_connection(connection)
                     return data
 
+                options = {"history": history["historico"]}
+                if screen_context is not None:
+                    options["screen_context"] = screen_context
                 result = await self.generator.generate_mentor_response(
-                    context["mensagem"],
-                    get_tool_data,
-                    history=history["historico"],
+                    context["mensagem"], get_tool_data, **options
                 )
                 await self._check_lock_connection(connection)
             except Exception as error:

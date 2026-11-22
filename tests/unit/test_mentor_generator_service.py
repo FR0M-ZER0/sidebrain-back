@@ -89,6 +89,32 @@ async def test_generator_rejects_untrusted_history_roles():
 
 
 @pytest.mark.anyio
+async def test_generator_supplies_current_question_and_evaluation():
+    create = Mock(return_value=response('{"content":"Vamos analisar."}'))
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    context = {
+        "tipo": "quiz",
+        "licao": {"titulo": "Listas", "conteudo": "Use for."},
+        "questao": "O que faz o for?",
+        "avaliacao": {
+            "resposta": "Repete.",
+            "classificacao": "almost_got_it",
+            "justificativa": "Faltou falar dos itens.",
+        },
+    }
+    await MentorGeneratorService(client, "test").generate_mentor_response(
+        "Por que quase certa?", AsyncMock(), screen_context=context
+    )
+    messages = create.call_args.kwargs["messages"]
+    assert "Não questione nem sugira" in messages[0]["content"]
+    assert "nunca forneça a resposta" in messages[0]["content"]
+    assert json.dumps(context, ensure_ascii=False) in messages[-2]["content"]
+    assert messages[-1]["content"] == "Por que quase certa?"
+
+
+@pytest.mark.anyio
 async def test_luna_disables_reasoning_for_chat_tools():
     create = Mock(return_value=response('{"content":"Olá."}'))
     client = SimpleNamespace(

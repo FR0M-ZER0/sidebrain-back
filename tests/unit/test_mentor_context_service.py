@@ -73,6 +73,41 @@ async def test_history_budget_removes_oldest_complete_messages():
 
 
 @pytest.mark.anyio
+async def test_screen_context_budget_preserves_question_and_evaluation():
+    contexts = AsyncMock()
+    contexts.get_screen_context.return_value = {
+        "tipo": "quiz",
+        "licao": {"titulo": "Listas", "conteudo": "x" * 10000},
+        "questao": "Pergunta atual?",
+        "avaliacao": {
+            "resposta": "resposta",
+            "classificacao": "almost_got_it",
+            "justificativa": "Faltou detalhe.",
+        },
+    }
+    service = MentorContextService(
+        AsyncMock(), contexts, max_context_chars=500
+    )
+    base = {
+        "track_id": str(UUID(int=1)),
+        "context": {
+            "type": "quiz",
+            "lesson_id": str(UUID(int=2)),
+            "quiz_id": str(UUID(int=3)),
+            "answer_id": str(UUID(int=4)),
+        },
+    }
+    result = await service.get_mentor_screen_context("usuario", base)
+    assert result["questao"] == "Pergunta atual?"
+    assert result["avaliacao"]["resposta"] == "resposta"
+    assert result["licao"]["conteudo_truncado"] is True
+    assert len(json.dumps(result, ensure_ascii=False)) <= 500
+    contexts.get_screen_context.assert_awaited_once_with(
+        "usuario", UUID(int=1), UUID(int=2), UUID(int=3), UUID(int=4)
+    )
+
+
+@pytest.mark.anyio
 async def test_tools_filter_data_and_reject_unknown_names():
     generations = AsyncMock()
     contexts = AsyncMock()

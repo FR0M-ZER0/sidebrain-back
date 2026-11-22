@@ -25,6 +25,12 @@ RETRY_MIGRATION_PATH = (
     / "versions"
     / "sdb110_retry_origem.py"
 )
+CONTEXT_MIGRATION_PATH = (
+    Path(__file__).parents[2]
+    / "migrations"
+    / "versions"
+    / "f3a4b5c6d7e8_mentor_contexto_por_mensagem.py"
+)
 
 
 def _load_migration(path=MIGRATION_PATH):
@@ -86,6 +92,7 @@ async def test_mentor_migration_upgrade_downgrade_in_isolated_schema(
     migration = _load_migration()
     privacy_migration = _load_migration(PRIVACY_MIGRATION_PATH)
     retry_migration = _load_migration(RETRY_MIGRATION_PATH)
+    context_migration = _load_migration(CONTEXT_MIGRATION_PATH)
     assert privacy_migration.down_revision == migration.revision
     assert retry_migration.down_revision == privacy_migration.revision
     schema = f"mentor_test_{uuid4().hex}"
@@ -105,12 +112,18 @@ async def test_mentor_migration_upgrade_downgrade_in_isolated_schema(
             migration.upgrade()
             privacy_migration.upgrade()
             retry_migration.upgrade()
+            context_migration.upgrade()
             tables = inspect(sync_connection).get_table_names(schema=schema)
             assert "mentor_message" in tables
             columns = inspect(sync_connection).get_columns(
                 "mentor_privacy_block", schema=schema
             )
             assert "reason" in {column["name"] for column in columns}
+            message_columns = inspect(sync_connection).get_columns(
+                "mentor_message", schema=schema
+            )
+            assert "context" in {column["name"] for column in message_columns}
+            context_migration.downgrade()
             retry_migration.downgrade()
             privacy_migration.downgrade()
             migration.downgrade()

@@ -8,6 +8,10 @@ from sidebrain_back.repositories.mentor_consent_repository import (
     MentorConsentRepository,
     get_mentor_consent_repository,
 )
+from sidebrain_back.repositories.mentor_context_repository import (
+    MentorContextRepository,
+    get_mentor_context_repository,
+)
 from sidebrain_back.repositories.mentor_conversation_repository import (
     MentorConversationRepository,
     get_mentor_conversation_repository,
@@ -54,6 +58,7 @@ class MentorService:
         consent_service: MentorConsentService,
         db: AsyncSession,
         privacy_service: MentorPrivacyService | None = None,
+        context_repository: MentorContextRepository | None = None,
     ) -> None:
         self.conversations = conversation_repository
         self.generations = generation_repository
@@ -61,6 +66,7 @@ class MentorService:
         self.consent_service = consent_service
         self.db = db
         self.privacy_service = privacy_service
+        self.contexts = context_repository
 
     async def create_mentor_conversation(
         self, user_id: UUID, track_id: UUID
@@ -90,14 +96,22 @@ class MentorService:
     ) -> MentorGenerationAccepted:
         try:
             block = await self.consent.lock_privacy(user_id)
-            if await self.conversations.get(user_id, conversation_id) is None:
+            conversation = await self.conversations.get(
+                user_id, conversation_id
+            )
+            if conversation is None:
                 raise MentorNotFound("Conversa não encontrada.")
+            context = (
+                payload.context.model_dump(mode="json", exclude_none=True)
+                if payload.context is not None
+                else None
+            )
             existing = await self.generations.get_by_key(
                 conversation_id, idempotency_key
             )
             if existing is not None:
                 await self.generations.validate_submission_replay(
-                    existing, payload.content
+                    existing, payload.content, context
                 )
                 response = MentorGenerationAccepted(
                     generation_id=existing.id,
@@ -111,8 +125,19 @@ class MentorService:
             notice = await self.consent_service.get_mentor_consent(user_id)
             if not notice.authorized:
                 raise MentorConsentRequired("Autorização necessária.")
+            if context is not None:
+                contexts = self.contexts or MentorContextRepository(self.db)
+                screen = await contexts.get_screen_context(
+                    user_id,
+                    conversation.track_id,
+                    payload.context.lesson_id,
+                    getattr(payload.context, "quiz_id", None),
+                    getattr(payload.context, "answer_id", None),
+                )
+                if screen is None:
+                    raise MentorNotFound("Contexto indisponível.")
             generation = await self.generations.create(
-                conversation_id, idempotency_key, payload.content
+                conversation_id, idempotency_key, payload.content, context
             )
             response = MentorGenerationAccepted(
                 generation_id=generation.id,
@@ -295,6 +320,9 @@ def get_mentor_service(
     privacy_service: MentorPrivacyService = Depends(  # noqa: B008
         get_mentor_privacy_service
     ),
+    contexts: MentorContextRepository = Depends(  # noqa: B008
+        get_mentor_context_repository
+    ),
 ) -> MentorService:
     return MentorService(
         conversations,
@@ -303,4 +331,5 @@ def get_mentor_service(
         consent_service,
         db,
         privacy_service,
+        contexts,
     )
