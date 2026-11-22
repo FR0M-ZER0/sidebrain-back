@@ -55,7 +55,7 @@ async def test_previous_messages_are_limited_ordered_and_isolated(
                 sequence=1,
                 role="student",
                 content="Outra conversa",
-            )
+            ),
         ]
     )
     await db_session.flush()
