@@ -44,6 +44,9 @@ async def test_list_rankings_success():
         name="Maria",
         xp=1500,
         missions_completed=10,
+        avatar_slug="cat",
+        avatar_name="Gato",
+        avatar_image_path="/static/avatars/cat.png",
     )
     repo = DummyRankingRepository(count=55, rows=[row])
     service = RankingService(repo)
@@ -62,6 +65,8 @@ async def test_list_rankings_success():
     assert result.data[0].name == "Maria"
     assert result.data[0].xp == 1500
     assert result.data[0].missions_completed == 10
+    assert result.data[0].avatar.slug == "cat"
+    assert result.data[0].avatar.image_url == "/static/avatars/cat.png"
 
 
 @pytest.mark.anyio
@@ -85,6 +90,7 @@ async def test_get_my_ranking_success():
     assert result.name == "Carlos"
     assert result.xp == 300
     assert result.missions_completed == 3
+    assert result.avatar.slug == "default"
 
 
 @pytest.mark.anyio

@@ -8,9 +8,34 @@ from sidebrain_back.core.errors import ProblemDetailError
 from sidebrain_back.enums.mission_progress_status_enum import (
     MissionProgressStatusEnum,
 )
+from sidebrain_back.models.avatar_model import Avatar
 from sidebrain_back.models.track_model import Track
 from sidebrain_back.repositories.ranking_repository import RankingRepository
 from sidebrain_back.services.ranking_service import RankingService
+
+
+@pytest.mark.anyio
+async def test_ranking_uses_active_avatar_and_falls_back_for_inactive(
+    db_session, user_factory
+):
+    user = await user_factory(name="Avatar ativo")
+    user.usr_avatar_slug = "cat"
+    await db_session.flush()
+    service = RankingService(RankingRepository(db_session))
+
+    listed = await service.list_rankings()
+    entry = next(item for item in listed.data if item.user_id == user.usr_id)
+    assert entry.avatar.slug == "cat"
+    assert entry.avatar.image_url == "/static/avatars/cat.png"
+    assert (await service.get_my_ranking(user)).avatar.slug == "cat"
+
+    avatar = await db_session.get(Avatar, "cat")
+    avatar.avt_is_active = False
+    await db_session.flush()
+    listed = await service.list_rankings()
+    entry = next(item for item in listed.data if item.user_id == user.usr_id)
+    assert entry.avatar.slug == "default"
+    assert (await service.get_my_ranking(user)).avatar.slug == "default"
 
 
 @pytest.mark.anyio

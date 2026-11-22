@@ -61,6 +61,7 @@ def assert_public_ranking_entry(entry: dict):
         "position",
         "userId",
         "name",
+        "avatar",
         "xp",
         "missionsCompleted",
     }
@@ -70,6 +71,11 @@ def assert_public_ranking_entry(entry: dict):
     assert not any(key.startswith("mpg_") for key in entry)
     assert "email" not in entry
     assert "password_hash" not in entry
+    assert entry["avatar"] == {
+        "slug": "default",
+        "name": "Avatar padrão",
+        "imageUrl": "/static/avatars/default.png",
+    }
 
 
 def test_ranking_openapi_tag():

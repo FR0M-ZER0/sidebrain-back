@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
+from sidebrain_back.schemas.avatar_schema import AvatarResponse
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.ranking_schema import RankingEntryResponse
 from sidebrain_back.services import ranking_stream_service
@@ -44,6 +45,38 @@ async def test_stream_sends_initial_changes_and_heartbeat(monkeypatch):
     assert json.loads(events[1].split("data: ")[1])["xp"] == 20
     assert events[2] == ": keep-alive\n\n"
     assert read.await_count == 4
+
+
+@pytest.mark.anyio
+async def test_stream_sends_avatar_changes_without_xp_change(monkeypatch):
+    initial = _entry(uuid4(), 10)
+    updated = initial.model_copy(
+        update={
+            "avatar": AvatarResponse(
+                slug="cat",
+                name="Gato",
+                image_url="/static/avatars/cat.png",
+            )
+        }
+    )
+    request = SimpleNamespace(is_disconnected=AsyncMock(return_value=False))
+    service = RankingStreamService(None, None)
+    monkeypatch.setattr(ranking_stream_service, "MAX_POLLS", 1)
+    monkeypatch.setattr(ranking_stream_service, "POLL_INTERVAL_SECONDS", 0)
+
+    events = [
+        event
+        async for event in service.stream(
+            request, "xp", initial, AsyncMock(return_value=updated)
+        )
+    ]
+
+    assert len(events) == 2
+    assert json.loads(events[1].split("data: ")[1])["avatar"] == {
+        "slug": "cat",
+        "name": "Gato",
+        "imageUrl": "/static/avatars/cat.png",
+    }
 
 
 @pytest.mark.anyio
