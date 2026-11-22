@@ -36,6 +36,7 @@ class _Env(BaseSettings):
 
     RABBITMQ_HOST: str = "127.0.0.1"
     RABBITMQ_PORT: int = 5672
+    RABBITMQ_MANAGEMENT_PORT: int = 15672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
     RABBITMQ_VHOST: str = "/"
