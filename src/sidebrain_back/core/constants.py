@@ -130,6 +130,7 @@ class _Env(BaseSettings):
     RAG_ROUTER_CONFIDENCE_THRESHOLD: float = 0.80
     RAG_SOURCES_CONFIG: str = "config/rag_sources.yml"
 
+    # Mantida para compatibilidade com ambientes antigos; não é mais usada.
     STEP_SUMMARY_MODEL_PATH: str = "artifacts/step_summary_classifier.joblib"
 
 

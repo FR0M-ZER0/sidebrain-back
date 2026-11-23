@@ -15,7 +15,6 @@ _TOPIC_LABELS = {
     "html": "HTML",
     "nodejs": "Node.js",
     "objetos": "Objetos",
-    "python": "Python",
     "strings": "Strings",
     "testes": "Testes",
     "tratamento_erros": "Tratamento de erros",
