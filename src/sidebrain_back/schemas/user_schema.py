@@ -12,6 +12,8 @@ from pydantic import (
     model_validator,
 )
 
+from sidebrain_back.schemas.avatar_schema import AvatarResponse
+
 Name = Annotated[str, Field(min_length=1, max_length=255)]
 Password = Annotated[str, Field(min_length=8)]
 
@@ -42,6 +44,7 @@ class UserUpdateRequest(BaseModel):
 
     name: Name | None = None
     email: Annotated[EmailStr, Field(max_length=255)] | None = None
+    avatar: str | None = Field(default=None, max_length=64)
 
     _trim_name = field_validator("name", mode="before")(_normalize_name)
     _normalize_email = field_validator("email", mode="before")(
@@ -50,12 +53,14 @@ class UserUpdateRequest(BaseModel):
 
     @model_validator(mode="after")
     def require_change(self) -> "UserUpdateRequest":
-        has_explicit_null = any(
-            getattr(self, field_name) is None
-            for field_name in self.model_fields_set
-        )
-        if not self.model_fields_set or has_explicit_null:
+        if not self.model_fields_set:
             raise ValueError("Informe nome e/ou e-mail.")
+        if any(
+            field_name in self.model_fields_set
+            and getattr(self, field_name) is None
+            for field_name in ("name", "email")
+        ):
+            raise ValueError("Nome e e-mail não podem ser nulos.")
         return self
 
 
@@ -84,6 +89,13 @@ class UserResponse(BaseModel):
 
 
 class UserMeResponse(UserResponse):
+    avatar: AvatarResponse = Field(
+        default_factory=lambda: AvatarResponse(
+            slug="default",
+            name="Avatar padrão",
+            image_url="/static/avatars/default.png",
+        )
+    )
     created_at: datetime = Field(
         alias="createdAt",
         serialization_alias="createdAt",

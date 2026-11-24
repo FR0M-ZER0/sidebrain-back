@@ -2,6 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from sidebrain_back.schemas.avatar_schema import AvatarResponse
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 
 
@@ -15,6 +16,13 @@ class RankingEntryResponse(BaseModel):
         serialization_alias="userId",
     )
     name: str
+    avatar: AvatarResponse = Field(
+        default_factory=lambda: AvatarResponse(
+            slug="default",
+            name="Avatar padrão",
+            image_url="/static/avatars/default.png",
+        )
+    )
     xp: int = Field(..., ge=0)
     missions_completed: int = Field(
         ...,

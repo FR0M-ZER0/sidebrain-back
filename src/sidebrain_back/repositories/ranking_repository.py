@@ -9,6 +9,7 @@ from sidebrain_back.core.database import get_db
 from sidebrain_back.enums.mission_progress_status_enum import (
     MissionProgressStatusEnum,
 )
+from sidebrain_back.models.avatar_model import Avatar
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.mission_progress_model import MissionProgress
 from sidebrain_back.models.user_model import User
@@ -21,6 +22,9 @@ class RankedUserRow:
     name: str
     xp: int
     missions_completed: int
+    avatar_slug: str | None = None
+    avatar_name: str | None = None
+    avatar_image_path: str | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +65,14 @@ class RankingRepository:
                 summary.c.name,
                 summary.c.xp,
                 summary.c.missions_completed,
+                Avatar.avt_slug.label("avatar_slug"),
+                Avatar.avt_name.label("avatar_name"),
+                Avatar.avt_image_path.label("avatar_image_path"),
+            )
+            .outerjoin(
+                Avatar,
+                (Avatar.avt_slug == summary.c.avatar_slug)
+                & Avatar.avt_is_active.is_(True),
             )
             .order_by(position_expr)
             .offset(offset)
@@ -75,6 +87,9 @@ class RankingRepository:
                 name=row.name,
                 xp=row.xp,
                 missions_completed=row.missions_completed,
+                avatar_slug=row.avatar_slug,
+                avatar_name=row.avatar_name,
+                avatar_image_path=row.avatar_image_path,
             )
             for row in rows
         ]
@@ -97,16 +112,28 @@ class RankingRepository:
             summary.c.name,
             summary.c.xp,
             summary.c.missions_completed,
+            summary.c.avatar_slug,
             position_expr,
         ).cte("ranked_users")
 
-        stmt = select(
-            ranked_subq.c.position,
-            ranked_subq.c.user_id,
-            ranked_subq.c.name,
-            ranked_subq.c.xp,
-            ranked_subq.c.missions_completed,
-        ).where(ranked_subq.c.user_id == user_id)
+        stmt = (
+            select(
+                ranked_subq.c.position,
+                ranked_subq.c.user_id,
+                ranked_subq.c.name,
+                ranked_subq.c.xp,
+                ranked_subq.c.missions_completed,
+                Avatar.avt_slug.label("avatar_slug"),
+                Avatar.avt_name.label("avatar_name"),
+                Avatar.avt_image_path.label("avatar_image_path"),
+            )
+            .outerjoin(
+                Avatar,
+                (Avatar.avt_slug == ranked_subq.c.avatar_slug)
+                & Avatar.avt_is_active.is_(True),
+            )
+            .where(ranked_subq.c.user_id == user_id)
+        )
 
         result = await self.db.execute(stmt)
         row = result.one_or_none()
@@ -119,6 +146,9 @@ class RankingRepository:
             name=row.name,
             xp=row.xp,
             missions_completed=row.missions_completed,
+            avatar_slug=row.avatar_slug,
+            avatar_name=row.avatar_name,
+            avatar_image_path=row.avatar_image_path,
         )
 
     async def get_user_xp_summary(self, user_id: UUID) -> UserXpSummary | None:
@@ -145,6 +175,7 @@ class RankingRepository:
                 User.usr_id.label("user_id"),
                 User.usr_name.label("name"),
                 User.usr_created_at.label("created_at"),
+                User.usr_avatar_slug.label("avatar_slug"),
                 xp_expr,
                 missions_expr,
             )
@@ -162,7 +193,12 @@ class RankingRepository:
                 & Mission.msn_is_deleted.is_(False),
             )
             .where(User.usr_is_deleted.is_(False))
-            .group_by(User.usr_id, User.usr_name, User.usr_created_at)
+            .group_by(
+                User.usr_id,
+                User.usr_name,
+                User.usr_created_at,
+                User.usr_avatar_slug,
+            )
         )
 
 

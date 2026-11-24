@@ -29,6 +29,11 @@ def test_ranking_entry_response_valid():
         "position": 1,
         "userId": user_id,
         "name": "Maria Silva",
+        "avatar": {
+            "slug": "default",
+            "name": "Avatar padrão",
+            "imageUrl": "/static/avatars/default.png",
+        },
         "xp": 1250,
         "missionsCompleted": 12,
     }

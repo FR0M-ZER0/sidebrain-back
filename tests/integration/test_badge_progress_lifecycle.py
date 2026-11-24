@@ -11,6 +11,7 @@ from sidebrain_back.enums.badge_progress_status_enum import (
     BadgeProgressStatusEnum,
 )
 from sidebrain_back.models.badge_progress_model import BadgeProgress
+from sidebrain_back.models.notification_model import Notification
 from sidebrain_back.repositories.badge_progress_repository import (
     BadgeProgressRepository,
 )
@@ -128,6 +129,22 @@ async def test_answer_completes_global_badges_from_user_activity(
         ).all()
     )
     assert len(persisted) == len(criteria)
+    service = BadgeProgressService(
+        BadgeProgressRepository(db_session), db_session
+    )
+    await service.update_badges_by_user_id(user_id)
+    notifications = list(
+        await db_session.scalars(
+            select(Notification).where(
+                Notification.user_id == user_id,
+                Notification.type == "badge_earned",
+            )
+        )
+    )
+    assert len(notifications) == len(criteria)
+    assert all(
+        item.destination == "/missions#badges" for item in notifications
+    )
 
 
 @pytest.mark.anyio
@@ -272,8 +289,19 @@ async def test_ai_track_persistence_updates_track_creation_badges(
     payload = GenerationInput(
         request_id=uuid4(), user_id=user_id, goal="Python", topic="Python"
     )
+    result = await service.generate(payload)
     await service.generate(payload)
 
     assert (await _badge_statuses(db_session, user_id))[
         BadgeCriteriaEnum.TRACKS_CREATED
     ] is BadgeProgressStatusEnum.DONE
+    notifications = list(
+        await db_session.scalars(
+            select(Notification).where(
+                Notification.user_id == user_id,
+                Notification.type == "track_ready",
+            )
+        )
+    )
+    assert len(notifications) == 1
+    assert notifications[0].destination == f"/trails/{result.track_id}"

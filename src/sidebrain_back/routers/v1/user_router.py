@@ -21,6 +21,9 @@ from sidebrain_back.services.auth_errors import (
     DomainValidationError,
     ResourceNotFoundError,
 )
+from sidebrain_back.services.mentor_consent_service import (
+    MentorConsentUnavailable,
+)
 from sidebrain_back.services.user_service import UserService, get_user_service
 
 router = APIRouter(prefix="/v1/users", tags=["Users"])
@@ -52,6 +55,12 @@ async def update_user(
             409,
             "Conflito",
             "O e-mail informado já está em uso.",
+        ) from error
+    except DomainValidationError as error:
+        raise ProblemDetailError(
+            422,
+            "Erro de validação",
+            str(error),
         ) from error
 
 
@@ -103,6 +112,10 @@ async def delete_user(
         await service.delete_user(user)
     except ResourceNotFoundError as error:
         raise _not_found() from error
+    except MentorConsentUnavailable as error:
+        raise ProblemDetailError(
+            503, "Serviço indisponível", str(error)
+        ) from error
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

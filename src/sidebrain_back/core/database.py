@@ -14,7 +14,9 @@ DATABASE_URL = (
     f"/{Env.POSTGRES_DB}"
 )
 
-engine = create_async_engine(DATABASE_URL, echo=Env.MODE == "dev")
+engine = create_async_engine(
+    DATABASE_URL, echo=Env.MODE == "dev", hide_parameters=True
+)
 
 async_session = async_sessionmaker(
     engine, expire_on_commit=False, class_=AsyncSession

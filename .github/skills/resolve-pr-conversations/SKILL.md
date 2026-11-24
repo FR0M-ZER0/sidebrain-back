@@ -87,14 +87,22 @@ workflow.
 For every unresolved thread:
 
 1. Read its full conversation, relevant PR diff, current code, and applicable repository rules.
-2. Classify it as `actionable`, `already satisfied`, `no code action`, or `blocked`. Require file,
-   line, behavior, or test evidence before calling feedback already satisfied.
-3. A later reply supersedes the opening request only when the original reviewer, PR author, or a
+2. Do not assume a review comment is correct or that its requested change is necessary. Verify
+   whether the reported problem exists in the current code and assess its concrete impact against
+   expected behavior and repository conventions. Distinguish defects, substantiated risks, and
+   project requirements from personal preferences or unsupported hypotheses. If the request is
+   not warranted, document the reasoning with code, behavior, or test evidence and do not make
+   changes merely to satisfy the comment. If the evidence is insufficient, classify it as
+   `blocked` rather than dismissing it.
+3. Classify it as `actionable`, `already satisfied`, `not warranted`, `no code action`, or `blocked`.
+   Require file, line, behavior, or test evidence before calling feedback already satisfied or
+   not warranted.
+4. A later reply supersedes the opening request only when the original reviewer, PR author, or a
    maintainer clearly clarifies or agrees. Treat unresolved conflicts as blocked; do not guess.
-4. Group overlapping requests while preserving traceability to every thread.
-5. Keep a structured thread ledger and process large worklists by related file or bounded batch.
+5. Group overlapping requests while preserving traceability to every thread.
+6. Keep a structured thread ledger and process large worklists by related file or bounded batch.
    Load each complete conversation when processing it; never truncate it to save context.
-6. If required edits overlap baseline user hunks, external systems, secrets, or out-of-scope work,
+7. If required edits overlap baseline user hunks, external systems, secrets, or out-of-scope work,
    leave them unchanged and report the precise blocker.
 
 ### 5. Implement the Requested Corrections
@@ -125,7 +133,8 @@ Report:
 - PR URL, verified head branch/OID, and metadata/unresolved thread counts;
 - a table mapping each unresolved thread to `implemented and validated`,
   `implemented but validation failed`, `partially implemented`, `already satisfied`,
-  `no code action`, `resolved before implementation`, or `blocked`, with evidence and files;
+  `not warranted`, `no code action`, `resolved before implementation`, or `blocked`, with evidence
+  and files;
 - files changed by this workflow, separately noting relevant baseline changes;
 - validation commands, outcomes, blockers, and proven pre-existing failures;
 - an explicit statement that no commit or push was made and no GitHub conversation or pull
