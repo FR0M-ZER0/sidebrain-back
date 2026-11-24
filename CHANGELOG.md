@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.2.0](https://github.com/FR0M-ZER0/sidebrain-back/compare/v1.1.0...v1.2.0) (2026-11-24)
+
+
+### Features
+
+* **sdb-101:** adiciona infraestrutura RabbitMQ para notificações ([b183068](https://github.com/FR0M-ZER0/sidebrain-back/commit/b18306836cd02093dc7043567ee8143b4b714e1e))
+* **sdb-105:** adiciona atualização de xp e ranking por sse ([7f8ef2a](https://github.com/FR0M-ZER0/sidebrain-back/commit/7f8ef2a48cb21de6529045dd5d8f22e1dc0bf891))
+* **sdb-108:** adicione critério de desempate do rótulo ([04471b6](https://github.com/FR0M-ZER0/sidebrain-back/commit/04471b6e25f2c0f2c6293c94171bdfee8213f59c))
+* **sdb-109:** adiciona acompanhamento de jobs por websocket ([abcffff](https://github.com/FR0M-ZER0/sidebrain-back/commit/abcffff0338869af3dcf7949ca7252037792dd68))
+* **sdb-110:** adiciona ferramentas de consulta ao mentor ([29e632f](https://github.com/FR0M-ZER0/sidebrain-back/commit/29e632f7390430462a8474e9fe086642415f2ab2))
+* **sdb-110:** adiciona mentoria por ia e acompanhamento em tempo real ([db810b1](https://github.com/FR0M-ZER0/sidebrain-back/commit/db810b1cd560b05d3a0a74fe67d44dcd1654723f))
+* **sdb-110:** amplia orientação do mentor sobre estudos ([df9d692](https://github.com/FR0M-ZER0/sidebrain-back/commit/df9d6923741e6f3d33e47b42d6c946b750554291))
+* **sdb-111:** adiciona catálogo de avatares ([4263ca5](https://github.com/FR0M-ZER0/sidebrain-back/commit/4263ca53ba4bac3cddfd81bffd0edfd5dcda8d79))
+* **sdb-111:** integra avatares ao perfil do usuário ([6ba78d9](https://github.com/FR0M-ZER0/sidebrain-back/commit/6ba78d9ff055e516d7b7bed1d7baf7cb0ddd1cd4))
+* **sdb-112:** adiciona endpoints das estatísticas do usuário ([97a6094](https://github.com/FR0M-ZER0/sidebrain-back/commit/97a60943d0fdb36d20f042f87a6aeb18e459bb0c))
+* **sdb-113:** adiciona avatares ao ranking ([fabd40a](https://github.com/FR0M-ZER0/sidebrain-back/commit/fabd40a13448b4a415c44866ba8bfd36f84ea646))
+* **sdb-113:** adiciona contexto de lição e quiz ao mentor ([c0c8fbf](https://github.com/FR0M-ZER0/sidebrain-back/commit/c0c8fbfd147902a05f36a36b2cf7710d332ab275))
+* **sdb-113:** adiciona notificações de progresso por usuário ([9f11860](https://github.com/FR0M-ZER0/sidebrain-back/commit/9f118609af8a7112fde8a99f2762e77d835eb750))
+* **sdb-113:** treina classificador de resumos com corpus integrado ([de9c537](https://github.com/FR0M-ZER0/sidebrain-back/commit/de9c53762ba572c4dc7277fd6edc8710c6396bce))
+* **sdb-92:** conecta memoria de geracao e cache de avaliacoes ([99d9156](https://github.com/FR0M-ZER0/sidebrain-back/commit/99d9156369c6ecfc24096e403e650c361f7fb88c))
+* **sdb-92:** integra dev e adapta memoria de geracao ([bc7b738](https://github.com/FR0M-ZER0/sidebrain-back/commit/bc7b73815dd6b4fd99b818d5c92319f7a459c5b4))
+
+
+### Bug Fixes
+
+* **sdb-105:** extrai identificadores e tokens antes de expirar sessão nos testes ([2f729b3](https://github.com/FR0M-ZER0/sidebrain-back/commit/2f729b309edb089a7c051991b2a684abc86b4ae2))
+* **sdb-109:** corrige falhas no acompanhamento de jobs por websocket ([89e15d0](https://github.com/FR0M-ZER0/sidebrain-back/commit/89e15d0612f6f23581b37d1af086364f77641264))
+* **sdb-109:** garante entrega consistente das atualizações de jobs ([27967f2](https://github.com/FR0M-ZER0/sidebrain-back/commit/27967f232b1fd578aa31a6b9d65d3b8cdd883327))
+* **sdb-110:** padroniza a tag das rotas de ranking ([a67a798](https://github.com/FR0M-ZER0/sidebrain-back/commit/a67a798d8a1752ae9daa82bfb77475f9d4d86e72))
+* **sdb-110:** registra diagnóstico seguro de falhas do mentor ([569e1f1](https://github.com/FR0M-ZER0/sidebrain-back/commit/569e1f1681bfcb56f878a4814764593212c3bdc9))
+* **sdb-112:** substitui rollback por commit antes da geração da avaliação ([24922f1](https://github.com/FR0M-ZER0/sidebrain-back/commit/24922f194f76b18ac810e9ff333ffe2b3c8e577e))
+* **sdb-113:** configure a porta de gerenciamento do RabbitMQ ([3d8bdb4](https://github.com/FR0M-ZER0/sidebrain-back/commit/3d8bdb465f4782cc4f8619e125c683fd100f0d55))
+* **sdb-113:** inclue o histórico nas respostas do mentor ([6d1d0b6](https://github.com/FR0M-ZER0/sidebrain-back/commit/6d1d0b6f2e4dd535b68a4f06cf1c54afd0f83b54))
+
+
+### Reverts
+
+* **sdb-105:** remove alterações anteriores de xp e ranking ([e5a82d0](https://github.com/FR0M-ZER0/sidebrain-back/commit/e5a82d0c0423e95f0ae84b7cecd6c8cdf1e44486))
+
 ## [1.1.0](https://github.com/FR0M-ZER0/sidebrain-back/compare/v1.0.0...v1.1.0) (2026-10-28)
 
 
