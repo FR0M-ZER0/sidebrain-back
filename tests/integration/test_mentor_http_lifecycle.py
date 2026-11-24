@@ -95,8 +95,9 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
             generator.generate_mentor_response = AsyncMock()
             captured = {}
 
-            async def generate(message, get_tool_data):
+            async def generate(message, get_tool_data, *, history):
                 captured["message"] = message
+                captured["automatic_history"] = history
                 captured["history"] = await get_tool_data(
                     "consultar_historico"
                 )
@@ -160,6 +161,10 @@ async def test_mentor_http_lifecycle_with_controlled_provider(
                 user_id, UUID(retry_id)
             )
             assert captured["message"] == "Tenho pouco tempo."
+            assert captured["automatic_history"] == [
+                {"role": "student", "content": "Como estudar?"},
+                {"role": "mentor", "content": "Revise os fundamentos."},
+            ]
             context = captured["history"]
             assert any(
                 item["content"] == "Como estudar?"
@@ -245,6 +250,91 @@ async def test_deletion_returns_503_when_send_is_inconclusive(
             revoked = await client.delete("/api/v1/mentor-consent")
             assert revoked.status_code == 204
             assert (await client.delete(base)).status_code == 204
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+        app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.mark.anyio
+async def test_http_context_requires_matching_lesson_and_is_idempotent(
+    db_session, learning_hierarchy_factory, quiz_factory
+):
+    own = await learning_hierarchy_factory()
+    foreign = await learning_hierarchy_factory()
+    quiz = await quiz_factory(own.lesson)
+    user_id = own.user.usr_id
+    track_id, lesson_id = own.track.trk_id, own.lesson.lsn_id
+    foreign_lesson_id, quiz_id = foreign.lesson.lsn_id, quiz.qui_id
+
+    async def override_db():
+        yield db_session
+
+    async def override_user():
+        return SimpleNamespace(usr_id=user_id)
+
+    app.dependency_overrides[get_db] = override_db
+    app.dependency_overrides[get_current_user] = override_user
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app),
+            base_url="http://testserver",
+        ) as client:
+            notice = (await client.get("/api/v1/mentor-consent")).json()
+            await client.put(
+                "/api/v1/mentor-consent",
+                json={
+                    "notice_version": notice["notice_version"],
+                    "accepted": True,
+                },
+            )
+            created = await client.post(
+                "/api/v1/mentor-conversations",
+                json={"track_id": str(track_id)},
+            )
+            base = (
+                f"/api/v1/mentor-conversations/{created.json()['id']}/messages"
+            )
+            key = str(uuid4())
+            payload = {
+                "content": "Poderia me ajudar?",
+                "context": {
+                    "type": "quiz",
+                    "lesson_id": str(lesson_id),
+                    "quiz_id": str(quiz_id),
+                },
+            }
+            submitted = await client.post(
+                base, json=payload, headers={"Idempotency-Key": key}
+            )
+            assert submitted.status_code == 202
+            replay = await client.post(
+                base, json=payload, headers={"Idempotency-Key": key}
+            )
+            assert (
+                replay.json()["generation_id"]
+                == submitted.json()["generation_id"]
+            )
+            changed = {
+                "content": payload["content"],
+                "context": {"type": "lesson", "lesson_id": str(lesson_id)},
+            }
+            conflict = await client.post(
+                base, json=changed, headers={"Idempotency-Key": key}
+            )
+            assert conflict.status_code == 409
+            invalid = {
+                "content": "Ajude",
+                "context": {
+                    "type": "lesson",
+                    "lesson_id": str(foreign_lesson_id),
+                },
+            }
+            denied = await client.post(
+                base,
+                json=invalid,
+                headers={"Idempotency-Key": str(uuid4())},
+            )
+            assert denied.status_code == 404
     finally:
         app.dependency_overrides.pop(get_db, None)
         app.dependency_overrides.pop(get_current_user, None)

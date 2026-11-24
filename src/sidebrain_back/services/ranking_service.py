@@ -3,14 +3,27 @@ from fastapi import Depends
 from sidebrain_back.core.errors import ProblemDetailError
 from sidebrain_back.models.user_model import User
 from sidebrain_back.repositories.ranking_repository import (
+    RankedUserRow,
     RankingRepository,
     get_ranking_repository,
 )
+from sidebrain_back.schemas.avatar_schema import AvatarResponse
 from sidebrain_back.schemas.pagination_schema import PaginatedResponse
 from sidebrain_back.schemas.ranking_schema import (
     RankingEntryResponse,
     RankingListResponse,
 )
+from sidebrain_back.services.avatar_service import DEFAULT_AVATAR
+
+
+def _ranking_avatar(row: RankedUserRow) -> AvatarResponse:
+    if row.avatar_slug and row.avatar_name and row.avatar_image_path:
+        return AvatarResponse(
+            slug=row.avatar_slug,
+            name=row.avatar_name,
+            image_url=row.avatar_image_path,
+        )
+    return DEFAULT_AVATAR
 
 
 class RankingService:
@@ -30,6 +43,7 @@ class RankingService:
                 position=row.position,
                 user_id=row.user_id,
                 name=row.name,
+                avatar=_ranking_avatar(row),
                 xp=row.xp,
                 missions_completed=row.missions_completed,
             )
@@ -54,6 +68,7 @@ class RankingService:
             position=row.position,
             user_id=row.user_id,
             name=row.name,
+            avatar=_ranking_avatar(row),
             xp=row.xp,
             missions_completed=row.missions_completed,
         )

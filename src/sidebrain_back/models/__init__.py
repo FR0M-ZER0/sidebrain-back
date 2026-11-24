@@ -32,6 +32,7 @@ from sidebrain_back.models.mentor_generation_model import (
 from sidebrain_back.models.mentor_message_model import MentorMessage
 from sidebrain_back.models.mission_model import Mission
 from sidebrain_back.models.mission_progress_model import MissionProgress
+from sidebrain_back.models.notification_model import Notification
 from sidebrain_back.models.quiz_model import Quiz
 from sidebrain_back.models.rag_chunk_attribution_model import (
     RagChunkAttributionModel,
@@ -71,6 +72,7 @@ __all__ = [
     "KnowledgeAssessmentAnswer",
     "Mission",
     "MissionProgress",
+    "Notification",
     "Badge",
     "BadgeProgress",
     "Login",

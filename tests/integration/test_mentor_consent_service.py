@@ -107,3 +107,26 @@ async def test_provider_change_requires_new_authorization(
     assert changed.recipient == "OpenAI"
     assert changed.notice_version != notice.notice_version
     assert not changed.authorized
+
+
+@pytest.mark.anyio
+async def test_screen_context_notice_requires_updated_consent(
+    db_session, user_factory
+):
+    user = await user_factory()
+    repository = MentorConsentRepository(db_session)
+    service = MentorConsentService(repository, db_session)
+    notice = await service.get_mentor_consent(user.usr_id)
+    old_version = f"3-{notice.recipient.lower()}"
+    await repository.accept(user.usr_id, old_version)
+    await db_session.commit()
+
+    current = await service.get_mentor_consent(user.usr_id)
+    assert not current.authorized
+    assert any(
+        "resposta de quiz enviada" in item for item in current.data_categories
+    )
+    accepted = await service.accept_mentor_consent(
+        user.usr_id, current.notice_version
+    )
+    assert accepted.authorized

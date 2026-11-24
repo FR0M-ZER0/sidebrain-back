@@ -163,8 +163,9 @@ async def test_provider_context_excludes_other_users_and_tracks(
     generator.generate_mentor_response = AsyncMock()
     captured = {}
 
-    async def generate(message, get_tool_data):
+    async def generate(message, get_tool_data, *, history):
         captured["message"] = message
+        captured["history"] = history
         captured["context"] = await get_tool_data("consultar_avaliacoes")
         return "Pratique os fundamentos."
 
@@ -175,6 +176,7 @@ async def test_provider_context_excludes_other_users_and_tracks(
     )
 
     assert captured["message"] == "Como melhorar?"
+    assert captured["history"] == []
     context = str(captured["context"])
     assert "Dados próprios" in context
     assert "Dados de terceiro" not in context

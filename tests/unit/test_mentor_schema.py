@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from pydantic import ValidationError
 
@@ -25,3 +27,21 @@ def test_mentor_requests_reject_extra_fields():
                 "user_id": "00000000-0000-0000-0000-000000000002",
             }
         )
+
+
+@pytest.mark.parametrize(
+    "context",
+    [
+        {
+            "type": "lesson",
+            "lesson_id": str(uuid4()),
+            "quiz_id": str(uuid4()),
+        },
+        {"type": "quiz", "lesson_id": str(uuid4())},
+        {"type": "quiz", "lesson_id": str(uuid4()), "quiz_id": "invalid"},
+        {"type": "unknown", "lesson_id": str(uuid4())},
+    ],
+)
+def test_mentor_rejects_invalid_screen_context(context):
+    with pytest.raises(ValidationError):
+        MentorMessageCreate(content="Ajuda", context=context)

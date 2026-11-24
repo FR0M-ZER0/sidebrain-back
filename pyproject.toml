@@ -45,7 +45,10 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "sidebrain_back"
 module-root = "src"
-include = ["src/sidebrain_back/static/avatars/*.png"]
+include = [
+    "src/sidebrain_back/static/avatars/*.png",
+    "src/sidebrain_back/data/*.json",
+]
 
 [dependency-groups]
 dev = [

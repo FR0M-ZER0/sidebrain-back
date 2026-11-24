@@ -36,6 +36,7 @@ class _Env(BaseSettings):
 
     RABBITMQ_HOST: str = "127.0.0.1"
     RABBITMQ_PORT: int = 5672
+    RABBITMQ_MANAGEMENT_PORT: int = 15672
     RABBITMQ_USER: str = "guest"
     RABBITMQ_PASSWORD: str = "guest"
     RABBITMQ_VHOST: str = "/"
@@ -56,7 +57,6 @@ class _Env(BaseSettings):
 
     GROQ_API_KEY: str | None = None
     GROQ_CHAT_MODEL: str | None = None
-    # Mantido para que arquivos .env antigos continuem sendo carregados.
     GROQ_MODEL: str | None = None
     OPENAI_CHAT_API_KEY: str | None = None
     OPENAI_CHAT_MODEL: str = "gpt-4o-mini"
@@ -130,6 +130,7 @@ class _Env(BaseSettings):
     RAG_ROUTER_CONFIDENCE_THRESHOLD: float = 0.80
     RAG_SOURCES_CONFIG: str = "config/rag_sources.yml"
 
+    # Mantida para compatibilidade com ambientes antigos; não é mais usada.
     STEP_SUMMARY_MODEL_PATH: str = "artifacts/step_summary_classifier.joblib"
 
 

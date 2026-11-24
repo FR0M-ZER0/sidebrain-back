@@ -17,6 +17,9 @@ from sidebrain_back.routers.v1.mentor_consent_router import (
 )
 from sidebrain_back.routers.v1.mentor_router import router as mentor_router
 from sidebrain_back.routers.v1.mission_router import router as mission_router
+from sidebrain_back.routers.v1.notification_router import (
+    router as notification_router,
+)
 from sidebrain_back.routers.v1.quiz_router import router as quiz_router
 from sidebrain_back.routers.v1.ranking_router import router as ranking_router
 from sidebrain_back.routers.v1.step_router import router as step_router
@@ -38,6 +41,7 @@ router.include_router(job_update_router)
 router.include_router(mentor_consent_router)
 router.include_router(mentor_router)
 router.include_router(mission_router)
+router.include_router(notification_router)
 router.include_router(knowledge_assessment_router)
 router.include_router(quiz_router)
 router.include_router(ranking_router)

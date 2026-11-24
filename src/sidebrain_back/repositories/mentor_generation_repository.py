@@ -69,7 +69,10 @@ class MentorGenerationRepository:
         )
 
     async def validate_submission_replay(
-        self, generation: MentorGeneration, content: str
+        self,
+        generation: MentorGeneration,
+        content: str,
+        context: dict[str, Any] | None = None,
     ) -> None:
         message = await self.db.get(
             MentorMessage, generation.student_message_id
@@ -77,6 +80,7 @@ class MentorGenerationRepository:
         if (
             message is None
             or message.content != content
+            or message.context != context
             or generation.retry_of_generation_id is not None
         ):
             raise MentorGenerationConflict(
@@ -95,6 +99,7 @@ class MentorGenerationRepository:
                     MentorConversation.id.label("conversation_id"),
                     MentorMessage.content,
                     MentorMessage.sequence,
+                    MentorMessage.context,
                 )
                 .join(
                     MentorConversation,
@@ -125,6 +130,7 @@ class MentorGenerationRepository:
             "track_id": str(result.trk_id),
             "conversation_id": str(result.conversation_id),
             "sequence": result.sequence,
+            "context": result.context,
         }
 
     async def list_previous_messages(
@@ -146,16 +152,20 @@ class MentorGenerationRepository:
                     MentorMessage.sequence < sequence,
                 )
                 .order_by(MentorMessage.sequence.desc())
-                .limit(6)
+                .limit(40)
             )
         ).all()
         return [
-            {"role": row.role, "content": row.content[:1000]}
+            {"role": row.role, "content": row.content}
             for row in reversed(rows)
         ]
 
     async def create(
-        self, conversation_id: UUID, idempotency_key: UUID, content: str
+        self,
+        conversation_id: UUID,
+        idempotency_key: UUID,
+        content: str,
+        context: dict[str, Any] | None = None,
     ) -> MentorGeneration:
         conversation = await self.db.scalar(
             select(MentorConversation)
@@ -166,7 +176,7 @@ class MentorGenerationRepository:
             raise ValueError("Conversa não encontrada.")
         existing = await self.get_by_key(conversation_id, idempotency_key)
         if existing is not None:
-            await self.validate_submission_replay(existing, content)
+            await self.validate_submission_replay(existing, content, context)
             return existing
 
         active = await self.db.scalar(
@@ -187,6 +197,7 @@ class MentorGenerationRepository:
             sequence=(last_sequence or 0) + 1,
             role="student",
             content=content,
+            context=context,
         )
         self.db.add(message)
         await self.db.flush()

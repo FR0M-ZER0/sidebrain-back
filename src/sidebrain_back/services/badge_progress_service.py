@@ -20,6 +20,9 @@ from sidebrain_back.repositories.badge_progress_repository import (
     BadgeProgressRepository,
     get_badge_progress_repository,
 )
+from sidebrain_back.repositories.notification_repository import (
+    NotificationRepository,
+)
 
 
 class BadgeProgressService:
@@ -108,6 +111,15 @@ class BadgeProgressService:
             elif progress.bpg_status != status:
                 progress.bpg_status = status
                 progress.bpg_updated_at = now
+            if status == BadgeProgressStatusEnum.DONE:
+                NotificationRepository(self.db).create(
+                    user_id=user_id,
+                    event_key=f"badge_earned:{badge.bdg_id}",
+                    type="badge_earned",
+                    title="Badge conquistado",
+                    message=f"Você conquistou o badge {badge.bdg_name}.",
+                    destination="/missions#badges",
+                )
         await self.repository.flush()
         return stats
 

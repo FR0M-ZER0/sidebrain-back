@@ -2,12 +2,15 @@ import json
 from typing import Any
 from uuid import UUID
 
+from pydantic import TypeAdapter
+
 from sidebrain_back.repositories.mentor_context_repository import (
     MentorContextRepository,
 )
 from sidebrain_back.repositories.mentor_generation_repository import (
     MentorGenerationRepository,
 )
+from sidebrain_back.schemas.mentor_schema import MentorScreenContext
 
 
 class MentorContextService:
@@ -29,6 +32,42 @@ class MentorContextService:
         if base is None:
             raise ValueError("Contexto indisponível.")
         return base
+
+    async def get_mentor_screen_context(
+        self, user_id: UUID, base: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        if base.get("context") is None:
+            return None
+        context = TypeAdapter(MentorScreenContext).validate_python(
+            base["context"]
+        )
+        data = await self.contexts.get_screen_context(
+            user_id,
+            UUID(base["track_id"]),
+            context.lesson_id,
+            getattr(context, "quiz_id", None),
+            getattr(context, "answer_id", None),
+        )
+        if data is None:
+            raise ValueError("Contexto indisponível.")
+        if len(data["licao"]["conteudo"]) > 10000:
+            data["licao"]["conteudo"] = data["licao"]["conteudo"][:10000]
+            data["licao"]["conteudo_truncado"] = True
+        for container, key in (
+            (data["licao"], "conteudo"),
+            (data.get("avaliacao", {}), "resposta"),
+        ):
+            while len(json.dumps(data, ensure_ascii=False)) > (
+                self.max_context_chars
+            ) and container.get(key):
+                excess = len(json.dumps(data, ensure_ascii=False)) - (
+                    self.max_context_chars
+                )
+                container[key] = container[key][:-excess]
+                container[f"{key}_truncado"] = True
+        if len(json.dumps(data, ensure_ascii=False)) > self.max_context_chars:
+            raise ValueError("Contexto excede o limite.")
+        return data
 
     async def get_mentor_tool_data(
         self,

@@ -13,7 +13,7 @@ from sidebrain_back.repositories.mentor_consent_repository import (
 from sidebrain_back.schemas.mentor_consent_schema import MentorConsentResponse
 from sidebrain_back.services.auth_errors import ConflictError
 
-NOTICE_VERSION = "3"
+NOTICE_VERSION = "4"
 
 
 class MentorConsentUnavailable(Exception):
@@ -57,6 +57,8 @@ class MentorConsentService:
                 "mensagens",
                 "dados da trilha escolhida",
                 "conteúdo de lições e perguntas de quizzes solicitados",
+                "lição e questão atuais, inclusive conteúdo e pergunta",
+                "resposta de quiz enviada, classificação e justificativa",
                 "progresso e avaliações vinculados",
             ],
             retention_notice=(

@@ -21,6 +21,63 @@ class MentorContextRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    async def get_screen_context(
+        self,
+        user_id: UUID,
+        track_id: UUID,
+        lesson_id: UUID,
+        quiz_id: UUID | None = None,
+        answer_id: UUID | None = None,
+    ) -> dict | None:
+        lesson = (
+            await self.db.execute(
+                select(Lesson.lsn_title, Lesson.lsn_text)
+                .join(Step, Step.stp_id == Lesson.lsn_step_id)
+                .join(Track, Track.trk_id == Step.stp_track_id)
+                .where(
+                    Track.trk_id == track_id,
+                    Track.trk_user_id == user_id,
+                    Track.trk_is_deleted.is_(False),
+                    Step.stp_is_deleted.is_(False),
+                    Lesson.lsn_id == lesson_id,
+                    Lesson.lsn_is_deleted.is_(False),
+                )
+            )
+        ).one_or_none()
+        if lesson is None:
+            return None
+        data = {
+            "tipo": "quiz" if quiz_id else "lesson",
+            "licao": {"titulo": lesson.lsn_title, "conteudo": lesson.lsn_text},
+        }
+        if quiz_id is not None:
+            question = await self.db.scalar(
+                select(Quiz.qui_question).where(
+                    Quiz.qui_id == quiz_id,
+                    Quiz.qui_lesson_id == lesson_id,
+                    Quiz.qui_is_deleted.is_(False),
+                )
+            )
+            if question is None:
+                return None
+            data["questao"] = question
+        if answer_id is not None:
+            answer = await self.db.scalar(
+                select(Answer).where(
+                    Answer.ans_id == answer_id,
+                    Answer.ans_question_id == quiz_id,
+                    Answer.ans_user_id == user_id,
+                )
+            )
+            if answer is None:
+                return None
+            data["avaliacao"] = {
+                "resposta": answer.ans_text,
+                "classificacao": answer.ans_rate.value,
+                "justificativa": answer.ans_reason,
+            }
+        return data
+
     async def list_lessons_by_title(
         self, user_id: UUID, track_id: UUID, title: str
     ) -> list[dict]:

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -32,12 +32,34 @@ class MentorConversationResponse(BaseModel):
     updated_at: datetime
 
 
+class MentorLessonContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["lesson"]
+    lesson_id: UUID
+
+
+class MentorQuizContext(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["quiz"]
+    lesson_id: UUID
+    quiz_id: UUID
+    answer_id: UUID | None = None
+
+
+MentorScreenContext = Annotated[
+    MentorLessonContext | MentorQuizContext, Field(discriminator="type")
+]
+
+
 class MentorMessageCreate(BaseModel):
     model_config = ConfigDict(
         from_attributes=True, populate_by_name=True, extra="forbid"
     )
 
     content: str = Field(min_length=1, max_length=4000)
+    context: MentorScreenContext | None = None
 
     @field_validator("content", mode="before")
     @classmethod
