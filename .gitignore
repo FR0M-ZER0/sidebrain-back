@@ -338,3 +338,5 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+celerybeat-schedule*

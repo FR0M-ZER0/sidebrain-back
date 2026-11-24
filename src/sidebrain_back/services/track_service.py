@@ -16,6 +16,10 @@ from sidebrain_back.repositories.generation_request_repository import (
 from sidebrain_back.repositories.knowledge_assessment_repository import (
     KnowledgeAssessmentRepository,
 )
+from sidebrain_back.repositories.mentor_conversation_repository import (
+    MentorConversationRepository,
+    get_mentor_conversation_repository,
+)
 from sidebrain_back.repositories.track_repository import (
     StepProgressContext,
     TrackRepository,
@@ -42,6 +46,17 @@ from sidebrain_back.services.badge_progress_service import (
 from sidebrain_back.services.generation_request_service import (
     GenerationRequestService,
 )
+from sidebrain_back.services.mentor_consent_service import (
+    MentorConsentUnavailable,
+)
+from sidebrain_back.services.mentor_privacy_service import (
+    MentorPrivacyService,
+    get_mentor_privacy_service,
+)
+from sidebrain_back.services.step_preparation_service import (
+    StepPreparationService,
+    get_step_preparation_service,
+)
 
 
 class TrackService:
@@ -54,6 +69,9 @@ class TrackService:
         generation_requests: GenerationRequestRepository | None = None,
         assessments: KnowledgeAssessmentRepository | None = None,
         badge_progress_service: BadgeProgressService | None = None,
+        step_preparation_service: StepPreparationService | None = None,
+        mentor_privacy_service: MentorPrivacyService | None = None,
+        mentor_conversations: MentorConversationRepository | None = None,
     ):
         self.repository = repository
         self.db = db
@@ -62,6 +80,9 @@ class TrackService:
         )
         self.assessments = assessments or KnowledgeAssessmentRepository(db)
         self.badge_progress_service = badge_progress_service
+        self.step_preparation_service = step_preparation_service
+        self.mentor_privacy_service = mentor_privacy_service
+        self.mentor_conversations = mentor_conversations
 
     @classmethod
     def completion_ratio(
@@ -99,7 +120,30 @@ class TrackService:
             prepare_next_step_content_task,
         )
 
-        return prepare_next_step_content_task.delay(str(next_step.stp_id))
+        if self.step_preparation_service is None:
+            return prepare_next_step_content_task.delay(str(next_step.stp_id))
+        task_id = await self.step_preparation_service.reserve(
+            step_id, next_step.stp_id
+        )
+        return await self._dispatch_preparation(
+            prepare_next_step_content_task, next_step.stp_id, task_id
+        )
+
+    async def _dispatch_preparation(self, task, step_id: UUID, task_id: str):
+        # O worker serializa mensagens duplicadas pela reserva transacional.
+        for attempt in range(2):
+            try:
+                return task.apply_async(
+                    args=[str(step_id)],
+                    kwargs={"tracking_task_id": task_id},
+                    task_id=task_id,
+                )
+            except Exception:
+                if attempt == 1:
+                    await self.step_preparation_service.finish(
+                        task_id, "failed"
+                    )
+                    raise
 
     async def prepare_next_step(
         self, user: User, track_id: UUID, step_id: UUID
@@ -118,7 +162,17 @@ class TrackService:
             prepare_next_step_content_task,
         )
 
-        result = prepare_next_step_content_task.delay(str(next_step.stp_id))
+        if self.step_preparation_service is None:
+            result = prepare_next_step_content_task.delay(
+                str(next_step.stp_id)
+            )
+        else:
+            task_id = await self.step_preparation_service.reserve(
+                step_id, next_step.stp_id, user.usr_id
+            )
+            result = await self._dispatch_preparation(
+                prepare_next_step_content_task, next_step.stp_id, task_id
+            )
         return PrepareNextAccepted(
             step_id=next_step.stp_id,
             task_id=str(result.id),
@@ -247,6 +301,7 @@ class TrackService:
             status=request.status,
             track_id=request.track_id,
             error_code=request.error_code,
+            source=getattr(request, "source", None),
         )
         await self.db.rollback()
         return progress
@@ -324,9 +379,27 @@ class TrackService:
             raise ProblemDetailError(
                 404, "Não encontrado", "Trilha não encontrada"
             )
+        if (
+            self.mentor_privacy_service is None
+            or self.mentor_conversations is None
+        ):
+            raise RuntimeError("Serviço de privacidade não configurado.")
         try:
+            block = await self.mentor_privacy_service.lock_for_deletion(
+                user.usr_id
+            )
+            await self.mentor_conversations.delete_by_track_id(
+                user.usr_id, track_id
+            )
             await self.repository.soft_delete(track)
+            block.blocked = False
+            block.reason = None
             await self.db.commit()
+        except MentorConsentUnavailable as error:
+            await self.db.rollback()
+            raise ProblemDetailError(
+                503, "Serviço indisponível", str(error)
+            ) from error
         except Exception as error:
             await self.db.rollback()
             raise ProblemDetailError(
@@ -340,6 +413,15 @@ def get_track_service(
     badge_progress_service: BadgeProgressService = Depends(  # noqa: B008
         get_badge_progress_service
     ),
+    step_preparation_service: StepPreparationService = Depends(  # noqa: B008
+        get_step_preparation_service
+    ),
+    mentor_privacy_service: MentorPrivacyService = Depends(  # noqa: B008
+        get_mentor_privacy_service
+    ),
+    mentor_conversations: MentorConversationRepository = Depends(  # noqa: B008
+        get_mentor_conversation_repository
+    ),
 ) -> TrackService:
     return TrackService(
         repository,
@@ -347,4 +429,7 @@ def get_track_service(
         GenerationRequestRepository(db),
         KnowledgeAssessmentRepository(db),
         badge_progress_service,
+        step_preparation_service,
+        mentor_privacy_service,
+        mentor_conversations,
     )

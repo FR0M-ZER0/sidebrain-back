@@ -1,3 +1,4 @@
+import hashlib
 import json
 import re
 
@@ -5,12 +6,19 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sidebrain_back.core.constants import Env
 from sidebrain_back.core.llm_client import get_llm_client, get_llm_model
+from sidebrain_back.repositories.generation_cache_repository import (
+    GenerationCacheRepository,
+)
 from sidebrain_back.repositories.generation_repository import (
     GenerationRepository,
 )
 from sidebrain_back.repositories.generation_request_repository import (
     GenerationRequestRepository,
+)
+from sidebrain_back.repositories.notification_repository import (
+    NotificationRepository,
 )
 from sidebrain_back.schemas.generation_schema import (
     GeneratedTrack,
@@ -22,6 +30,9 @@ from sidebrain_back.services.badge_progress_service import BadgeProgressService
 from sidebrain_back.services.generation_errors import (
     GenerationPersistenceError,
     GenerationValidationError,
+)
+from sidebrain_back.services.generation_memory_service import (
+    GenerationMemoryService,
 )
 from sidebrain_back.services.generation_reference_service import (
     GenerationReferenceService,
@@ -51,11 +62,13 @@ class GenerationService:
         db: AsyncSession,
         request_repository: GenerationRequestRepository | None = None,
         badge_progress_service: BadgeProgressService | None = None,
+        cache_repository: GenerationCacheRepository | None = None,
     ):
         self.repository = repository
         self.db = db
         self.request_repository = request_repository
         self.badge_progress_service = badge_progress_service
+        self.cache_repository = cache_repository
 
     @staticmethod
     def build_prompt(
@@ -234,7 +247,45 @@ class GenerationService:
             return GenerationSuccess(
                 request_id=payload.request_id, track_id=existing.trk_id
             )
-        generated = self.generate_with_ai(payload, reference_context)
+        cache_id = None
+        source = "ai"
+        if self.cache_repository and Env.AI_MEMORY_ENABLED:
+            references = [
+                reference.model_dump(mode="json")
+                for reference in reference_context or []
+            ]
+            references_hash = hashlib.sha256(
+                json.dumps(
+                    references, sort_keys=True, ensure_ascii=True
+                ).encode("utf-8")
+            ).hexdigest()
+            generated, source, cache_id = await GenerationMemoryService(
+                self.db, self.cache_repository
+            ).generate(
+                content_type="track",
+                context={
+                    "goal": payload.goal,
+                    "topic": payload.topic,
+                    "knowledge_level": (
+                        payload.knowledge_level.value
+                        if payload.knowledge_level
+                        else None
+                    ),
+                    "assessment_answers": [
+                        answer.model_dump(mode="json")
+                        for answer in payload.assessment_answers or []
+                    ],
+                    "references_hash": references_hash,
+                },
+                topic_field="topic",
+                schema=GeneratedTrack,
+                generator=lambda: self.generate_with_ai(
+                    payload, reference_context
+                ),
+            )
+        else:
+            await self.db.rollback()
+            generated = self.generate_with_ai(payload, reference_context)
         MissionGenerationService.align_track_mission_titles(generated)
         try:
             if self.db.in_transaction():
@@ -242,6 +293,16 @@ class GenerationService:
             async with self.db.begin():
                 track = await self.repository.create(
                     payload.user_id, payload.request_id, generated
+                )
+                NotificationRepository(self.db).create(
+                    user_id=payload.user_id,
+                    event_key=f"track_ready:{track.trk_id}",
+                    type="track_ready",
+                    title="Sua trilha está pronta",
+                    message=(
+                        f"A trilha {track.trk_title} está pronta para estudar."
+                    ),
+                    destination=f"/trails/{track.trk_id}",
                 )
                 badge_progress = self.badge_progress_service
                 if badge_progress is not None:
@@ -251,6 +312,9 @@ class GenerationService:
                 if self.request_repository:
                     await self.request_repository.mark_succeeded(
                         payload.request_id, track.trk_id
+                    )
+                    await self.request_repository.set_source(
+                        payload.request_id, source=source, cache_id=cache_id
                     )
         except IntegrityError:
             await self.db.rollback()

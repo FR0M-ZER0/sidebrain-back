@@ -1,0 +1,2602 @@
+[
+  {
+    "text": "Correto: o atributo `id` deve ser único em todo o documento, enquanto `class` pode se repetir.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: o bloco `catch` só é executado se ocorrer exceção no `try`; sem erro, ele é ignorado.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Está errado afirmar que closures causam sempre vazamento de memória; isso só ocorre quando referências desnecessárias são mantidas.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Está correto: variáveis não inicializadas valem `undefined`, e não `null`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou explicar que `flat` achata arrays aninhados e aceita a profundidade como argumento.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Está errado achar que o atributo `disabled` envia o valor do campo; campos desabilitados não são enviados no formulário.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: `<p>` é usado para parágrafos, e não para criar espaço vertical entre elementos; para isso usa-se CSS.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: `BigInt` e `Symbol` também são tipos primitivos, e a resposta citou só número, string e booleano.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Boa resposta. Poderia acrescentar que a nomenclatura de variáveis em camelCase é a convenção em JavaScript.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Boa explicação sobre o tempo limite de uma requisição usando `Promise.race` com um `setTimeout`.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: acessar um índice inexistente de um array retorna `undefined` e não lança erro.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta confunde `<section>` com `<article>`; o segundo é para conteúdo independente que poderia ser distribuído separadamente.",
+    "subject": "html"
+  },
+  {
+    "text": "Está certo que comentários em HTML são escritos entre `<!--` e `-->` e não aparecem na página.",
+    "subject": "html"
+  },
+  {
+    "text": "O atributo correto é `defer`, que adia a execução do script até que o documento seja interpretado. `noreload` não é um atributo HTML válido para essa finalidade.",
+    "subject": "html"
+  },
+  {
+    "text": "O exemplo de encadeamento de `.then()` está certo, e cada `.then()` recebe o valor retornado pelo anterior.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: o atributo `rel=stylesheet` na tag `<link>` indica que o arquivo é uma folha de estilos.",
+    "subject": "html"
+  },
+  {
+    "text": "Está certo que a depuração com `debugger` e as ferramentas do navegador ajudam a encontrar a origem de uma exceção.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta poderia esclarecer que `<header>` pode aparecer várias vezes, inclusive dentro de um `<article>`.",
+    "subject": "html"
+  },
+  {
+    "text": "O exemplo de função com retorno antecipado, usando `return` logo no início para casos inválidos, está certo e deixa o código mais legível.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Está certo que o `await` pausa apenas a função `async`, e o restante do programa continua rodando.",
+    "subject": "async"
+  },
+  {
+    "text": "Está certo capturar o erro no `catch`, porém ignorá-lo sem registrar nada dificulta a depuração.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Está errado: declarar uma variável com `var` dentro de uma função não a torna global.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: `map(Number)` converte cada texto do array em número, desde que o texto seja válido.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta deveria alertar que `parseInt` dentro de `map` pode dar resultados inesperados, pois recebe o índice como segundo argumento.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou explicar que a troca de valores entre duas variáveis pode ser feita com desestruturação: `[a, b] = [b, a]`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A explicação sobre programação assíncrona está boa, mas confunde concorrência com paralelismo.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: acessar uma propriedade de `undefined` gera `TypeError`, e não `ReferenceError`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: capturar erros em camadas, tratando o que é possível e relançando o restante, mantém o código organizado.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A explicação sobre funções de callback está boa, porém o exemplo esquece de invocar a função passada como parâmetro.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: `Array(5).fill(0)` cria um array com cinco posições preenchidas com zero.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta está certa sobre `return`, mas poderia explicar que uma função sem `return` devolve `undefined`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Parcialmente correto: `async/await` é açúcar sintático sobre promessas, mas a resposta deveria dizer que o código continua assíncrono.",
+    "subject": "async"
+  },
+  {
+    "text": "Está certo dizer que `Promise.all` falha se qualquer promessa for rejeitada; faltou citar `Promise.allSettled` como alternativa.",
+    "subject": "async"
+  },
+  {
+    "text": "Resposta correta sobre funções puras: elas retornam o mesmo resultado para os mesmos argumentos e não causam efeitos colaterais.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: `<select>` com `<option>` cria uma lista suspensa, e o atributo `selected` define o item inicial.",
+    "subject": "html"
+  },
+  {
+    "text": "Boa resposta: nomes de variáveis claros, como `quantidadeDeItens`, melhoram a legibilidade do código.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A resposta acerta ao dizer que `let` e `const` não criam propriedades no objeto `window`, diferente de `var` no escopo global.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correta a explicação: variáveis declaradas com `let` só existem dentro do bloco em que foram criadas.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: a tag `<img>` deve ter o atributo `alt` para acessibilidade e para quando a imagem não carregar.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `shift` remove o primeiro elemento do array e `unshift` adiciona um elemento no início.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Está certo que `var` pode ser redeclarada, mas a resposta não alertou que isso costuma causar bugs difíceis de encontrar.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `try/catch` não captura erros de código assíncrono disparado por `setTimeout`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: um erro lançado dentro de uma Promise sem `catch` gera um aviso de rejeição não tratada.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: o método `map` retorna um novo array com o resultado da função aplicada a cada elemento, sem alterar o original.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta usa `throw new Error` corretamente, mas deveria explicar que lançar uma string perde o stack trace.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "O método `reduce` foi explicado corretamente, mas faltou indicar a importância do valor inicial do acumulador.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Parcialmente correto: `reverse` inverte a ordem dos elementos, mas altera o array original, o que a resposta não avisou.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: o `<form>` precisa ter campos com o atributo `name` para que os valores sejam enviados.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: strings são imutáveis, então modificar uma variável de texto cria uma nova string em vez de alterar a original.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `concat` não modifica o array original, e sim devolve um novo array.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou mencionar que esquecer o `await` faz a variável receber uma Promise em vez do valor esperado.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: um método é uma função associada a um objeto, mas a resposta não explicou como acessar o `this` dentro dele.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta confunde `map` com `forEach`; o primeiro devolve um novo array e o segundo não devolve nada.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: o bloco `finally` é executado independentemente de ter ocorrido erro no `try`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta acertou ao propor valores padrão em caso de falha, mas deveria avisar que isso pode mascarar problemas reais.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Está errado achar que `finally` capture o erro; ele apenas executa o código final, e o erro continua sendo propagado.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Incorreto: usar uma variável `let` antes da declaração lança ReferenceError, e não retorna `undefined`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A resposta poderia esclarecer que nomes de variáveis diferenciam maiúsculas de minúsculas, então `total` e `Total` são variáveis distintas.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Parcialmente correto: o event loop verifica a pilha e a fila de tarefas, mas a resposta não separou a fila de microtarefas.",
+    "subject": "async"
+  },
+  {
+    "text": "O uso de `call` e `apply` foi explicado corretamente; a única diferença é que `apply` recebe os argumentos em um array.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta sobre `every` e `some` está certa, mas faltou dizer que `every` retorna `true` para um array vazio.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A tabela está correta, mas deveria usar `<thead>` e `<th>` para o cabeçalho.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: reatribuir uma variável declarada com `const` lança TypeError, não é ignorado silenciosamente.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: um `await` em uma promessa já rejeitada lança o erro no ponto da expressão.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: o `fetch` aceita um objeto de opções, mas a resposta não mostrou que `response.json()` também retorna uma Promise.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: `await` só pode ser usado dentro de funções declaradas com `async` ou em módulos com top-level await.",
+    "subject": "async"
+  },
+  {
+    "text": "Está errado dizer que JavaScript sobrecarrega funções pelo número de parâmetros; a última definição simplesmente substitui a anterior.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta sobre agrupar elementos com `reduce` está certa, mas ficaria mais clara usando `Object.groupBy`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: o atributo `required` impede o envio do formulário com o campo vazio.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta confundiu o objeto `Promise` com `async function`; a segunda sempre envolve o retorno em uma promessa.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: o operador `??=` atribui um valor à variável apenas se ela for `null` ou `undefined`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: funções declaradas com `function` podem ser chamadas antes da definição por causa do hoisting.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: `Array.from` converte objetos iteráveis, como um `Set` ou uma string, em arrays.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: em um `forEach`, o `await` dentro do callback não faz o laço esperar; use `for...of` ou `Promise.all`.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: funções callback são passadas como argumento, mas a resposta não deixou claro que elas podem ser síncronas.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: o operador de encadeamento opcional `?.` evita o `TypeError` ao acessar propriedades de valores nulos.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: em versões recentes o `catch` pode omitir o parâmetro do erro (optional catch binding).",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta deveria esclarecer que `console.error` apenas exibe a mensagem e não interrompe a execução do programa.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "O índice do primeiro elemento é zero, e a resposta acertou, mas confundiu `length` com o último índice.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Poderia esclarecer a diferença entre falhar rápido, lançando o erro assim que o problema é detectado, e retornar valores de erro.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou citar que `Promise.any` resolve com a primeira promessa bem-sucedida e só rejeita se todas falharem.",
+    "subject": "async"
+  },
+  {
+    "text": "Faltou comentar que uma função deve ter uma única responsabilidade para ser mais fácil de testar.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O exemplo de closure está correto: a função interna mantém acesso às variáveis da função externa mesmo depois de ela terminar.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: em JavaScript uma variável pode receber valores de tipos diferentes ao longo do tempo, porque a linguagem tem tipagem dinâmica.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou mencionar a diferença entre `SyntaxError`, `TypeError` e `ReferenceError`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta sobre `Number.MAX_SAFE_INTEGER` está certa; acima desse limite o valor numérico perde precisão.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está certo usar `Object.freeze`, mas a resposta deveria dizer que ele congela apenas o primeiro nível do objeto.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Poderia esclarecer que `find` retorna o primeiro elemento que satisfaz a condição, e `findIndex` retorna a posição dele.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: uma arrow function não possui `this` próprio e herda o do contexto onde foi criada.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta confunde mutabilidade com reatribuição; `const` impede reatribuir a variável, mas não congela o valor. Para isso seria preciso `Object.freeze`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A explicação do callback hell está boa, e o uso de promessas deixa o fluxo assíncrono mais fácil de ler.",
+    "subject": "async"
+  },
+  {
+    "text": "Está correto afirmar que variáveis globais implícitas, criadas sem declaração, são uma má prática e falham no modo estrito.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou citar `Array.isArray` como forma confiável de verificar se um valor é um array, já que `typeof` retorna object.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Parcialmente correto: o `<audio>` aceita vários formatos com `<source>`, mas a resposta não citou o atributo `controls`.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: JavaScript é single-thread, e a execução assíncrona não cria novas threads por padrão.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: parâmetros padrão são avaliados na chamada da função, não na definição.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta acertou que promessas não podem ser canceladas diretamente, mas deveria citar o `AbortController` como alternativa.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: o nome de uma função deve ser um verbo ou uma expressão que descreva claramente o que ela faz.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta poderia diferenciar erros esperados, como entrada inválida, de erros inesperados, como falhas de programação.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Parcialmente correto: o operador spread `[...a, ...b]` concatena arrays, mas faz apenas cópia rasa.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou citar a diferença entre `<section>` e `<div>`: a primeira tem valor semântico, a segunda é apenas um contêiner genérico.",
+    "subject": "html"
+  },
+  {
+    "text": "O uso de `indexOf` está certo, porém `includes` seria mais legível para apenas verificar a existência de um elemento.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Incorreto: uma `Promise` rejeitada sem `catch` gera um erro de rejeição não tratada, não é ignorada.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: a resposta cita `Promise.allSettled`, mas não mostrou o formato do resultado, com `status` e `value` ou `reason`.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: `throw` interrompe a execução da função atual e transfere o controle para o `catch` mais próximo.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: `<details>` e `<summary>` criam um bloco expansível sem precisar de JavaScript.",
+    "subject": "html"
+  },
+  {
+    "text": "Está errado dizer que toda função precisa ter um nome; funções anônimas e arrow functions não precisam.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou mencionar que funções são cidadãs de primeira classe e podem ser passadas como argumentos para outras funções.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: a Web API do navegador, e não o motor JavaScript, é responsável por esperar o término de um temporizador.",
+    "subject": "async"
+  },
+  {
+    "text": "A atribuição por desestruturação `const { nome, idade } = pessoa` foi explicada corretamente.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: uma função pode retornar apenas um valor, mas esse valor pode ser um array ou um objeto contendo vários dados.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Poderia esclarecer que `reduceRight` percorre o array do fim para o início.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: `error.message` traz a descrição do erro e `error.stack` mostra a pilha de chamadas.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Boa resposta sobre `entries()`, que permite percorrer o índice e o valor juntos em um `for...of`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: `Array.of(3)` cria um array com o elemento 3, enquanto `new Array(3)` cria um array com três posições vazias.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta poderia diferenciar passagem por valor de passagem por referência ao copiar variáveis de tipos primitivos e de objetos.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A resposta acertou sobre funções com efeitos colaterais, mas deveria dar o exemplo de uma função que altera uma variável externa.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta deveria citar as asserções, como `console.assert`, para validar condições durante o desenvolvimento.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta sobre `<nav>` está certa, mas poderia dizer que ele é indicado para blocos principais de navegação.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `<button type=submit>` envia o formulário, e `<button type=button>` não tem comportamento padrão.",
+    "subject": "html"
+  },
+  {
+    "text": "O formulário está certo, porém falta o atributo `method` e o `action` para indicar para onde os dados serão enviados.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta sobre `.finally()` está certa: ele executa independentemente de a promessa ter sido resolvida ou rejeitada.",
+    "subject": "async"
+  },
+  {
+    "text": "Está errado afirmar que código assíncrono é sempre mais rápido; ele apenas evita bloquear a execução enquanto espera.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: uma função `async` que lança um erro retorna uma promessa rejeitada em vez de lançar a exceção diretamente.",
+    "subject": "async"
+  },
+  {
+    "text": "A recursão de cauda foi explicada corretamente, mas a resposta deveria avisar que nem todos os motores JavaScript a otimizam.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O exemplo de remover duplicados com `new Set(lista)` está correto e é uma solução curta e legível.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou explicar que `await` dentro de um laço `for` executa as chamadas em sequência, e não em paralelo.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: parâmetros são as variáveis listadas na definição da função, e argumentos são os valores passados na chamada.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: a tag `<title>` fica dentro de `<head>` e define o texto exibido na aba do navegador.",
+    "subject": "html"
+  },
+  {
+    "text": "O exemplo de classe de erro `ErroValidacao` está bom, mas faltou chamar `super(mensagem)` no construtor.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Incorreto: o valor padrão de um parâmetro não substitui valores `null`, apenas `undefined`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou citar que `const` em um laço `for...of` é válido, porque cada iteração cria uma nova variável.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `setInterval` não espera o término do callback anterior para agendar a próxima execução.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: o resultado de `0.1 + 0.2` não é exatamente `0.3` por causa da representação de ponto flutuante, e não por um bug da variável.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Parcialmente correto: o `try/catch` com `async/await` funciona, mas a resposta não mostrou o tratamento de várias chamadas.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "O exemplo valida o parâmetro e lança um `TypeError` quando o tipo é inválido, o que é uma boa prática.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: `new Function` cria funções a partir de texto, mas seu uso é desaconselhado por questões de segurança e desempenho.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Poderia esclarecer a diferença entre chamadas síncronas, que bloqueiam a execução, e chamadas assíncronas, que não bloqueiam.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: a ordem de saída do exemplo seria 1, 3 e 2, pois o callback do `setTimeout` só roda após o código síncrono.",
+    "subject": "async"
+  },
+  {
+    "text": "Está certo afirmar que `let` permite reatribuição, mas faltou mencionar a zona morta temporal antes da declaração.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: `let a = b = 5` cria `b` como variável global implícita, o que a resposta alertou muito bem.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: a composição de funções permite combinar funções pequenas para criar uma operação mais complexa.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: `async` em uma arrow function é escrito antes dos parâmetros, como em `async () => {}`.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: no modo estrito, atribuir um valor a uma variável não declarada lança ReferenceError.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: `<script src=app.js async>` baixa o arquivo em paralelo e executa assim que estiver pronto.",
+    "subject": "html"
+  },
+  {
+    "text": "Está errado dizer que `delete lista[1]` remove o elemento e reorganiza os índices; ele apenas deixa uma posição vazia.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta sobre arrow function com retorno implícito está certa: `x => x * 2` devolve o resultado sem precisar de `return`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A explicação de arrays multidimensionais está boa, mas o exemplo acessa a posição errada da matriz.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta acertou o conceito de função construtora, mas deveria dizer que ela é chamada com `new`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto em geral: validar a entrada antes de processar evita exceções desnecessárias, mas não substitui o tratamento de erros.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Parcialmente correto: lançar erros com `throw` é útil, mas a resposta deveria preferir objetos `Error` a valores simples.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta explicou bem o escopo de bloco, mas poderia mostrar um exemplo com chaves soltas `{}` para deixar claro.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou explicar entidades HTML, como `&lt;` e `&amp;`, usadas para mostrar caracteres reservados.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: o valor retornado por uma função construtora chamada com `new` é o novo objeto, a menos que ela retorne outro objeto.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Boa resposta sobre mensagens de erro claras, que explicam o que aconteceu e como o usuário pode corrigir.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou mencionar que `sort` altera o array original, e que `toSorted` devolve uma cópia ordenada.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta deveria mencionar o `<main>`, que contém o conteúdo principal e deve existir apenas uma vez por página.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `slice` copia uma parte do array sem modificá-lo, enquanto `splice` altera o array original.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou explicar o atributo `lang` na tag `<html>`, importante para tradutores e leitores de tela.",
+    "subject": "html"
+  },
+  {
+    "text": "O exemplo captura todas as exceções de forma genérica; seria melhor verificar o tipo do erro com `instanceof`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Boa resposta sobre `<picture>` e `<source>`, usados para carregar imagens diferentes conforme o tamanho da tela.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: nomear os parâmetros de forma descritiva torna o uso da função mais fácil sem consultar a documentação.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto em geral: o `typeof` de uma variável não declarada retorna `undefined` em vez de lançar erro, mas a resposta poderia explicar o motivo.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A função `async` sempre retorna uma Promise, mesmo que o valor retornado seja simples. A resposta acertou.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: o método `bind` não executa a função, apenas retorna uma nova função com `this` fixado.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou mencionar que funções com muitos parâmetros devem ser refatoradas para receber um único objeto de opções.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou citar o uso de `console.warn` e `console.error` para diferenciar avisos de falhas ao depurar.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Incorreto: um array em JavaScript pode misturar tipos diferentes, como números, textos e objetos.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Faltou explicar o `for await...of`, usado para iterar sobre fontes de dados assíncronas.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: o elemento `<br>` não precisa de tag de fechamento, é um elemento vazio.",
+    "subject": "html"
+  },
+  {
+    "text": "Faltou dizer que nomes de variáveis não podem começar com número nem usar palavras reservadas como `class`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está errado usar `<table>` para posicionar elementos na página, pois a tabela deve conter apenas dados tabulares.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: `length` pode ser alterada manualmente, e reduzir seu valor descarta os elementos finais do array.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Resposta correta sobre `Promise.race`: ela resolve ou rejeita com a primeira promessa que terminar.",
+    "subject": "async"
+  },
+  {
+    "text": "Boa explicação sobre relançar o erro com `throw` dentro do `catch` para tratamento em uma camada superior.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A explicação de `splice` está boa, mas o exemplo usa os parâmetros em ordem errada: o primeiro é o índice e o segundo é a quantidade.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Poderia esclarecer que o valor de `this` em uma função comum depende de como ela é chamada, e não de onde foi definida.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Poderia esclarecer que uma IIFE é executada imediatamente após ser definida e serve para criar um escopo privado.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou explicar que um erro dentro de um `finally` pode substituir o erro original lançado no `try`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Boa explicação de memoização: guardar o resultado de chamadas anteriores evita recalcular a função para os mesmos argumentos.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Está certo que `<h1>` deve aparecer uma vez por página como título principal, e os demais títulos seguem a hierarquia.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `const` deve ser usado quando a variável não será reatribuída. Vale lembrar que o conteúdo de objetos ainda pode mudar.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou mencionar `window.onerror` e o evento `unhandledrejection` como forma de capturar erros globais.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Incorreto: um `catch` vazio é uma má prática, pois esconde falhas e dificulta descobrir a causa dos bugs.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Parcialmente correto: a conversão automática de tipos faz `'5' + 1` virar texto, mas a resposta não explicou a coerção.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: os métodos `keys()`, `values()` e `entries()` de um array retornam iteradores.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: `findLast` retorna o último elemento que satisfaz a condição, e `findLastIndex` retorna a posição dele.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: o construtor `new Promise((resolve, reject) => ...)` recebe uma função executora que roda de forma síncrona.",
+    "subject": "async"
+  },
+  {
+    "text": "Boa resposta sobre template strings, mas o exemplo interpola a variável com a sintaxe errada; o correto é `${nome}`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "O exemplo usa callbacks aninhados, o que leva ao callback hell; seria melhor reescrever com `async` e `await`.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: `forEach` não retorna um novo array; ele sempre devolve `undefined`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Poderia mostrar a diferença entre `function` tradicional e arrow function ao usar o objeto `arguments`, que não existe na segunda.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O exemplo de `join` está correto, mas deveria mostrar o separador padrão, que é a vírgula.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Incorreto: a tag `<center>` está obsoleta no HTML5, e o alinhamento deve ser feito com CSS.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: `includes` compara com `===`, mas trata `NaN` de forma diferente de `indexOf`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "O uso de variáveis globais no exemplo é desaconselhado; a resposta deveria sugerir declará-las com `let` dentro de um bloco.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está errado dizer que `try/catch` deixa o código muito mais lento; o custo só é relevante quando exceções são lançadas com frequência.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta sobre `Error.cause` está certa, e ele permite encadear o erro original ao novo erro lançado.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Correto: funções de ordem superior recebem outras funções como parâmetro ou as retornam como resultado.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O exemplo de `<input type=checkbox>` está correto, mas cada caixa deveria ter um `<label>` associado.",
+    "subject": "html"
+  },
+  {
+    "text": "O exemplo declara `const` sem valor inicial, o que gera SyntaxError. Toda constante precisa ser inicializada na declaração.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Parcialmente correto: o valor `NaN` é do tipo número, e a resposta deveria mencionar `Number.isNaN` para testá-lo.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A resposta explica bem o event loop, mas poderia citar a diferença entre microtarefas e macrotarefas.",
+    "subject": "async"
+  },
+  {
+    "text": "A resposta acertou o uso de `<ol>` para listas ordenadas e `<ul>` para listas sem ordem.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta explica bem a fila de microtarefas, mas esqueceu de dizer que `.then()` entra nela antes de um `setTimeout`.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: os atributos `data-*` guardam informações personalizadas no elemento, mas a resposta não mostrou como lê-los pelo `dataset`.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: registrar o erro em um serviço de monitoramento ajuda, mas a resposta não falou em não expor detalhes ao usuário.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A propriedade `length` de uma função retorna a quantidade de parâmetros declarados, sem contar o parâmetro rest. A resposta está correta.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta sobre `filter` está certa, mas poderia mencionar que o array original não é modificado.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Resposta correta sobre currying: transformar uma função de vários parâmetros em uma sequência de funções de um parâmetro.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Faltou explicar que uma arrow function não pode ser usada como construtora com `new`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Incorreto: `instanceof Error` não identifica objetos de erro criados em outro contexto, como um `iframe`, em todos os casos.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou explicar a diferença entre atribuir um valor primitivo e uma referência: copiar uma variável de objeto copia a referência.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `sort` sem função de comparação ordena os elementos como strings, então 10 vem antes de 2.",
+    "subject": "arrays"
+  },
+  {
+    "text": "O exemplo para somar os valores do array com `reduce` está correto, e o valor inicial zero evita erro em arrays vazios.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Está errado dizer que `push` retorna o array; ele retorna o novo tamanho.",
+    "subject": "arrays"
+  },
+  {
+    "text": "O estado de uma promessa pode ser pendente, resolvida ou rejeitada; a resposta citou os três corretamente.",
+    "subject": "async"
+  },
+  {
+    "text": "A explicação sobre erros HTTP com `fetch` está certa: é preciso checar `response.ok` e lançar o erro manualmente.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Parcialmente correto: o debounce atrasa a execução da função, mas a resposta não explicou como o temporizador é reiniciado.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O encadeamento com `.then()` está correto, mas a resposta poderia mostrar a versão equivalente com `async/await`.",
+    "subject": "async"
+  },
+  {
+    "text": "Faltou explicar que o escopo léxico define onde uma variável pode ser lida, de acordo com o local onde foi declarada.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou explicar que `error.name` identifica o tipo do erro, como `TypeError` ou `RangeError`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta confunde `<em>` e `<i>`; o primeiro indica ênfase semântica, o segundo apenas estilo de texto.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta explicou corretamente que funções podem ser armazenadas em variáveis e propriedades de objetos.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A recursão está bem implementada, porém falta o caso base, o que causaria estouro de pilha.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A explicação do operador spread para copiar arrays está correta, e ele também é útil para passar elementos como argumentos de funções.",
+    "subject": "arrays"
+  },
+  {
+    "text": "O exemplo sobrescreve a variável `resultado` dentro do laço sem querer; seria melhor usar nomes mais descritivos.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "O uso de `.catch()` em uma `Promise` está certo, pois ele trata rejeições do encadeamento anterior.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A explicação de `<iframe>` está boa, mas deveria alertar sobre o atributo `sandbox` por segurança.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: o atributo `href` é usado em links, e não em imagens; imagens usam `src`.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `fetch` retorna uma Promise que só é rejeitada em falha de rede, não em status HTTP 404.",
+    "subject": "async"
+  },
+  {
+    "text": "Poderia citar `flatMap` como forma de mapear e achatar o resultado em um único passo.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Correto: o `catch` pode reagir de forma diferente conforme o tipo do erro, usando `if` e `instanceof` dentro do bloco.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Parcialmente correto: `lista.length = 0` esvazia o array, mas a resposta não falou que as outras referências também serão afetadas.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Parcialmente correto: `<input type=email>` valida o formato básico, mas não garante que o endereço exista.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta cita o nome correto, mas o tipo da variável em JavaScript é dinâmico, algo que deveria ser explicado melhor.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `<div>` não é um elemento semântico; para o rodapé o correto seria `<footer>`.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: o valor padrão de uma variável declarada e não inicializada é `undefined`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: acessar `lista[lista.length - 1]` devolve o último elemento do array.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta acerta ao indicar `<figure>` com `<figcaption>` para associar uma imagem à sua legenda.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: `JSON.parse` lança `SyntaxError` quando o texto não é um JSON válido, e deve ser usado dentro de `try/catch`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "O exemplo de `<video controls>` está correto, mas faltou incluir um texto alternativo para navegadores sem suporte.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: `Promise.resolve(10)` cria uma promessa já resolvida, e não executa nenhum código de forma assíncrona.",
+    "subject": "async"
+  },
+  {
+    "text": "Está errado afirmar que `await` bloqueia a thread principal; ele apenas suspende a função e libera o event loop.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: `<fieldset>` agrupa campos de um formulário, mas a resposta esqueceu de citar o `<legend>`.",
+    "subject": "html"
+  },
+  {
+    "text": "Incorreto: alterar um objeto recebido como parâmetro modifica o objeto original, pois a função recebe a referência.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "O exemplo de `sleep` com `new Promise(resolve => setTimeout(resolve, ms))` está correto e muito usado com `await`.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: elementos HTML não diferenciam maiúsculas de minúsculas, mas a convenção é escrever as tags em minúsculas.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: copiar um array com `slice()` gera uma cópia rasa; objetos internos continuam compartilhados.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A explicação sobre hoisting está parcialmente correta: declarações com `var` são elevadas, mas a inicialização não.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Incorreto: `typeof null` retorna `object`, e isso é um comportamento histórico da linguagem, não um tipo de objeto real.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A tag `<meta charset=UTF-8>` foi indicada corretamente para evitar problemas com acentos.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: o parâmetro `...numeros` deve ser sempre o último da lista de parâmetros da função.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta está incorreta: `var` tem escopo de função, não de bloco, então a variável continua acessível fora do `if`.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "O exemplo de função geradora com `function*` e `yield` está correto, mas poderia mostrar como consumir os valores com `next()`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: as constantes em maiúsculas, como `MAX_ITENS`, são uma convenção de nomenclatura e não uma regra da linguagem.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está certo que `<a href>` cria um link; poderia mencionar `target=_blank` junto com `rel=noopener` por segurança.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: erros personalizados devem estender a classe `Error` e definir a propriedade `name`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou citar o atributo `placeholder` como dica de preenchimento, que não substitui o `<label>`.",
+    "subject": "html"
+  },
+  {
+    "text": "Parcialmente correto: `setTimeout` com zero milissegundos não executa imediatamente, ele apenas agenda o callback para depois da pilha de chamadas.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: `const` não torna o valor imutável, apenas impede que o nome seja associado a outro valor.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Faltou explicar a diferença entre elementos de bloco e elementos em linha, como `<span>` e `<div>`.",
+    "subject": "html"
+  },
+  {
+    "text": "Correto: o método `at(-1)` retorna o último elemento do array de forma mais legível.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Declarar duas vezes o mesmo nome com `let` no mesmo escopo causa SyntaxError, ao contrário de `var`, que permite. A resposta acertou.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está errado dizer que uma exceção não tratada continua a execução normalmente, ela interrompe o fluxo atual.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "O exemplo faz três chamadas com `await` em sequência; usar `Promise.all` deixaria as requisições em paralelo e mais rápidas.",
+    "subject": "async"
+  },
+  {
+    "text": "Parcialmente correto: `Promise.reject` cria uma promessa rejeitada, mas a resposta não disse que ela precisa de um `.catch()` ou de `await` dentro de `try`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta explica bem funções anônimas, mas falta citar que elas dificultam a leitura de stack traces.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta confunde exceção com mensagem de log; a exceção altera o fluxo do programa, o log apenas registra informação.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Está errado usar `for...in` para percorrer arrays, pois ele itera sobre as chaves e pode incluir propriedades inesperadas.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Parcialmente correto: `<ul>` cria lista não ordenada, mas cada item precisa estar dentro de `<li>`.",
+    "subject": "html"
+  },
+  {
+    "text": "A estrutura básica está correta: `<!DOCTYPE html>` deve vir antes da tag `<html>`.",
+    "subject": "html"
+  },
+  {
+    "text": "Está errado dizer que `await` funciona em qualquer lugar; fora de funções `async` ele causa erro de sintaxe, exceto em módulos.",
+    "subject": "async"
+  },
+  {
+    "text": "Incorreto: usar `async` em uma função não a torna automaticamente executada em segundo plano.",
+    "subject": "async"
+  },
+  {
+    "text": "Boa explicação sobre testes que verificam se uma função lança o erro esperado com entradas inválidas.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Poderia explicar o que são Web Workers e como eles permitem executar tarefas pesadas em outra thread.",
+    "subject": "async"
+  },
+  {
+    "text": "A resposta confunde callback com promessa; um callback é uma função passada, enquanto a promessa representa um valor futuro.",
+    "subject": "async"
+  },
+  {
+    "text": "Está errado usar `<b>` apenas para dar importância; o elemento `<strong>` tem significado semântico.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta acerta ao usar `<label for>` associado ao `id` do campo, mas faltou citar o benefício para leitores de tela.",
+    "subject": "html"
+  },
+  {
+    "text": "Está certo que `pop` remove e retorna o último elemento do array.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Está certo que `structuredClone` faz cópias profundas, e a resposta poderia comparar com `JSON.parse(JSON.stringify())`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Parcialmente correto: o operador rest `...args` reúne os argumentos em um array, mas não é igual ao objeto `arguments`.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: o `try/catch` com `await` captura a rejeição da promessa dentro da função `async`.",
+    "subject": "async"
+  },
+  {
+    "text": "Correto: `RangeError` ocorre quando um valor está fora do intervalo permitido, como em `new Array(-1)`.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou mencionar o risco de condições de corrida quando várias operações assíncronas alteram o mesmo dado.",
+    "subject": "async"
+  },
+  {
+    "text": "Faltou explicar a diferença entre arrays e objetos: arrays têm índices numéricos ordenados e métodos próprios.",
+    "subject": "arrays"
+  },
+  {
+    "text": "A resposta confunde parâmetros opcionais com parâmetros com valor padrão; o segundo é uma sintaxe específica da linguagem.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Está certo que `return` encerra a função imediatamente, e o código depois dele nunca é executado.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: uma função de callback usada em `addEventListener` recebe o evento como primeiro argumento.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "A resposta acerta que `null` e `undefined` são valores diferentes, mas deveria mostrar que `null == undefined` é verdadeiro e `null === undefined` é falso.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "A resposta confunde erro de sintaxe com erro em tempo de execução; o primeiro impede o código de rodar.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "Faltou mencionar a meta tag `viewport`, necessária para que a página seja responsiva em dispositivos móveis.",
+    "subject": "html"
+  },
+  {
+    "text": "A resposta confundiu `let` com `const`; a variável do exemplo nunca é reatribuída, então `const` seria mais adequado.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: mensagens de erro devem ser específicas, como `Idade não pode ser negativa`, em vez de textos genéricos.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A diferença entre declaração de função e expressão de função foi bem explicada, mas faltou citar que apenas a declaração sofre hoisting completo.",
+    "subject": "funcoes"
+  },
+  {
+    "text": "Correto: o tratamento de erros em uma cadeia de promessas pode ser feito com um único `.catch()` no final.",
+    "subject": "async"
+  },
+  {
+    "text": "A resposta sobre desestruturação de arrays está correta, como em `const [a, b] = lista`.",
+    "subject": "arrays"
+  },
+  {
+    "text": "Está certo que `let` dentro de um laço cria uma nova variável a cada iteração, o que resolve o clássico problema de closures em loops.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Está certo que um `return` dentro do `try` ainda executa o bloco `finally` antes de devolver o valor.",
+    "subject": "tratamento_erros"
+  },
+  {
+    "text": "A resposta confunde declaração com inicialização; `let x;` declara a variável, e `x = 3` a inicializa.",
+    "subject": "variaveis"
+  },
+  {
+    "text": "Correto: `Object.keys(obj)` retorna um array com os nomes das propriedades próprias enumeráveis do objeto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: `Object.assign` faz cópia rasa, e não profunda; objetos aninhados continuam compartilhados.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Está certo que a notação de ponto e a de colchetes acessam propriedades, mas faltou dizer que colchetes aceitam nomes dinâmicos.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Parcialmente correto: `Object.freeze` impede alterações no objeto, mas a resposta não disse que objetos aninhados continuam mutáveis.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta confunde `Object.entries` com `Object.values`; o primeiro devolve pares `[chave, valor]`, o segundo só os valores.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: o operador `in` verifica se uma propriedade existe no objeto, inclusive herdada pelo protótipo.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou explicar que `hasOwnProperty` ignora propriedades herdadas pela cadeia de protótipos.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Boa explicação sobre propriedades computadas, como `{ [chave]: valor }`, que usam o resultado de uma expressão como nome.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: `delete obj.nome` remove a propriedade do objeto, e não apenas atribui `undefined` a ela.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: a sintaxe abreviada `{ nome, idade }` cria propriedades com o mesmo nome das variáveis.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta acertou sobre protótipos, mas poderia explicar que `Object.create(proto)` cria um objeto com aquele protótipo.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Está errado dizer que objetos mantêm sempre a ordem de inserção das chaves; chaves numéricas inteiras vêm primeiro em ordem crescente.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: `Object.fromEntries` transforma um array de pares chave-valor em um objeto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "O exemplo de desestruturação `const { nome: apelido } = pessoa` está correto e renomeia a variável criada.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou citar que o operador spread `{ ...a, ...b }` copia propriedades e que, em caso de conflito, vale a última.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Parcialmente correto: `JSON.stringify` converte objetos em texto, mas a resposta não avisou que funções e `undefined` são omitidos.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: comparar dois objetos com `===` compara referências, então dois objetos iguais em conteúdo resultam em `false`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Boa resposta sobre `this` em métodos: quando chamado como `obj.metodo()`, `this` aponta para `obj`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta poderia mencionar `Object.getOwnPropertyNames`, que inclui propriedades não enumeráveis.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: getters e setters definidos com `get` e `set` permitem executar código ao ler ou gravar uma propriedade.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Está errado afirmar que `const obj = {}` impede adicionar propriedades; só impede reatribuir a variável.",
+    "subject": "objetos"
+  },
+  {
+    "text": "O exemplo de encadeamento opcional `obj?.endereco?.rua` está correto e evita erro quando algum nível é nulo.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou explicar que `Object.seal` impede adicionar e remover propriedades, mas permite alterar as existentes.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Parcialmente correto: `Map` aceita qualquer tipo de chave, mas a resposta não comparou com objetos, que convertem chaves em texto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta confunde `Object.is` com `===`; a diferença aparece em `NaN` e em `+0` e `-0`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: `structuredClone` cria uma cópia profunda de objetos, mas não copia funções.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: `typeof` de um array retorna `object`, então não serve para distinguir arrays de objetos comuns.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Boa explicação sobre `Object.defineProperty`, que permite configurar se a propriedade é gravável e enumerável.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou mencionar que métodos de objeto podem ser escritos na forma abreviada, como `{ saudar() {} }`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: `for...in` percorre as chaves enumeráveis de um objeto, incluindo as herdadas.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta acertou sobre a cópia rasa, mas deveria mostrar um exemplo de alteração em um objeto aninhado afetando a cópia.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Está errado dizer que todo objeto literal tem `Object.prototype` como protótipo; `Object.create(null)` cria um objeto sem protótipo.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Parcialmente correto: `Object.entries` percorre propriedades próprias, mas a resposta esqueceu de citar que chaves do tipo símbolo ficam de fora.",
+    "subject": "objetos"
+  },
+  {
+    "text": "O exemplo de `Object.groupBy` está correto e agrupa os elementos conforme o valor retornado pela função.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Poderia esclarecer que arrow functions usadas como métodos não têm `this` próprio e por isso não acessam o objeto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: quando o valor de uma propriedade é uma função, ela é chamada de método do objeto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: `Object.keys` não retorna propriedades herdadas, apenas as próprias do objeto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Boa resposta sobre `WeakMap`, que mantém chaves como referências fracas e permite a coleta de lixo.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou explicar o que é a cadeia de protótipos e como o motor procura propriedades em cada nível.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A resposta confunde `Object.freeze` com `const`; o primeiro bloqueia mudanças no objeto, o segundo só a reatribuição.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: `Object.hasOwn(obj, 'chave')` é uma alternativa moderna e mais segura ao `hasOwnProperty`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Parcialmente correto: `class` cria objetos com métodos no protótipo, mas a resposta não explicou que os métodos ficam compartilhados entre instâncias.",
+    "subject": "objetos"
+  },
+  {
+    "text": "O exemplo para contar propriedades com `Object.keys(obj).length` está correto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Está errado achar que `JSON.parse` devolve datas como objetos `Date`; elas voltam como texto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Poderia mencionar `Symbol` como forma de criar chaves de propriedade que não colidem com outras.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: acessar uma propriedade inexistente de um objeto retorna `undefined`, sem lançar erro.",
+    "subject": "objetos"
+  },
+  {
+    "text": "A explicação sobre `toString` e `valueOf` está boa, mas faltou mostrar como eles influenciam a conversão do objeto em texto.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Incorreto: `Object.assign(alvo, origem)` modifica o objeto `alvo`; para não alterá-lo, use `{}` como primeiro argumento.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: a desestruturação com valor padrão, como `const { cor = 'azul' } = opcoes`, usa o padrão se a propriedade for `undefined`.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Faltou dizer que ao passar um objeto para uma função ela recebe a referência, então alterá-lo lá dentro afeta o original.",
+    "subject": "objetos"
+  },
+  {
+    "text": "Correto: `document.querySelector` retorna o primeiro elemento que corresponde ao seletor CSS, ou `null` se não houver.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: `querySelectorAll` retorna uma `NodeList` estática, que não se atualiza quando o DOM muda.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou explicar que `getElementsByClassName` retorna uma coleção viva, atualizada automaticamente.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `textContent` altera o texto do elemento, mas a resposta não disse que `innerHTML` interpreta marcação HTML.",
+    "subject": "dom"
+  },
+  {
+    "text": "Está certo que `addEventListener` permite registrar vários ouvintes para o mesmo evento no mesmo elemento.",
+    "subject": "dom"
+  },
+  {
+    "text": "A resposta confunde `textContent` com `innerText`; o segundo considera estilos CSS e não mostra texto oculto.",
+    "subject": "dom"
+  },
+  {
+    "text": "Boa explicação sobre delegação de eventos: um único ouvinte no elemento pai trata eventos dos filhos graças à propagação.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: `event.preventDefault()` cancela o comportamento padrão do evento, mas não interrompe a propagação.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `event.stopPropagation()` impede que o evento suba para os elementos ancestrais.",
+    "subject": "dom"
+  },
+  {
+    "text": "Está errado usar `innerHTML` com texto digitado pelo usuário sem tratamento, pois isso abre brecha para ataques XSS.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou citar `classList.toggle`, que adiciona a classe se ela não existir e remove se existir.",
+    "subject": "dom"
+  },
+  {
+    "text": "A resposta acerta ao usar `createElement` e `appendChild` para criar e inserir um novo elemento na página.",
+    "subject": "dom"
+  },
+  {
+    "text": "Poderia esclarecer que o evento `DOMContentLoaded` dispara quando o HTML foi analisado, sem esperar imagens.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `element.setAttribute('id', 'x')` define o valor de um atributo, e `getAttribute` o lê.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `remove()` retira o elemento do DOM, mas a resposta não disse que ele continua na memória se alguma variável o referenciar.",
+    "subject": "dom"
+  },
+  {
+    "text": "Está errado dizer que `event.target` e `event.currentTarget` são sempre iguais; o primeiro é quem originou o evento, o segundo é onde o ouvinte está.",
+    "subject": "dom"
+  },
+  {
+    "text": "Boa resposta sobre `dataset`, que lê atributos `data-*` como propriedades, convertendo `data-user-id` em `userId`.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: `document.getElementById` recebe apenas o id, sem o símbolo `#`.",
+    "subject": "dom"
+  },
+  {
+    "text": "A explicação sobre o evento `input` está certa, e ele dispara a cada alteração do valor do campo.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou mencionar que o evento `change` em campos de texto só dispara quando o campo perde o foco.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `element.style.backgroundColor` usa camelCase para acessar propriedades CSS via JavaScript.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `insertAdjacentHTML` insere marcação em posições relativas ao elemento, mas a resposta não listou `beforebegin`, `afterbegin`, `beforeend` e `afterend`.",
+    "subject": "dom"
+  },
+  {
+    "text": "O exemplo de `removeEventListener` não funciona, pois a função passada é anônima e diferente da registrada.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `parentElement`, `children` e `nextElementSibling` permitem navegar pela árvore do DOM.",
+    "subject": "dom"
+  },
+  {
+    "text": "Poderia explicar que manipular o DOM várias vezes dentro de um laço é custoso e que um `DocumentFragment` ajuda.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: o clique em um botão dentro de um `<form>` envia o formulário por padrão, a menos que se chame `preventDefault` ou se use `type=button`.",
+    "subject": "dom"
+  },
+  {
+    "text": "Boa explicação sobre `IntersectionObserver`, usado para detectar quando um elemento entra na área visível.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou explicar a diferença entre `NodeList` e array: a primeira tem `forEach`, mas não tem `map`.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `element.closest('seletor')` procura o ancestral mais próximo que corresponde ao seletor, incluindo o próprio elemento.",
+    "subject": "dom"
+  },
+  {
+    "text": "A resposta confunde o evento `load` da janela com `DOMContentLoaded`; o primeiro espera imagens e estilos.",
+    "subject": "dom"
+  },
+  {
+    "text": "Está certo que `window` é o objeto global do navegador e `document` é uma propriedade dele.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `localStorage` guarda dados no navegador, mas a resposta não disse que ele só armazena texto.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: `element.classList.add('a b')` não funciona com várias classes em uma string; é preciso passar argumentos separados.",
+    "subject": "dom"
+  },
+  {
+    "text": "Boa resposta sobre `MutationObserver`, que notifica alterações na estrutura ou nos atributos do DOM.",
+    "subject": "dom"
+  },
+  {
+    "text": "Poderia citar `requestAnimationFrame` como forma adequada de agendar atualizações visuais antes da próxima pintura.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: o evento `keydown` dispara ao pressionar a tecla, e `event.key` informa qual tecla foi usada.",
+    "subject": "dom"
+  },
+  {
+    "text": "Está errado afirmar que `addEventListener` com `{ once: true }` executa o ouvinte sempre; ele roda uma única vez e é removido.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou explicar a fase de captura e a fase de bolha na propagação de eventos.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `element.focus()` move o foco do teclado para o elemento, desde que ele seja focalizável.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `cloneNode(true)` copia o elemento com os descendentes, mas não copia ouvintes registrados com `addEventListener`.",
+    "subject": "dom"
+  },
+  {
+    "text": "A explicação de `getBoundingClientRect` está certa, e ele devolve posição e tamanho relativos à janela.",
+    "subject": "dom"
+  },
+  {
+    "text": "O exemplo de `form.elements` está correto e dá acesso aos campos pelo atributo `name`.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: `scrollIntoView` rola a página até o elemento, e não altera a posição do elemento no DOM.",
+    "subject": "dom"
+  },
+  {
+    "text": "Boa resposta sobre `FormData`, que reúne os campos de um formulário para enviar com `fetch`.",
+    "subject": "dom"
+  },
+  {
+    "text": "Faltou citar o atributo `hidden` e a propriedade `element.hidden` para esconder elementos.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: `window.location.href` retorna a URL atual, e atribuir um valor a ela navega para outra página.",
+    "subject": "dom"
+  },
+  {
+    "text": "A resposta confunde `setTimeout` com `requestAnimationFrame`; o segundo sincroniza o callback com a taxa de atualização da tela.",
+    "subject": "dom"
+  },
+  {
+    "text": "Poderia mencionar que `event.target.value` obtém o valor atual de um campo de formulário.",
+    "subject": "dom"
+  },
+  {
+    "text": "Parcialmente correto: `contains` verifica se um nó é descendente de outro, mas a resposta não disse que ele também retorna `true` para o próprio nó.",
+    "subject": "dom"
+  },
+  {
+    "text": "Incorreto: um script no `<head>` sem `defer` pode tentar acessar elementos que ainda não existem no DOM.",
+    "subject": "dom"
+  },
+  {
+    "text": "Correto: o método `constructor` de uma classe é chamado automaticamente ao criar uma instância com `new`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: `class` em JavaScript é açúcar sintático sobre protótipos; não existe um sistema de classes separado.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou explicar que, em uma classe filha, é obrigatório chamar `super()` antes de usar `this` no construtor.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: `extends` cria herança entre classes, mas a resposta não explicou como acessar métodos da classe pai com `super.metodo()`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Boa explicação sobre métodos estáticos, que pertencem à classe e são chamados sem criar uma instância.",
+    "subject": "classes"
+  },
+  {
+    "text": "Está errado afirmar que campos privados com `#` podem ser lidos de fora da classe; isso gera SyntaxError.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: getters definidos com `get` são acessados como propriedades, sem parênteses.",
+    "subject": "classes"
+  },
+  {
+    "text": "A resposta confunde `static` com métodos de instância; o método estático não tem acesso ao `this` da instância.",
+    "subject": "classes"
+  },
+  {
+    "text": "Poderia esclarecer que classes não sofrem hoisting como funções; usar a classe antes da declaração causa ReferenceError.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: campos de classe, como `contador = 0;`, são criados em cada instância.",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: uma classe não pode ser chamada sem `new`; isso lança TypeError.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou mencionar `instanceof`, usado para verificar se um objeto foi criado por determinada classe.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: métodos de classe ficam no protótipo, mas a resposta não disse que arrow functions usadas como campos criam uma cópia por instância.",
+    "subject": "classes"
+  },
+  {
+    "text": "A herança do exemplo está correta, mas a classe filha sobrescreve `falar()` sem chamar o método do pai, e isso deveria ser explicado.",
+    "subject": "classes"
+  },
+  {
+    "text": "Boa resposta sobre encapsulamento: campos privados protegem o estado interno e expõem apenas métodos públicos.",
+    "subject": "classes"
+  },
+  {
+    "text": "Está certo que uma classe pode ter apenas um `constructor`; declarar dois gera SyntaxError.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: `static #contador` define um campo estático privado acessível apenas dentro da classe.",
+    "subject": "classes"
+  },
+  {
+    "text": "A resposta confunde composição com herança; na composição, um objeto contém outros em vez de herdar deles.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou explicar o princípio de preferir composição à herança quando a relação não for do tipo \"é um\".",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: setters recebem exatamente um parâmetro, e definir mais de um gera erro de sintaxe.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: `Object.getPrototypeOf(instancia)` retorna o protótipo da instância, que é `Classe.prototype`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: `toString` pode ser sobrescrito em uma classe, mas a resposta não mostrou que isso afeta a conversão em texto.",
+    "subject": "classes"
+  },
+  {
+    "text": "Boa explicação sobre polimorfismo: classes diferentes implementam o mesmo método com comportamentos distintos.",
+    "subject": "classes"
+  },
+  {
+    "text": "Está errado dizer que JavaScript tem classes abstratas nativas; é preciso simulá-las, por exemplo lançando erro no construtor.",
+    "subject": "classes"
+  },
+  {
+    "text": "O exemplo de `new.target` para impedir a instanciação direta de uma classe abstrata está correto.",
+    "subject": "classes"
+  },
+  {
+    "text": "Poderia citar mixins como forma de compartilhar comportamento entre classes sem herança múltipla.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: `super(...)` chama o construtor da classe pai e repassa os argumentos.",
+    "subject": "classes"
+  },
+  {
+    "text": "A resposta erra ao chamar `instancia.metodoEstatico()`, o que gera TypeError, pois métodos estáticos pertencem à classe.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou explicar que `this` dentro de um método passado como callback perde o contexto, e `bind` ou uma arrow function resolve.",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: o corpo de uma classe é sempre executado em modo estrito, mesmo sem `'use strict'`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: métodos de classe não são enumeráveis, então não aparecem em `for...in`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: `get` e `set` criam propriedades de acesso, mas a resposta esqueceu que o setter pode validar o valor.",
+    "subject": "classes"
+  },
+  {
+    "text": "Boa resposta sobre o padrão Singleton, que garante uma única instância da classe.",
+    "subject": "classes"
+  },
+  {
+    "text": "Está certo que `class A extends B` herda também os métodos estáticos de B.",
+    "subject": "classes"
+  },
+  {
+    "text": "Poderia explicar a diferença entre propriedades públicas, privadas e protegidas, lembrando que as protegidas não existem nativamente.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: uma expressão de classe pode ser atribuída a uma variável, como `const Pessoa = class {}`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: campos privados não são acessíveis diretamente pela classe filha.",
+    "subject": "classes"
+  },
+  {
+    "text": "A explicação sobre `Symbol.iterator` em classes está boa, permitindo usar a instância em `for...of`.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou citar os blocos `static { }` para inicializar estado estático complexo.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: `Object.setPrototypeOf` altera o protótipo, mas a resposta não alertou que isso prejudica o desempenho.",
+    "subject": "classes"
+  },
+  {
+    "text": "O exemplo de classe `Conta` com método `sacar` valida o saldo antes de subtrair, o que é uma boa prática.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: o `constructor` não precisa ser declarado; a classe recebe um construtor padrão vazio.",
+    "subject": "classes"
+  },
+  {
+    "text": "A resposta confunde `extends` com `implements`; JavaScript não possui interfaces nativas.",
+    "subject": "classes"
+  },
+  {
+    "text": "Está errado achar que `this` em um método estático aponta para a instância; ele aponta para a própria classe.",
+    "subject": "classes"
+  },
+  {
+    "text": "Boa explicação sobre o padrão Factory, que centraliza a criação de objetos em uma função ou método estático.",
+    "subject": "classes"
+  },
+  {
+    "text": "Faltou mencionar que `super` também pode ser usado em métodos de objetos literais, não só em classes.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: `Classe.name` retorna o nome da classe como texto.",
+    "subject": "classes"
+  },
+  {
+    "text": "Incorreto: sobrescrever um método na classe filha não altera o método da classe pai.",
+    "subject": "classes"
+  },
+  {
+    "text": "Parcialmente correto: `instanceof` verifica a cadeia de protótipos, mas a resposta não disse que ele pode falhar entre contextos diferentes, como iframes.",
+    "subject": "classes"
+  },
+  {
+    "text": "Poderia esclarecer que classes ajudam na organização, mas funções e objetos simples resolvem bem muitos casos em JavaScript.",
+    "subject": "classes"
+  },
+  {
+    "text": "Correto: `trim()` remove espaços do início e do fim da string, sem alterar a original.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: `replace` com uma string substitui apenas a primeira ocorrência; para todas use `replaceAll` ou regex global.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou explicar que `slice` aceita índices negativos, contando a partir do fim da string.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `split` divide a string em array, mas a resposta não mostrou que `split('')` separa por caractere.",
+    "subject": "strings"
+  },
+  {
+    "text": "Boa explicação sobre `padStart`, útil para completar números com zeros à esquerda.",
+    "subject": "strings"
+  },
+  {
+    "text": "Está errado dizer que `substr` é recomendado; ele é considerado obsoleto e `slice` ou `substring` são preferíveis.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `includes` verifica se um trecho existe dentro da string e diferencia maiúsculas de minúsculas.",
+    "subject": "strings"
+  },
+  {
+    "text": "A resposta confunde `indexOf` com `includes`; o primeiro retorna a posição, ou -1 se não encontrar.",
+    "subject": "strings"
+  },
+  {
+    "text": "Poderia esclarecer que `toUpperCase` e `toLowerCase` retornam novas strings.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `charAt(0)` e `texto[0]` retornam o primeiro caractere da string.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: strings são imutáveis, então `texto[0] = 'A'` não altera o texto e é ignorado fora do modo estrito.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou citar `startsWith` e `endsWith` para verificar o início e o fim do texto.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `localeCompare` compara strings considerando o idioma, mas a resposta não mostrou o uso para ordenar com acentos.",
+    "subject": "strings"
+  },
+  {
+    "text": "Boa resposta sobre template strings com crases, que permitem múltiplas linhas e interpolação.",
+    "subject": "strings"
+  },
+  {
+    "text": "Está errado achar que `length` conta palavras; ele conta unidades de código UTF-16.",
+    "subject": "strings"
+  },
+  {
+    "text": "O exemplo de `repeat(3)` está correto e devolve a string repetida três vezes.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `concat` junta strings, mas o operador `+` ou template strings costumam ser mais legíveis.",
+    "subject": "strings"
+  },
+  {
+    "text": "A resposta confunde `substring` com `slice`; `substring` troca os argumentos se o primeiro for maior e trata negativos como zero.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou explicar que `match` com regex global devolve todas as ocorrências, mas sem grupos de captura.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: `parseInt('12abc')` retorna 12, e não `NaN`, pois lê até encontrar um caractere inválido.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `Number('12abc')` retorna `NaN`, pois exige que toda a string seja numérica.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `normalize('NFD')` separa letras e acentos, mas a resposta não explicou como remover os acentos com regex em seguida.",
+    "subject": "strings"
+  },
+  {
+    "text": "Boa explicação sobre `matchAll`, que devolve um iterador com todas as correspondências e seus grupos.",
+    "subject": "strings"
+  },
+  {
+    "text": "Poderia mencionar `at(-1)` para obter o último caractere da string.",
+    "subject": "strings"
+  },
+  {
+    "text": "Está errado dizer que `'10' + 5` resulta em 15; o resultado é a string `'105'`.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `'10' - 5` resulta em 5, pois o operador `-` converte a string em número.",
+    "subject": "strings"
+  },
+  {
+    "text": "A resposta acerta ao usar `join` para transformar um array de palavras em uma frase.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou explicar que `split` aceita um segundo argumento que limita o número de partes.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `codePointAt` retorna o código do caractere, mas a resposta não citou que emojis ocupam dois valores em `length`.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: `escape` não é a forma recomendada de codificar URLs; deve-se usar `encodeURIComponent`.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `encodeURIComponent` codifica caracteres especiais para uso seguro em parâmetros de URL.",
+    "subject": "strings"
+  },
+  {
+    "text": "Boa resposta sobre `Intl.NumberFormat`, que formata números e moedas conforme o idioma.",
+    "subject": "strings"
+  },
+  {
+    "text": "A explicação sobre expressões regulares está boa, mas o exemplo esqueceu a flag `g` para encontrar todas as ocorrências.",
+    "subject": "strings"
+  },
+  {
+    "text": "Poderia esclarecer a diferença entre aspas simples, duplas e crases ao declarar strings.",
+    "subject": "strings"
+  },
+  {
+    "text": "Está certo que `'abc' < 'abd'` retorna `true`, pois a comparação segue a ordem dos códigos dos caracteres.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `String(123)` e `(123).toString()` convertem um número em texto.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: `'a' === new String('a')` retorna `false`, porque um é primitivo e o outro é um objeto.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou citar `trimStart` e `trimEnd` para remover espaços de apenas um dos lados.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `search` retorna a posição da primeira correspondência com regex, mas a resposta não disse que retorna -1 se não houver.",
+    "subject": "strings"
+  },
+  {
+    "text": "A resposta confunde `lastIndexOf` com `indexOf`; o primeiro busca a última ocorrência.",
+    "subject": "strings"
+  },
+  {
+    "text": "Boa explicação sobre `String.raw`, que preserva as barras invertidas sem interpretar sequências de escape.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `\\n` representa uma quebra de linha e `\\t` uma tabulação em uma string.",
+    "subject": "strings"
+  },
+  {
+    "text": "Poderia mencionar `Array.from(texto)` ou o spread para separar a string respeitando emojis.",
+    "subject": "strings"
+  },
+  {
+    "text": "Está errado usar `==` para comparar strings e números sem cuidado, pois a coerção pode gerar resultados inesperados.",
+    "subject": "strings"
+  },
+  {
+    "text": "O exemplo para inverter uma string com `split('').reverse().join('')` está correto.",
+    "subject": "strings"
+  },
+  {
+    "text": "Faltou explicar que `replace` aceita uma função como segundo argumento para calcular a substituição.",
+    "subject": "strings"
+  },
+  {
+    "text": "Incorreto: `'abc'.length = 5` não muda o tamanho da string, pois a propriedade `length` é somente leitura.",
+    "subject": "strings"
+  },
+  {
+    "text": "Parcialmente correto: `toLocaleUpperCase` respeita o idioma, mas a resposta não deu um exemplo em que ele difere de `toUpperCase`.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: `isWellFormed()` verifica se a string não contém pontos de código substitutos isolados.",
+    "subject": "strings"
+  },
+  {
+    "text": "A resposta confunde o escape de HTML com a codificação de URL; são processos diferentes para finalidades diferentes.",
+    "subject": "strings"
+  },
+  {
+    "text": "Correto: Node.js executa JavaScript fora do navegador e é bastante usado para criar servidores e ferramentas de linha de comando.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: Node.js não é uma linguagem de programação; é um ambiente de execução para JavaScript.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Faltou mencionar que APIs do navegador, como `document` e `window`, não estão disponíveis por padrão no Node.js.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: em módulos CommonJS, `require` carrega módulos e `module.exports` define o valor exportado.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta confunde CommonJS com ES modules; `import` e `export` são a sintaxe de módulos ES.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Em um projeto configurado como ES module, arquivos `.js` usam `import` e `export` conforme o `package.json` ou a extensão do arquivo.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: `exports = valor` não substitui `module.exports`; essa atribuição apenas troca a referência local de `exports`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: o campo `scripts` do `package.json` permite definir comandos como `npm start` e `npm test`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Boa explicação sobre `npm install`: ele instala as dependências declaradas no projeto.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Para instalações reproduzíveis em CI, `npm ci` instala a partir do lockfile e falha se ele estiver inconsistente com `package.json`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta deveria explicar que `package-lock.json` registra versões resolvidas das dependências para tornar as instalações mais consistentes.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: `process.env.PORT` normalmente é uma string, então pode ser necessário convertê-la para número antes de usá-la em cálculos.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `process.argv` contém os argumentos da linha de comando, incluindo o executável e o caminho do script.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "É preferível definir `process.exitCode` ao encerrar após uma falha, pois `process.exit()` pode interromper operações pendentes.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta confunde `process.cwd()`, que retorna a pasta atual do processo, com o diretório do arquivo do módulo.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `node:fs/promises` oferece operações de sistema de arquivos baseadas em Promises.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: `readFileSync` pode bloquear o event loop enquanto lê o arquivo; para operações assíncronas, use `fs/promises`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Faltou recomendar `node:path` para compor caminhos de arquivos de forma compatível com o sistema operacional.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `path.join` combina segmentos de caminho e normaliza separadores redundantes.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta poderia usar `new URL` ou `fileURLToPath` ao converter URLs de arquivo em caminhos locais em ES modules.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Streams permitem processar dados em partes, sem precisar carregar todo o conteúdo na memória de uma só vez.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: ignorar backpressure em um stream pode aumentar o consumo de memória; verifique o retorno de `write` e respeite o evento `drain`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `Buffer` representa sequências de bytes e é útil para lidar com dados binários.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Com `http.createServer`, o callback recebe os objetos de requisição e resposta para tratar cada conexão HTTP.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta deveria encerrar a resposta HTTP com `res.end()` depois de enviar o corpo, para que o cliente não fique esperando.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: o módulo `http` não interpreta automaticamente o corpo JSON da requisição; a aplicação precisa ler e analisar os dados.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: ao criar um servidor, é necessário tratar erros de inicialização e escolher explicitamente a porta de escuta.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Node.js usa um event loop para coordenar operações de I/O assíncronas sem criar uma thread JavaScript para cada requisição.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta exagera ao afirmar que todo o trabalho em Node.js ocorre em uma única thread; algumas operações usam um pool de threads.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Não há garantia geral de qual callback entre `setTimeout` e `setImmediate` será executado primeiro em todos os contextos.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: uma função `async` sempre retorna uma Promise, mesmo quando retorna diretamente um valor.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Faltou tratar rejeições de Promises com `try/catch` ao usar `await` dentro de uma função assíncrona.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: criar uma Promise sem aguardá-la ou retornar sua referência pode fazer o fluxo seguir antes da operação terminar.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "É importante tratar erros de operações assíncronas para evitar rejeições não tratadas e falhas difíceis de diagnosticar.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Para executar um programa externo com argumentos separados, `execFile` evita a necessidade de montar uma linha de comando concatenada.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta confunde `exec` e `spawn`: `exec` coleta a saída em buffers, enquanto `spawn` trabalha com streams.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "`worker_threads` pode ajudar em tarefas intensivas de CPU, mas geralmente não é necessário para operações comuns de I/O.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "O módulo `node:os` fornece informações do sistema operacional, como diretório temporário e quantidade de CPUs.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Em ES modules, `__dirname` não existe por padrão; o caminho do módulo pode ser derivado de `import.meta.url`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `console.error` escreve mensagens de erro no fluxo de saída de erro padrão.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta deveria distinguir `process.cwd()` da localização do arquivo: o diretório atual pode variar conforme o comando que iniciou o processo.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Módulos CommonJS carregados são armazenados em cache, então chamadas posteriores a `require` normalmente reutilizam a mesma instância.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Dependências necessárias apenas durante o desenvolvimento podem ser declaradas em `devDependencies` no `package.json`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Incorreto: o comando `npm run` executa scripts definidos pelo projeto; ele não substitui o próprio runtime `node`.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "O versionamento semântico usa versões no formato major.minor.patch, e uma mudança major pode indicar incompatibilidade.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: variáveis de ambiente permitem configurar valores como porta e modo de execução sem fixá-los no código.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Não é recomendável registrar tokens ou senhas em logs; use variáveis de ambiente e evite expor seus valores.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Um servidor pode tratar `SIGINT` e `SIGTERM` para parar de aceitar conexões e concluir tarefas antes de encerrar.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "A resposta deveria definir um código de status HTTP apropriado antes de enviar o corpo da resposta.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "`JSON.stringify` converte um valor JavaScript serializável em texto JSON; propriedades com valores não serializáveis podem ser omitidas.",
+    "subject": "nodejs"
+  },
+  {
+    "text": "Correto: `if` executa seu bloco quando a condição é verdadeira, e `else` pode tratar o caso alternativo.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: o bloco `else` só é executado quando a condição associada ao `if` é falsa.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Em JavaScript, `===` compara sem conversão implícita de tipos e costuma ser mais previsível que `==`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta deveria explicar que `0` é um valor falsy e, portanto, a condição `if (0)` não entra no bloco.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Uma string vazia é falsy, mas uma string contendo espaços, como `' '`, é truthy.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: arrays vazios são truthy em JavaScript; verifique `array.length` para saber se há elementos.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: objetos vazios também são truthy, então `if ({})` executa o bloco.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "`null` e `undefined` são falsy, mas representam valores distintos e podem indicar situações diferentes.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O operador `??` usa o valor à direita somente quando o da esquerda é `null` ou `undefined`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta confunde `??` com `||`: `||` também substitui valores falsy como `0`, `false` e string vazia.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O encadeamento opcional `usuario?.endereco` evita erro quando `usuario` é `null` ou `undefined`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O operador ternário é adequado para uma escolha curta entre dois valores, mas condições extensas ficam mais claras com `if/else`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: o operador ternário precisa conter as expressões dos dois resultados, separadas por `:`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Em um `switch`, `break` evita continuar executando os próximos casos quando não se deseja fall-through.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta deveria avisar que casos de `switch` sem `break` podem cair no caso seguinte.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "`switch` compara os valores dos casos usando igualdade estrita, sem coerção de tipos.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: a cláusula `default` de um `switch` é executada quando nenhum caso corresponde.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Variáveis declaradas com `let` em um caso de `switch` podem exigir blocos `{}` para evitar conflitos de escopo entre casos.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Para validar um intervalo, combine as duas comparações com `&&`, por exemplo `idade >= 18 && idade <= 65`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: usar `||` entre limites de um intervalo pode fazer a condição ser verdadeira para valores que deveriam ser rejeitados.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta deveria usar parênteses para deixar explícita a precedência quando mistura `&&` e `||`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Uma cláusula de guarda com `return` pode encerrar cedo casos inválidos e reduzir o aninhamento de condicionais.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Boa solução: o `else if` testa uma condição adicional apenas se as condições anteriores forem falsas.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "É mais claro comparar uma variável booleana diretamente, como `if (ativo)`, do que escrever `if (ativo === true)` sem necessidade.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A expressão `condicao && executar()` executa o lado direito quando a condição é truthy e retorna um dos operandos.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta confunde `&&` com uma conversão para booleano; o operador pode retornar o próprio valor de um dos lados.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O operador `||` retorna o primeiro operando truthy ou o último operando, em vez de sempre retornar `true` ou `false`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: `typeof valor === 'number'` verifica o tipo, mas também pode retornar verdadeiro para `NaN`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Use `Number.isNaN(valor)` para verificar especificamente se um valor numérico é `NaN`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: `typeof null` retorna `'object'` por uma peculiaridade histórica da linguagem.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A comparação `x !== null` não descarta `undefined`; considere ambos os casos se a intenção for validar presença.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Uma função de validação pode retornar `false` para entrada inválida e deixar a condição do `if` fácil de ler.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta deveria tratar explicitamente o caso padrão de um valor inesperado, em vez de assumir que todas as opções são válidas.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Em comparações encadeadas, `a < b < c` não significa que `b` está entre `a` e `c`; use `a < b && b < c`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: `!valor` nega a conversão booleana de `valor` e pode ser usado para testar valores falsy.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O operador `in` verifica se uma propriedade existe no objeto ou em sua cadeia de protótipos, não se o valor é truthy.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta deveria usar `Object.hasOwn` quando precisa verificar uma propriedade própria do objeto.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Um `if` sem chaves pode deixar ambíguo a qual condição um `else` pertence; usar chaves melhora a clareza.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: em `if (a) { ... } else if (b) { ... }`, o segundo teste só acontece se `a` for falsy.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Se as duas condições precisam ser verdadeiras ao mesmo tempo, use `&&` em vez de encadear dois blocos independentes.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A resposta confunde a igualdade de objetos com a igualdade de conteúdo: objetos distintos são diferentes com `===`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Para testar se uma propriedade numérica é zero, compare explicitamente com `0` em vez de depender da truthiness.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "O valor padrão de um parâmetro de função é usado quando o argumento é `undefined`, mas não quando é `null`.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Com desestruturação, um valor padrão não substitui `null`; use `??` se ambos `null` e `undefined` devem acionar o padrão.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Uma condição com `Array.isArray(valor)` é mais confiável que `typeof valor === 'object'` para reconhecer arrays.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Boa resposta: `continue` pula a iteração atual do loop, enquanto `break` encerra o loop.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "A expressão `a === b ? x : y` escolhe `x` quando a comparação é verdadeira e `y` caso contrário.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Em uma condição que aceita uma entre várias opções, `opcao === 'a' || opcao === 'b'` expressa corretamente a alternativa.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Incorreto: `opcao === 'a' || 'b'` é sempre truthy por causa da string `'b'`; compare cada alternativa separadamente.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: `Boolean(valor)` converte explicitamente um valor para seu equivalente booleano.",
+    "subject": "condicionais"
+  },
+  {
+    "text": "Correto: testes automatizados verificam comportamentos do código e ajudam a detectar regressões após alterações.",
+    "subject": "testes"
+  },
+  {
+    "text": "Um teste unitário costuma verificar uma unidade pequena de comportamento sem depender de serviços externos reais.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta confunde teste de integração com teste unitário; o teste de integração verifica a interação entre componentes.",
+    "subject": "testes"
+  },
+  {
+    "text": "No runner `node:test`, `test('descrição', callback)` registra um teste executável pelo Node.js.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: `node:assert/strict` oferece asserções estritas, como `assert.equal` e `assert.deepEqual`.",
+    "subject": "testes"
+  },
+  {
+    "text": "Para comparar objetos e arrays pelo conteúdo, use `assert.deepEqual` ou `assert.deepStrictEqual`, não igualdade por referência.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria usar uma asserção: chamar a função sem verificar o resultado não faz o teste detectar uma regressão.",
+    "subject": "testes"
+  },
+  {
+    "text": "Uma boa estrutura de teste organiza preparação, execução e verificação do resultado esperado.",
+    "subject": "testes"
+  },
+  {
+    "text": "É útil testar o caminho de sucesso e também as entradas inválidas e os limites da função.",
+    "subject": "testes"
+  },
+  {
+    "text": "Incorreto: testar apenas um caso comum não garante que a função trate corretamente valores vazios ou nulos.",
+    "subject": "testes"
+  },
+  {
+    "text": "Nomes de testes descritivos deixam claro qual comportamento está sendo verificado e facilitam entender falhas.",
+    "subject": "testes"
+  },
+  {
+    "text": "Cada teste deve verificar um comportamento identificável, evitando acumular cenários sem relação em um único caso.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: testes determinísticos produzem o mesmo resultado quando executados repetidamente nas mesmas condições.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria remover dependências de rede real para que o teste não falhe por indisponibilidade externa.",
+    "subject": "testes"
+  },
+  {
+    "text": "Mocks e stubs ajudam a controlar dependências, mas mockar detalhes internos pode tornar os testes frágeis.",
+    "subject": "testes"
+  },
+  {
+    "text": "É melhor verificar o comportamento público de uma função do que suas chamadas internas quando esses detalhes não fazem parte do contrato.",
+    "subject": "testes"
+  },
+  {
+    "text": "No `node:test`, uma função de teste assíncrona pode retornar uma Promise, e o runner aguarda sua conclusão.",
+    "subject": "testes"
+  },
+  {
+    "text": "Incorreto: um teste que inicia uma Promise mas não a retorna nem usa `await` pode terminar antes de verificar o resultado.",
+    "subject": "testes"
+  },
+  {
+    "text": "Use `await assert.rejects(...)` para verificar que uma operação assíncrona rejeita como esperado.",
+    "subject": "testes"
+  },
+  {
+    "text": "Para testar uma função síncrona que lança erro, `assert.throws` recebe a função como callback.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta confunde `assert.throws` e `assert.rejects`; o primeiro é para exceções síncronas e o segundo para Promises rejeitadas.",
+    "subject": "testes"
+  },
+  {
+    "text": "Com `assert.throws`, passe uma função que executa a operação, não o resultado de uma chamada que já ocorreu.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: `assert.match` pode verificar se uma string corresponde a uma expressão regular.",
+    "subject": "testes"
+  },
+  {
+    "text": "Use `assert.ok` para expressar que um valor deve ser truthy, ou prefira uma asserção mais específica quando possível.",
+    "subject": "testes"
+  },
+  {
+    "text": "Uma falha de asserção deve fazer o teste falhar e retornar um código de saída diferente de zero.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria aguardar todas as operações assíncronas iniciadas no teste antes de considerá-lo concluído.",
+    "subject": "testes"
+  },
+  {
+    "text": "Evite usar uma espera fixa com `setTimeout` para sincronizar testes; prefira aguardar a Promise ou o evento esperado.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: testes de borda incluem valores próximos aos limites definidos pelo comportamento esperado.",
+    "subject": "testes"
+  },
+  {
+    "text": "Um caso de teste para lista vazia é importante quando a função recebe arrays e precisa lidar com ausência de elementos.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta poderia testar tanto entradas válidas quanto inválidas para cobrir os dois resultados da validação.",
+    "subject": "testes"
+  },
+  {
+    "text": "Testes de regressão preservam um cenário que já causou um defeito, para evitar que ele reapareça.",
+    "subject": "testes"
+  },
+  {
+    "text": "Não é necessário que cada teste reproduza a implementação; verifique a saída ou efeito observável esperado.",
+    "subject": "testes"
+  },
+  {
+    "text": "Cobertura de linhas alta não prova que os testes verificam corretamente os resultados.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: `beforeEach` pode preparar estado novo antes de cada teste para evitar dependência entre casos.",
+    "subject": "testes"
+  },
+  {
+    "text": "Use `afterEach` para limpar recursos criados durante os testes, como arquivos temporários ou servidores locais.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria isolar estado compartilhado; a ordem de execução não deve alterar o resultado de um teste.",
+    "subject": "testes"
+  },
+  {
+    "text": "Fixtures permitem reutilizar dados de teste explícitos, mas devem ser pequenas e fáceis de entender.",
+    "subject": "testes"
+  },
+  {
+    "text": "Para testar arquivos temporários, crie uma pasta exclusiva para o teste e remova-a ao final.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: um teste de API pode verificar o status HTTP e o formato do corpo da resposta.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria validar o contrato da resposta, e não apenas verificar que a requisição terminou sem lançar erro.",
+    "subject": "testes"
+  },
+  {
+    "text": "Testar uma resposta de erro ajuda a confirmar que a aplicação trata entradas inválidas de forma previsível.",
+    "subject": "testes"
+  },
+  {
+    "text": "O comando `npm test` só executará testes se houver um script `test` definido no `package.json` ou configuração equivalente.",
+    "subject": "testes"
+  },
+  {
+    "text": "O runner integrado pode ser iniciado com `node --test`, que descobre arquivos de teste reconhecidos pelo Node.js.",
+    "subject": "testes"
+  },
+  {
+    "text": "Marcar um teste como `skip` deixa explícito que ele não é executado, enquanto um teste normal deve verificar o comportamento.",
+    "subject": "testes"
+  },
+  {
+    "text": "Um teste marcado como `todo` documenta trabalho pendente, mas não substitui uma verificação ativa.",
+    "subject": "testes"
+  },
+  {
+    "text": "A resposta deveria evitar compartilhar objetos mutáveis entre casos, pois a alteração em um teste pode afetar outro.",
+    "subject": "testes"
+  },
+  {
+    "text": "Testes com relógio controlado facilitam validar temporizadores sem depender de atrasos reais e instáveis.",
+    "subject": "testes"
+  },
+  {
+    "text": "Ao testar um callback baseado em eventos, registre o listener antes de disparar o evento para não perder a notificação.",
+    "subject": "testes"
+  },
+  {
+    "text": "Correto: uma asserção de igualdade estrita detecta diferenças de tipo, como `1` e `'1'`.",
+    "subject": "testes"
+  },
+  {
+    "text": "Uma mensagem de asserção útil ajuda a identificar a expectativa que falhou sem precisar depurar todo o teste.",
+    "subject": "testes"
+  }
+]

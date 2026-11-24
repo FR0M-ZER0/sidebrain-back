@@ -127,6 +127,8 @@ class StepService:
             return response
         except Exception as error:
             await self.db.rollback()
+            if isinstance(self.summary_service, StepSummaryService):
+                await self.summary_service.fail_last_generation()
             raise ProblemDetailError(
                 500,
                 "Erro interno",
